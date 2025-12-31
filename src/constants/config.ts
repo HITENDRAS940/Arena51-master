@@ -1,0 +1,5 @@
+import { GOOGLE_MAPS_API_KEY } from '@env';
+
+export const API_BASE_URL = 'https://turf-booking-backend-o121.onrender.com';
+export const GOOGLE_API_KEY = GOOGLE_MAPS_API_KEY;
+// export const API_BASE_URL = 'http://localhost:5000';
