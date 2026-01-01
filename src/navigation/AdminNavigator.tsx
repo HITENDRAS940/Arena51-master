@@ -9,6 +9,7 @@ import ServiceManagementScreen from '../screens/admin/ServiceManagementScreen';
 import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import AdminMoreScreen from '../screens/admin/AdminMoreScreen';
 import AdminServiceDetailScreen from '../screens/admin/AdminServiceDetailScreen';
+import UserManagementScreen from '../screens/admin/UserManagementScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,7 @@ const AdminNavigator = () => {
           };
         }}
       />
+      <Tab.Screen name="Users" component={UserManagementScreen} />
       <Tab.Screen name="Bookings" component={AllBookingsScreen} />
       <Tab.Screen name="More" component={AdminMoreScreen} />
     </Tab.Navigator>

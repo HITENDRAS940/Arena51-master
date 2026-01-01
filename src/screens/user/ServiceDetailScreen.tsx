@@ -300,12 +300,21 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           return;
         }
 
-        // Navigate to Payment Selection Screen with AUTHORITATIVE backend data
-        navigation.navigate('PaymentSelection', {
-          bookingRequest,
-          totalAmount: bookingData.amountBreakdown?.totalAmount || 0,
-          bookingResponse: bookingData
-        });
+        // Confirm booking directly and redirect
+        Alert.alert(
+          'Booking Request Submitted',
+          'Your booking request has been submitted successfully and is awaiting manual confirmation.',
+          [
+            { 
+              text: 'View Bookings', 
+              onPress: () => {
+                navigation.popToTop();
+                navigation.navigate('MainTabs', { screen: 'Bookings' });
+              } 
+            }
+          ]
+        );
+
       } catch (error: any) {
         // Handle booking failure by refreshing slot list
         let message = 'The selected slot might no longer be available. Please pick another one.';

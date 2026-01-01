@@ -16,23 +16,7 @@ export interface Activity {
   name: string;
 }
 
-export interface CashfreeOrderRequest {
-  internalBookingId: string;
-  amount: number;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  returnUrl: string;
-  notifyUrl: string;
-}
 
-export interface CashfreeOrderResponse {
-  orderId: string;
-  paymentSessionId: string;
-  orderStatus: string;
-  message?: string;
-}
 
 export type RootStackParamList = {
   Login: undefined;
@@ -41,10 +25,8 @@ export type RootStackParamList = {
   AdminTabs: undefined;
   ServiceDetail: { serviceId: number };
   BookingSummary: { bookingId: string };
-  PaymentSelection: { bookingRequest: DynamicBookingRequest; totalAmount: number; bookingResponse: DynamicBookingResponse };
   CategoryServices: { activityId: number; activityName: string; city: string; activityCode?: string };
   Wallet: undefined;
-  TopupPayment: { amount: number; reference: string };
 };
 
 export interface User {
@@ -360,6 +342,24 @@ export interface PageResponse<T> {
   totalPages: number;
   last: boolean;
 }
+
+export interface ManagerUser {
+  id: number;
+  phone: string;
+  name: string;
+  role: string;
+  enabled: boolean;
+  createdAt: string;
+  wallet: {
+    walletId: number;
+    balance: number;
+    status: string;
+  };
+  totalBookings: number;
+  confirmedBookings: number;
+  cancelledBookings: number;
+}
+
 export interface WalletBalance {
   balance: number;
 }
@@ -387,8 +387,4 @@ export interface PagedWalletTransactions {
   empty: boolean;
 }
 
-export interface WalletTopupResponse {
-  reference: string;
-  amount: number;
-  status: string;
-}
+

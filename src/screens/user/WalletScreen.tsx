@@ -11,10 +11,6 @@ import {
   StatusBar,
   Dimensions,
   Alert,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,9 +34,6 @@ const WalletScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isStickyHeaderActive, setIsStickyHeaderActive] = useState(false);
-  const [isTopupModalVisible, setIsTopupModalVisible] = useState(false);
-  const [topupAmount, setTopupAmount] = useState('500');
-  const [isTopupProcessing, setIsTopupProcessing] = useState(false);
   
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -75,8 +68,6 @@ const WalletScreen: React.FC = () => {
     return () => scrollY.removeListener(listenerId);
   }, [isStickyHeaderActive]);
 
-
-
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 80],
     outputRange: [0, 1],
@@ -89,33 +80,9 @@ const WalletScreen: React.FC = () => {
     extrapolate: 'clamp',
   });
 
-
-
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
-  };
-
-  const handleTopup = async () => {
-    const amountNum = parseFloat(topupAmount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid amount to top up.');
-      return;
-    }
-
-    setIsTopupProcessing(true);
-    try {
-      const response = await walletAPI.topup(amountNum);
-      const { reference, amount } = response.data;
-      
-      setIsTopupModalVisible(false);
-      (navigation as any).navigate('TopupPayment', { amount, reference });
-    } catch (error: any) {
-      console.error('Wallet Topup API error:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to initiate top-up. Please try again.');
-    } finally {
-      setIsTopupProcessing(false);
-    }
   };
 
   const renderHeader = () => (
@@ -147,16 +114,6 @@ const WalletScreen: React.FC = () => {
           <View>
             <Text style={styles.balanceLabel}>Current Balance</Text>
             <Text style={styles.balanceAmount}>₹{balance.toLocaleString()}</Text>
-          </View>
-          
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => setIsTopupModalVisible(true)}
-            >
-              <Ionicons name="add-circle" size={24} color="#FFF" />
-              <Text style={styles.actionText}>Add Money</Text>
-            </TouchableOpacity>
           </View>
         </LinearGradient>
       </View>
@@ -233,7 +190,7 @@ const WalletScreen: React.FC = () => {
               styles.statusText, 
               { color: item.status === 'COMPLETED' ? theme.colors.success : theme.colors.warning }
           ]}>
-              {item.status}
+              {item.status ?? 'PENDING'}
           </Text>
         </View>
       </View>
@@ -286,91 +243,6 @@ const WalletScreen: React.FC = () => {
           />
         }
       />
-
-      <Modal
-        visible={isTopupModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsTopupModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Add Money</Text>
-              <TouchableOpacity 
-                onPress={() => setIsTopupModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.modalSubtitle, { color: theme.colors.textSecondary }]}>
-              Enter the amount you want to add to your wallet
-            </Text>
-
-            <View style={[styles.amountInputContainer, { borderColor: theme.colors.border }]}>
-              <Text style={[styles.currencyPrefix, { color: theme.colors.text }]}>₹</Text>
-              <TextInput
-                style={[styles.amountInput, { color: theme.colors.text }]}
-                value={topupAmount}
-                onChangeText={setTopupAmount}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor={theme.colors.gray}
-              />
-            </View>
-
-            <View style={styles.quickAmountRow}>
-              {['100', '500', '1000', '2000'].map((amt) => (
-                <TouchableOpacity
-                  key={amt}
-                  style={[
-                    styles.quickAmountButton, 
-                    { backgroundColor: theme.colors.lightGray },
-                    topupAmount === amt && { backgroundColor: theme.colors.primary }
-                  ]}
-                  onPress={() => setTopupAmount(amt)}
-                >
-                  <Text style={[
-                    styles.quickAmountText, 
-                    { color: theme.colors.text },
-                    topupAmount === amt && { color: '#FFF' }
-                  ]}>
-                    ₹{amt}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.topupConfirmButton, 
-                { backgroundColor: theme.colors.primary },
-                isTopupProcessing && { opacity: 0.7 }
-              ]}
-              onPress={handleTopup}
-              disabled={isTopupProcessing}
-            >
-              {isTopupProcessing ? (
-                <ActivityIndicator color="#FFF" size="small" />
-              ) : (
-                <Text style={styles.topupConfirmText}>Proceed to Pay</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.paymentInfoRow}>
-              <Ionicons name="lock-closed" size={14} color={theme.colors.textSecondary} />
-              <Text style={[styles.paymentInfoText, { color: theme.colors.textSecondary }]}>
-                Secure payments via Cashfree
-              </Text>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </ScreenWrapper>
   );
 };
@@ -438,23 +310,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 32,
     fontWeight: '800',
-  },
-  actionButtons: {
-    justifyContent: 'center',
-  },
-  actionButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 16,
-    gap: 4,
-  },
-  actionText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
   },
   transactionSectionHeader: {
     marginBottom: 8,
@@ -539,108 +394,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
   },
-
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    minHeight: 400,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  modalCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 24,
-  },
-  amountInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 20,
-  },
-  currencyPrefix: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 32,
-    fontWeight: '800',
-    padding: 0,
-  },
-  quickAmountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-    gap: 12,
-  },
-  quickAmountButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  quickAmountText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  topupConfirmButton: {
-    height: 60,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  topupConfirmText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  paymentInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  paymentInfoText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',

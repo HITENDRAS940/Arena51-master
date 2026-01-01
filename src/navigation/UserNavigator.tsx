@@ -66,10 +66,9 @@ const UserNavigator = () => {
       <RootStack.Screen name="AllServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="CategoryServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
-      <RootStack.Screen name="PaymentSelection" component={PaymentSelectionScreen} />
       <RootStack.Screen name="Wallet" component={WalletScreen} />
-      <RootStack.Screen name="TopupPayment" component={TopupPaymentScreen} />
     </RootStack.Navigator>
+
   );
 };
 

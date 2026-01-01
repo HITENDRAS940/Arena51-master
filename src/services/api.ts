@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../constants/config';
-import { BookingRequest, BookingResponse, UserBookingRequest, UserBookingResponse, EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, CashfreeOrderResponse, WalletTopupResponse, PagedWalletTransactions } from '../types';
+import { BookingRequest, BookingResponse, UserBookingRequest, UserBookingResponse, EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, PagedWalletTransactions } from '../types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -116,8 +116,6 @@ export const bookingAPI = {
 export const walletAPI = {
   getBalance: () => api.get('api/wallet/balance'),
   getTransactions: () => api.get<PagedWalletTransactions>('api/wallet/transactions'),
-  topup: (amount: number) => api.post<WalletTopupResponse>('/api/wallet/topup', { amount }),
-  payWithWallet: (bookingId: string | number) => api.post(`/wallet/pay/${bookingId}`),
 };
 
 // Admin APIs
@@ -155,6 +153,9 @@ export const adminAPI = {
   disableSlotForDate: (data: { serviceId: number; slotId: number; date: string; reason: string }) => Promise.resolve({ data: {} } as any),
 
   getDisabledSlotsForDate: (serviceId: number, date: string) => Promise.resolve({ data: [] } as any),
+
+  // User Management for Manager
+  getUsers: (page: number = 0, size: number = 10) => api.get(`/manager/users`, { params: { page, size } }),
 };
 
 
