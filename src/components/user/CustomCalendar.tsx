@@ -3,6 +3,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,13 +34,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   };
 
   // Debug effect to track selectedDate changes
-  useEffect(() => {
-    console.log('📅 CustomCalendar selectedDate changed:', {
-      selectedDate: selectedDate.toDateString(),
-      selectedDateString: formatDateString(selectedDate),
-      visible
-    });
-  }, [selectedDate, visible]);
+  // Debug effect to track selectedDate changes (removed)
 
   if (!visible) return null;
 
@@ -50,47 +45,19 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   const selectedDateString = formatDateString(selectedDate);
   const minDateString = formatDateString(currentDate);
 
-  console.log('📅 Calendar Display Debug:', {
-    selectedDate: selectedDate.toDateString(),
-    selectedDateString,
-    currentDate: currentDate.toDateString(),
-    minDateString,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  });
-
   const handleDayPress = (day: DateData) => {
     const selectedDate = new Date(day.year, day.month - 1, day.day);
-    
-    console.log('🖱️ Calendar Day Press:', {
-      dayData: day,
-      constructedDate: selectedDate.toDateString(),
-      dateString: formatDateString(selectedDate)
-    });
     
     // Additional check to prevent selecting past dates
     const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     
-    console.log('🗓️ Date selection attempt:', {
-      selected: selectedDateOnly.toDateString(),
-      today: todayOnly.toDateString(),
-      isPast: selectedDateOnly < todayOnly,
-      isToday: selectedDateOnly.getTime() === todayOnly.getTime(),
-      isFuture: selectedDateOnly > todayOnly
-    });
-    
     if (selectedDateOnly < todayOnly) {
-      console.log('❌ Business Rule Violation: Attempted to select past date');
-      console.log('❌ Selected:', selectedDateOnly.toDateString());
-      console.log('❌ Current:', todayOnly.toDateString());
-      
       // Show user-friendly feedback
       Alert.alert('Invalid Date', 'Please select today or a future date');
-      
       return; // Don't allow past date selection
     }
     
-    console.log('✅ Valid date selected:', selectedDateOnly.toDateString());
     onDateSelect(selectedDate);
     onClose();
   };
@@ -117,9 +84,9 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
     textDayFontWeight: '500' as const,
     textMonthFontWeight: '600' as const,
     textDayHeaderFontWeight: '600' as const,
-    textDayFontSize: 16,
-    textMonthFontSize: 18,
-    textDayHeaderFontSize: 14,
+    textDayFontSize: moderateScale(16),
+    textMonthFontSize: moderateScale(18),
+    textDayHeaderFontSize: moderateScale(14),
   };
 
   return (
@@ -194,40 +161,40 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     width: '90%',
-    maxWidth: 400,
-    borderRadius: 16,
+    maxWidth: scale(340), // Adjusted from 400 for better mobile fit
+    borderRadius: moderateScale(16),
     overflow: 'hidden',
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 16,
+    padding: scale(20),
+    paddingBottom: verticalScale(16),
   },
   title: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '600',
   },
   closeButton: {
-    padding: 4,
+    padding: scale(4),
   },
   calendar: {
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   footer: {
-    padding: 20,
-    paddingTop: 16,
+    padding: scale(20),
+    paddingTop: verticalScale(16),
     borderTopWidth: 1,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     textAlign: 'center',
   },
 });

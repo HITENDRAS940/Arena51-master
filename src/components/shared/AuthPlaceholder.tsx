@@ -11,12 +11,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ScreenWrapper } from './ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import{ DiscoveryArrowIcon }from '../../components/shared/icons/activities';
 
 interface AuthPlaceholderProps {
   titleMain: string;
   titleSub: string;
   description: string;
-  icon: keyof typeof Ionicons.glyphMap;
   onLoginPress: () => void;
 }
 
@@ -26,7 +26,6 @@ export const AuthPlaceholder: React.FC<AuthPlaceholderProps> = ({
   titleMain,
   titleSub,
   description,
-  icon,
   onLoginPress,
 }) => {
   const { theme } = useTheme();
@@ -65,12 +64,7 @@ export const AuthPlaceholder: React.FC<AuthPlaceholderProps> = ({
               </View>
               
               <View style={styles.actionContainer}>
-                <Ionicons name="arrow-forward-circle" size={48} color="#FFFFFF" />
-              </View>
-
-              {/* Decorative Background Icon */}
-              <View style={styles.decorativeIcon}>
-                <Ionicons name={icon} size={120} color="rgba(255, 255, 255, 0.1)" />
+                <DiscoveryArrowIcon size={48} color="#FFFFFF" />
               </View>
             </View>
           </LinearGradient>

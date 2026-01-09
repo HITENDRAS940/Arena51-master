@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   RefreshControl,
   Alert,
-  StatusBar,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingAPI } from '../../services/api';
@@ -18,8 +16,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import BookingCard from '../../components/user/BookingCard';
 import EmptyState from '../../components/shared/EmptyState';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
-import LoadingState from '../../components/shared/LoadingState';
-import { BookingSkeletonCard, SkeletonList } from '../../components/shared/Skeletons';
+import { BookingSkeletonCard } from '../../components/shared/Skeletons';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
 
@@ -63,15 +60,12 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
 
   const fetchBookings = async () => {
     try {
-      console.log('Fetching user bookings...');
       const response = await bookingAPI.getUserBookings();
-      console.log('Bookings response:', response.data);
       
       let bookingsData = response.data;
       
       // Ensure it's an array
       if (!Array.isArray(bookingsData)) {
-        console.warn('⚠️ Bookings data is not an array:', bookingsData);
         bookingsData = [];
       }
       
@@ -90,7 +84,6 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
       }
       
     } catch (error: any) {
-      console.error('❌ Error fetching bookings:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'Failed to fetch bookings';
@@ -109,12 +102,10 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
 
   const handleBookingPress = useCallback((booking: UserBooking) => {
     // Navigate to booking details screen (implement if needed)
-    console.log('📱 UserBooking pressed:', booking.id);
   }, []);
 
   const confirmCancelBooking = useCallback(async (booking: UserBooking) => {
     try {
-      console.log('🚫 Cancelling booking:', booking.id);
       
       await bookingAPI.cancelBooking(booking.id);
       
@@ -130,7 +121,6 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
       Alert.alert('UserBooking Cancelled', `Your booking at ${booking.serviceName} has been cancelled`);
       
     } catch (error: any) {
-      console.error('❌ Error cancelling booking:', error);
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'Failed to cancel booking';
@@ -206,7 +196,6 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         titleMain="Your games."
         titleSub="Your history."
         description="Login to view your previous bookings, manage upcoming games, and rebook your favorite venues."
-        icon="calendar"
         onLoginPress={() => navigation.navigate('Auth', { 
           screen: 'PhoneEntry', 
           params: { redirectTo: { name: 'User', params: { screen: 'Bookings' } } } 
@@ -246,7 +235,7 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={[
           styles.listContent,
-          { paddingTop: insets.top + 20 },
+          { paddingTop: insets.top + verticalScale(20) },
           !loading && bookings.length === 0 && styles.emptyContent
         ]}
         onScroll={Animated.event(
@@ -260,7 +249,7 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
             onRefresh={onRefresh}
             colors={[theme.colors.primary]}
             tintColor={theme.colors.primary}
-            progressViewOffset={insets.top + 20}
+            progressViewOffset={insets.top + verticalScale(20)}
           />
         }
         ListEmptyComponent={!loading ? renderEmptyState : null}
@@ -283,22 +272,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(24),
   },
   headerTitleGroup: {
     flex: 1,
   },
   headerTitleMain: {
-    fontSize: 34,
+    fontSize: moderateScale(34),
     fontWeight: '800',
-    lineHeight: 40,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
-    fontSize: 34,
+    fontSize: moderateScale(34),
     fontWeight: '800',
-    lineHeight: 40,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,
   },
@@ -311,27 +300,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   stickyHeaderContent: {
-    height: 56,
+    height: verticalScale(56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   stickyTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
   },
   listContent: {
-    padding: 20,
-    paddingBottom: 120, // Extra space for tab bar
+    padding: scale(20),
+    paddingBottom: verticalScale(120), // Extra space for tab bar
   },
   emptyContent: {
     flexGrow: 1,
     justifyContent: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: verticalScale(12),
+    fontSize: moderateScale(16),
   },
 });
 

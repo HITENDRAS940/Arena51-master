@@ -111,18 +111,18 @@ export const simulatePaymentProcessing = (): Promise<boolean> => {
  */
 export const simulateCashfreePayment = (amount: number): Promise<{ success: boolean; paymentId?: string }> => {
   return new Promise((resolve) => {
-    console.log(`💸 Initiating Cashfree payment for ₹${amount}`);
+    // console.log(`💸 Initiating Cashfree payment for ₹${amount}`);
 
     // Simulate gateway initialization
     setTimeout(() => {
-      console.log('🔄 Redirecting to Cashfree...');
+      // console.log('🔄 Redirecting to Cashfree...');
 
       // Simulate user interaction and processing
       setTimeout(() => {
         const success = true; // Always succeed for testing
         const paymentId = `CF_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-        console.log(success ? '✅ Payment Successful' : '❌ Payment Failed');
+        // console.log(success ? '✅ Payment Successful' : '❌ Payment Failed');
         resolve({ success, paymentId });
       }, 2000);
     }, 1000);

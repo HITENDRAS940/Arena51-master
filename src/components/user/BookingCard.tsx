@@ -160,7 +160,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
             <View>
               <Text style={[styles.detailLabel, { color: statusTheme.secondaryText }]}>Time</Text>
               <Text style={[styles.detailValue, { color: statusTheme.text }]} numberOfLines={1}>
-                {formatSlots(booking.slots)}
+                {formatSlots(booking.slots || [])}
               </Text>
             </View>
           </View>

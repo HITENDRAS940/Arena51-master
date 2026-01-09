@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     fontWeight: "600",
+    fontFamily: "Inter-SemiBold",
   },
   required: {
     color: "#EF4444",
@@ -98,6 +99,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
+    fontFamily: "Inter-Regular",
   },
   textArea: {
     minHeight: 80,
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 13,
     flex: 1,
+    fontFamily: "Inter-Regular",
   },
 });
 

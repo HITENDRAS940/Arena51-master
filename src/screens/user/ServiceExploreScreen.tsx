@@ -2,19 +2,19 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
-  StatusBar,
-  ActivityIndicator,
   Animated,
   Alert,
+  ScrollView,
 } from 'react-native';
-import ReAnimated from 'react-native-reanimated';
+import Reanimated, { FadeInDown } from 'react-native-reanimated';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BackIcon from '../../components/shared/icons/BackIcon';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Service } from '../../types';
@@ -40,12 +40,6 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
-
-  const headerTranslate = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [-10, 0],
-    extrapolate: 'clamp',
-  });
   
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +56,8 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     startTime: string; 
     endTime: string; 
     city: string; 
-    activityCode?: string 
+    activityCode?: string;
+    maxDistanceKm?: number;
   } | null>(null);
   
   const { location, manualCity, setCityManually, detectAndSetToCurrentCity, loading: locationLoading } = useLocation();
@@ -136,11 +131,8 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
          setLoading(false);
       }
 
-      // Restore tab bar visibility when leaving (optional, usually handled by navigator, 
-      // but good for safety if navigator logic is glitching)
       return () => {
-        // Only restore if we are going back to Home
-        // navigation.getParent()?.setOptions({ tabBarStyle: undefined });
+        // Optional cleanup
       };
     }, [effectiveCity, locationLoading, activityId, navigation])
   );
@@ -160,13 +152,34 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
   const onRefresh = () => {
     setRefreshing(true);
     if (isFilterActive && activeFilterParams) {
-      serviceAPI.searchByAvailability(activeFilterParams)
-        .then(response => {
-          setServices(response.data as any); 
-        })
-        .finally(() => {
+      const fetchFiltered = async () => {
+        try {
+          let response;
+          if (activeFilterParams.maxDistanceKm !== undefined && location) {
+            response = await api.location.filterServicesByDistance({
+              userLatitude: location.latitude,
+              userLongitude: location.longitude,
+              maxDistanceKm: activeFilterParams.maxDistanceKm,
+              minDistanceKm: 0,
+              city: activeFilterParams.city
+            });
+            const mappedServices = (response.data as any[]).map(s => ({
+              ...s,
+              image: s.image || (s.images && s.images[0]) || '',
+              rating: s.rating || 0
+            }));
+            setServices(mappedServices);
+          } else {
+            response = await serviceAPI.searchByAvailability(activeFilterParams);
+            setServices(response.data as any);
+          }
+        } catch (error) {
+          console.error('Error refreshing filtered services:', error);
+        } finally {
           setRefreshing(false);
-        });
+        }
+      };
+      fetchFiltered();
     } else {
       if (effectiveCity) {
         fetchServices(effectiveCity, 0, false);
@@ -180,7 +193,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     if (loadingMore) {
       return (
         <View style={styles.footerLoader}>
-          <ActivityIndicator size="small" color={theme.colors.primary} />
+          <BrandedLoader size={24} color={theme.colors.primary} />
         </View>
       );
     }
@@ -205,18 +218,39 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     startTime: string; 
     endTime: string; 
     city: string; 
-    activityCode?: string 
+    activityCode?: string;
+    maxDistanceKm?: number;
   }) => {
     setLoading(true);
     setHasMore(false); 
     
     try {
-      const response = await serviceAPI.searchByAvailability(params);
-      setServices(response.data as any);
+      let response;
+      if (params.maxDistanceKm !== undefined && location) {
+        // Distance based filtering
+        response = await api.location.filterServicesByDistance({
+          userLatitude: location.latitude,
+          userLongitude: location.longitude,
+          maxDistanceKm: params.maxDistanceKm,
+          minDistanceKm: 0,
+          city: params.city
+        });
+        const mappedServices = (response.data as any[]).map(s => ({
+          ...s,
+          image: s.image || (s.images && s.images[0]) || '',
+          rating: s.rating || 0
+        }));
+        setServices(mappedServices);
+      } else {
+        // Time/Availability based filtering
+        response = await serviceAPI.searchByAvailability(params);
+        setServices(response.data as any);
+      }
+      
       setIsFilterActive(true);
       setActiveFilterParams(params);
     } catch (error) {
-      console.error('Error searching by availability:', error);
+      console.error('Error searching services:', error);
       Alert.alert('Error', 'Failed to search services. Please try again.');
     } finally {
       setLoading(false);
@@ -235,12 +269,14 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     <View style={styles.headerContainer}>
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeftSection}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={styles.headerBackIconGroup}
-          >
-            <Ionicons name="chevron-back" size={28} color={theme.colors.text} />
-          </TouchableOpacity>
+          {navigation.canGoBack() && (
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()} 
+              style={styles.headerBackIconGroup}
+            >
+              <BackIcon width={28} height={28} fill={theme.colors.text} />
+            </TouchableOpacity>
+          )}
           <View style={styles.headerTitleGroup}>
             <Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
               {activityName ? `${activityName}.` : 'Explore.'}
@@ -293,8 +329,6 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       safeAreaEdges={['left', 'right', 'bottom']}
     >
-      
-        
       {/* Sticky Top Bar */}
       <Animated.View 
         pointerEvents={isStickyHeaderActive ? 'auto' : 'none'}
@@ -304,17 +338,18 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
             paddingTop: insets.top,
             backgroundColor: theme.colors.background,
             opacity: headerOpacity,
-            transform: [{ translateY: headerTranslate }],
             borderBottomColor: theme.colors.border + '20',
           }
         ]}
       >
         <View style={styles.stickyHeaderContent}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-             <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
+          {navigation.canGoBack() && (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+               <BackIcon width={24} height={24} fill={theme.colors.text} />
+            </TouchableOpacity>
+          )}
           <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>
-            {activityName || 'Explore'}
+            {activityName ? `${activityName}.` : 'Explore.'}
           </Text>
           <View style={styles.stickyActions}>
             <TouchableOpacity onPress={() => setShowSearchModal(true)}>
@@ -331,20 +366,21 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         </View>
       </Animated.View>
         
-      {loading ? (
-        <View style={{ paddingTop: insets.top + 20 }}>
-          {renderHeader()}
-          <SkeletonList
-              count={4}
-              renderItem={() => <ServiceSkeletonCard />}
-              contentContainerStyle={[styles.list, { paddingHorizontal: 20 }]}
-          />
-        </View>
-      ) : (
-        <Animated.FlatList<Service>
-          data={services}
-          renderItem={({ item }: { item: Service }) => (
-            <View style={styles.cardWrapper}>
+      <Animated.FlatList<any>
+        data={loading ? [1, 2, 3, 4] : services}
+        renderItem={({ item, index }: { item: any; index: number }) => {
+          if (loading) {
+            return (
+              <View style={[styles.cardWrapper, { marginBottom: 16 }]}>
+                <ServiceSkeletonCard />
+              </View>
+            );
+          }
+          return (
+            <Reanimated.View 
+              entering={FadeInDown.delay(index * 100).duration(600).springify()}
+              style={styles.cardWrapper}
+            >
               <ServiceCard
                 service={item}
                 onPress={() => navigation.navigate('ServiceDetail', { 
@@ -352,33 +388,37 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
                   initialService: item 
                 })}
               />
-            </View>
-          )}
-          keyExtractor={(item: Service) => item.id.toString()}
-          ListHeaderComponent={renderHeader}
-          contentContainerStyle={[
-            styles.list, 
-            { paddingTop: insets.top + 20 },
-            services.length === 0 && { flexGrow: 1 }
-          ]}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={renderFooter}
-          showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
-          )}
-          scrollEventThrottle={16}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={theme.colors.primary}
-              progressViewOffset={insets.top + 20}
-            />
-          }
-          ListEmptyComponent={
+            </Reanimated.View>
+          );
+        }}
+        keyExtractor={(item: any, index: number) => 
+          loading ? `skeleton-${index}` : item.id.toString()
+        }
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={[
+          styles.list, 
+          { paddingTop: insets.top + 20 },
+          !loading && services.length === 0 && { flexGrow: 1 }
+        ]}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.primary}
+            progressViewOffset={insets.top + 40}
+          />
+        }
+        ListEmptyComponent={
+          !loading ? (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 }}>
               <EmptyState
                 icon={isFilterActive ? "search-outline" : activityId ? "search-outline" : "football-outline"} 
@@ -394,9 +434,9 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
               )}
             </View>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
 
       <ServiceSearchModal
         visible={showSearchModal}

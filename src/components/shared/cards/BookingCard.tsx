@@ -12,6 +12,7 @@ import StatusBadge from '../StatusBadge';
 import { formatDateToDDMMMYYYY } from '../../../utils/dateUtils';
 import { formatTimeRange } from '../../../utils/slotUtils';
 import { formatCurrency } from '../../../utils/revenueUtils';
+import ProfileIcon from '../../shared/icons/ProfileIcon';
 
 interface BookingSlot {
   slotId: number;
@@ -111,7 +112,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
                 </Text>
                 {isAdminBooking && (
                   <View style={[styles.adminBadge, { backgroundColor: '#F59E0B20' }]}>
-                    <Ionicons name="person-circle" size={12} color="#F59E0B" />
+                    <ProfileIcon size={12} color="#F59E0B" />
                     <Text style={styles.adminBadgeText}>Manual</Text>
                   </View>
                 )}

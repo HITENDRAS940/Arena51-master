@@ -8,10 +8,10 @@ import {
   TextInput,
   Modal,
   Keyboard,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import BrandedLoader from '../shared/BrandedLoader';
 import { useTheme } from '../../contexts/ThemeContext';
 import { serviceAPI } from '../../services/api';
 import { Service } from '../../types';
@@ -200,7 +200,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
 
           {searching ? (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <BrandedLoader size={32} color={theme.colors.primary} />
               <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
                 Finding best venues...
               </Text>

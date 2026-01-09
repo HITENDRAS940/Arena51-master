@@ -1,45 +1,47 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
   ScrollView,
+  Animated,
   StatusBar,
   Keyboard,
-  Animated,
-  Dimensions,
-  ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { OtpInput } from 'react-native-otp-entry';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { authAPI } from '../../services/api';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { useAuth } from '../../contexts/AuthContext';
-import { User } from '../../types';
-import { Alert } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { formatPhoneForDisplay } from '../../utils/phoneUtils';
-import { Ionicons } from '@expo/vector-icons';
+import BackIcon from '../../components/shared/icons/BackIcon';
+import HyperIcon from '../../components/shared/icons/HyperIcon';
+import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width } = Dimensions.get('window');
-
-const OTPVerificationScreen = ({ route, navigation }: any) => {
-  const { phone, redirectTo } = route.params || {};
-  const { login } = useAuth();
-  const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
+const OTPVerificationScreen = ({ navigation, route }: any) => {
+  const { phone } = route.params;
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [timer, setTimer] = useState(30);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  
+  const { verifyOTP, requestOTP, setRedirectData } = useAuth();
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const inputRef = useRef<TextInput>(null);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
+
+  // Array for rendering 6 blocks
+  const blocks = Array(6).fill(0);
 
   useEffect(() => {
     // Entry animation
@@ -70,185 +72,209 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
       'keyboardDidHide',
       () => setKeyboardVisible(false)
     );
+    
+    // Timer logic
+    let interval: any;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
 
     return () => {
+      clearInterval(interval);
       keyboardDidHideListener.remove();
       keyboardDidShowListener.remove();
     };
-  }, []);
+  }, [timer]);
 
-  const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
-      Alert.alert('Invalid OTP', 'Please enter a 6-digit OTP');
+  const handleVerify = async () => {
+    const currentOtp = otp; // Capture current state
+    if (currentOtp.length !== 6) {
+      Alert.alert('Invalid OTP', 'Please enter a 6-digit OTP.');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await authAPI.verifyOTP(phone, otp);
-      const { token, newUser } = response.data;
-      
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const role = payload.role || 'ROLE_USER';
-      const userId = payload.userId;
-      const name = payload.name;
-
-      // Only navigate to SetName for regular users if 'name' property is missing from payload
-      if (role === 'ROLE_USER' && !('name' in payload)) {
-        navigation.replace('SetName', {
-          token,
-          phone,
-          userId,
-          isNewUser: newUser,
-          redirectTo
-        });
-        return;
+      if (route.params?.redirectTo) {
+        setRedirectData(route.params.redirectTo);
       }
-
-      // For all other cases (Admin or User with name), complete login
-      const userData = { 
-        id: userId,
-        token, 
-        phone, 
-        role, 
-        isNewUser: newUser,
-        name: name
-      } as User;
-
-      await login(userData);
       
-      // If there's a redirectTo and we are still a ROLE_USER, go there.
-      // Admin will be handled by AppNavigator switching the stack.
-      if (role === 'ROLE_USER' && redirectTo) {
-        Alert.alert('Success', 'Login successful!');
-        navigation.navigate(redirectTo.name, redirectTo.params);
-      } else if (role === 'ROLE_USER') {
-        Alert.alert('Success', 'Login successful!');
+      const isNameMissing = await verifyOTP(phone, currentOtp);
+      
+      if (isNameMissing) {
+        navigation.replace('SetName', { redirectTo: route.params?.redirectTo });
       } else {
-        Alert.alert('Success', 'Welcome Admin!');
-        // No manual navigation here; AppNavigator will switch to Admin navigator
+        // Name present, AuthContext handles login and navigation to Home
       }
     } catch (error: any) {
-      Alert.alert('Verification Failed', error.response?.data?.message || 'Invalid OTP');
-      setOtp('');
+      Alert.alert('Verification Failed', error.response?.data?.message || 'Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendOTP = async () => {
+  const handleResend = async () => {
     setResending(true);
     try {
-      await authAPI.sendOTP(phone);
-      Alert.alert('OTP Resent', 'Check your phone for the new code');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to resend OTP');
+      await requestOTP(phone);
+      setTimer(30);
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to resend OTP.');
     } finally {
       setResending(false);
     }
   };
 
+  // Focus the hidden input when user taps the blocks area
+  const handleContainerPress = () => {
+    inputRef.current?.focus();
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.background}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
+      
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView 
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
+          {navigation.canGoBack() && (
             <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+              <BackIcon width={24} height={24} fill={theme.colors.text} />
             </TouchableOpacity>
+          )}
 
-            <Animated.View 
-              style={[
-                styles.header, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
-              ]}
-            >
-              <Text style={styles.brandName}>ARENA51 Verification</Text>
-              <Text style={styles.title}>Secure Identity Shield</Text>
-              <Text style={styles.subtitle}>
-                We've sent a 6-digit code to{' '}
-                <Text style={styles.phoneText}>{formatPhoneForDisplay(phone)}</Text>
-              </Text>
-            </Animated.View>
+          <Animated.View
+            style={[
+              styles.header,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
+            ]}
+          >
+            <View style={styles.logoContainer}>
+              <HyperIcon size={150} color={theme.colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: theme.colors.text }]}>Verification.</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+              Enter the code sent to {phone}
+            </Text>
+          </Animated.View>
 
-            <Animated.View 
-              style={[
-                styles.cardContainer, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-              ]}
-            >
-              <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Enter Code</Text>
-                
-                <View style={styles.otpWrapper}>
-                  <OtpInput
-                    numberOfDigits={6}
-                    onTextChange={setOtp}
-                    theme={{
-                      containerStyle: styles.otpContainer,
-                      pinCodeContainerStyle: StyleSheet.flatten([styles.otpBox, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]),
-                      pinCodeTextStyle: StyleSheet.flatten([styles.otpText, { color: theme.colors.text }]),
-                      focusedPinCodeContainerStyle: StyleSheet.flatten([styles.otpBoxFocused, { borderColor: theme.colors.primary }]),
-                    }}
+          <Animated.View
+            style={[
+              styles.cardContainer,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+            ]}
+          >
+            <View style={styles.card}>
+              
+              {/* Background Watermark Icon */}
+              <View style={styles.watermarkContainer}>
+                <HyperIcon size={200} color={theme.colors.primary} style={{ opacity: 0.05, transform: [{ rotate: '-15deg' }] }} />
+              </View>
+
+              <View style={styles.cardInner}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>ONE TIME PASSWORD</Text>
+
+                <TouchableOpacity 
+                  style={styles.otpContainer} 
+                  activeOpacity={1} 
+                  onPress={handleContainerPress}
+                >
+                  {blocks.map((_, index) => {
+                    const digit = otp[index] || '';
+                    const isCurrent = index === otp.length && isFocused;
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.otpBlock,
+                          {
+                            backgroundColor: '#F9FAFB',
+                            borderColor: isCurrent ? theme.colors.primary : '#E5E7EB',
+                            borderWidth: isCurrent ? 2 : 1.5,
+                          }
+                        ]}
+                      >
+                        <Text style={[styles.otpText, { color: theme.colors.text }]}>
+                          {digit}
+                        </Text>
+                      </View>
+                    );
+                  })}
+
+                  {/* Hidden Input for handling typing */}
+                  <TextInput
+                    ref={inputRef}
+                    style={styles.hiddenInput}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={otp}
+                    onChangeText={setOtp}
+                    autoFocus
+                    editable={!loading}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    caretHidden
                   />
-                </View>
+                </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={handleVerifyOTP}
+                  onPress={handleVerify}
                   style={[
-                    styles.mainButton, 
-                    { backgroundColor: theme.colors.primary }, 
-                    (loading || otp.length < 6) && styles.buttonDisabled
+                    styles.mainButton,
+                    { backgroundColor: theme.colors.primary },
+                    (loading || otp.length !== 6) && styles.buttonDisabled
                   ]}
-                  disabled={loading || otp.length < 6}
+                  disabled={loading || otp.length !== 6}
                   activeOpacity={0.8}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <BrandedLoader color="#FFFFFF" size={24} />
                   ) : (
                     <View style={styles.buttonContent}>
-                      <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Confirm Verification</Text>
-                      <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                      <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Verify Access</Text>
+                      <ArrowRightIcon size={20} color="#FFFFFF" />
                     </View>
                   )}
                 </TouchableOpacity>
-                
+
                 <View style={styles.resendContainer}>
-                  <Text style={[styles.resendInfo, { color: theme.colors.textSecondary }]}>Didn't receive the code?</Text>
-                  <TouchableOpacity onPress={handleResendOTP} disabled={resending}>
+                  <Text style={[styles.resendText, { color: theme.colors.textSecondary }]}>
+                    Didn't receive code?{' '}
+                  </Text>
+                  <TouchableOpacity onPress={handleResend} disabled={timer > 0 || resending}>
                     {resending ? (
-                      <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginLeft: 8 }} />
+                      <BrandedLoader size={16} color={theme.colors.primary} />
                     ) : (
-                      <Text style={[styles.resendButton, { color: theme.colors.primary }]}>Resend Now</Text>
+                      <Text
+                        style={[
+                          styles.resendLink,
+                          { color: timer > 0 ? theme.colors.textSecondary : theme.colors.primary },
+                        ]}
+                      >
+                        {timer > 0 ? `Resend in ${timer}s` : 'Resend Now'}
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>
               </View>
-            </Animated.View>
-
-            {!isKeyboardVisible && (
-              <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-                <Ionicons name="lock-closed" size={14} color="#9CA3AF" style={{ marginRight: 6 }} />
-                <Text style={styles.footerText}>Secure, Encrypted Login</Text>
-              </Animated.View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -256,10 +282,7 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  background: {
-    flex: 1,
+    backgroundColor: '#f3f4f6',
   },
   keyboardView: {
     flex: 1,
@@ -276,94 +299,115 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
-    marginTop: 20,
+    marginBottom: 35,
   },
-  brandName: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 8,
-    color: '#111827',
+  logoContainer: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+    borderRadius: 24,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '800',
     marginBottom: 8,
-    color: '#374151',
+    color: '#111827',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#6B7280',
     textAlign: 'center',
-    maxWidth: '85%',
-    lineHeight: 20,
-  },
-  phoneText: {
-    fontWeight: '700',
+    maxWidth: '80%',
   },
   cardContainer: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 5,
+    elevation: 6,
   },
   card: {
-    borderRadius: 32,
-    padding: 24,
+    borderRadius: 28,
     overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+  },
+  watermarkContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -1,
+  },
+  cardInner: {
+    padding: 24,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    marginBottom: 24,
-    textAlign: 'center',
+    marginBottom: 12,
+    marginLeft: 4,
     textTransform: 'uppercase',
-    letterSpacing: 2,
-  },
-  otpWrapper: {
-    marginBottom: 32,
+    letterSpacing: 1,
+    color: '#9CA3AF',
   },
   otpContainer: {
-    gap: 8,
-    width: '100%',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    position: 'relative',
   },
-  otpBox: {
-    flex: 1,
+  otpBlock: {
+    width: 44, // Slightly smaller to fit 6 on screen
     height: 60,
-    borderRadius: 16,
-    borderWidth: 1.5,
-  },
-  otpBoxFocused: {
-    borderWidth: 2,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   otpText: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '700',
+  },
+  hiddenInput: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0,
   },
   mainButton: {
     width: '100%',
-    height: 64,
-    borderRadius: 20,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#000',
+    marginBottom: 20,
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -383,27 +427,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  resendInfo: {
+  resendText: {
     fontSize: 14,
   },
-  resendButton: {
+  resendLink: {
     fontSize: 14,
     fontWeight: '700',
-    marginLeft: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 'auto',
-    paddingTop: 32,
-  },
-  footerText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: '#9CA3AF',
   },
 });
 

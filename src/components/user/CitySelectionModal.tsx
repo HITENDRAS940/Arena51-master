@@ -6,10 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  ActivityIndicator,
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BrandedLoader from '../shared/BrandedLoader';
 import { useTheme } from '../../contexts/ThemeContext';
 import { serviceAPI } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -151,7 +151,7 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <BrandedLoader size={32} color={theme.colors.primary} />
             </View>
           ) : (
             <FlatList

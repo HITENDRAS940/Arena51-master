@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LocationIcon from '../shared/icons/LocationIcon';
+import BackIcon from '../shared/icons/BackIcon';
 
 interface LocationHeaderProps {
   city?: string;
@@ -39,7 +41,7 @@ const LocationHeader: React.FC<LocationHeaderProps & { children?: React.ReactNod
               onPress={onBackPress}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <BackIcon width={24} height={24} fill="#FFFFFF" />
             </TouchableOpacity>
           )}
 
@@ -49,7 +51,7 @@ const LocationHeader: React.FC<LocationHeaderProps & { children?: React.ReactNod
             activeOpacity={0.7}
           >
             <View style={styles.locationIconContainer}>
-              <Ionicons name="location" size={20} color="#FFFFFF" />
+              <LocationIcon size={20} color="#FFFFFF" />
             </View>
             <View>
               <View style={styles.row}>

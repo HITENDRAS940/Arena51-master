@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import CalendarIcon from './icons/CalendarIcon';
 import { useTheme } from '../../contexts/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
+import ProfileIcon from './icons/ProfileIcon';
+import HomeIcon from './icons/HomeIcon';
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const { theme } = useTheme();
@@ -92,12 +95,29 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
               onLongPress={onLongPress}
               style={styles.tabItem}
             >
-              <View style={styles.tabContent}>
-                <Ionicons 
-                  name={iconName} 
-                  size={24} 
-                  color={isFocused ? theme.colors.navy : theme.colors.textSecondary} 
-                />
+              <View style={styles.tabItemContent}>
+                {route.name === 'Profile' ? (
+                  <ProfileIcon 
+                    size={24} 
+                    color={isFocused ? theme.colors.navy : theme.colors.textSecondary} 
+                  />
+                ) : route.name === 'HomeTab' ? (
+                  <HomeIcon 
+                    size={24} 
+                    color={isFocused ? theme.colors.navy : theme.colors.textSecondary} 
+                  />
+                ) : route.name === 'Bookings' ? (
+                  <CalendarIcon
+                    size={24}
+                    color={isFocused ? theme.colors.navy : theme.colors.textSecondary}
+                  />
+                ) : (
+                  <Ionicons 
+                    name={iconName} 
+                    size={24} 
+                    color={isFocused ? theme.colors.navy : theme.colors.textSecondary} 
+                  />
+                )}
                 <Text style={[
                   styles.label, 
                   { 
@@ -146,7 +166,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: '100%',
   },
-  tabContent: {
+  tabItemContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,

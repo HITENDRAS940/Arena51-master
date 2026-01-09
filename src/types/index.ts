@@ -22,7 +22,6 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   UserTabs: undefined;
-  AdminTabs: undefined;
   ServiceDetail: { serviceId: number };
   BookingSummary: { bookingId: string };
   CategoryServices: { activityId: number; activityName: string; city: string; activityCode?: string };
@@ -37,21 +36,9 @@ export interface User {
   name?: string;
   email?: string;
   isNewUser?: boolean;
-  // Admin specific fields
-  businessName?: string;
-  businessAddress?: string;
-  enabled?: boolean;
-  createdAt?: string;
   walletBalance?: number;
 }
 
-export interface WalletTransaction {
-  id: number;
-  amount: number;
-  type: 'CREDIT' | 'DEBIT';
-  description: string;
-  createdAt: string;
-}
 
 export interface Service {
   id: number;
@@ -147,10 +134,12 @@ export interface EphemeralSlot {
   availableCount: number;
   totalCount: number;
   displayPrice: number;
+  price?: number;
 }
 
 export interface EphemeralSlotResponse {
   slots: EphemeralSlot[];
+  content?: EphemeralSlot[];
 }
 
 export interface SlotAvailability {
@@ -290,50 +279,7 @@ export interface Booking {
   serviceId?: number;
 }
 
-export interface DashboardStats {
-  totalBookings: number;
-  totalRevenue: number;
-  activeServices: number;
-  todayBookings: number;
-}
-
 // New Service Creation Flow Types
-export interface ServiceDetails {
-  name: string;
-  location: string;
-  description: string;
-  contactNumber?: string;
-  amenities?: string[];
-}
-
-export interface ServiceCreationResponse {
-  id: number;
-  name: string;
-  location: string;
-  description: string;
-  contactNumber?: string;
-  images: string[];
-  slots: any[];
-}
-
-export interface SlotConfig {
-  slotId: number;
-  startTime: string;
-  endTime: string;
-  price?: number;
-  enabled: boolean;
-}
-
-export interface SlotUpdate {
-  slotId: number;
-  price?: number;
-  enabled: boolean;
-  priceChanged: boolean;
-  enabledChanged: boolean;
-}
-
-
-
 export interface PageResponse<T> {
   content: T[];
   pageNo: number;
@@ -343,48 +289,41 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-export interface ManagerUser {
-  id: number;
-  phone: string;
-  name: string;
-  role: string;
-  enabled: boolean;
-  createdAt: string;
-  wallet: {
-    walletId: number;
-    balance: number;
-    status: string;
-  };
-  totalBookings: number;
-  confirmedBookings: number;
-  cancelledBookings: number;
-}
-
 export interface WalletBalance {
   balance: number;
 }
 
 export interface WalletTransaction {
   id: number;
-  walletId: number;
+  walletId?: number;
   amount: number;
-  type: 'CREDIT' | 'DEBIT';
-  source: 'TOPUP' | 'BOOKING' | 'REFUND' | 'OTHER';
-  referenceId: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  type: 'CREDIT' | 'DEBIT' | 'REFUND';
+  source?: 'TOPUP' | 'BOOKING' | 'REFUND' | 'OTHER';
+  referenceId?: string;
+  status?: 'PENDING' | 'COMPLETED' | 'FAILED';
   description: string;
   createdAt: string;
 }
 
 export interface PagedWalletTransactions {
-  totalElements: number;
-  totalPages: number;
-  size: number;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
   content: WalletTransaction[];
-  number: number;
+  number?: number;
   last: boolean;
-  first: boolean;
-  empty: boolean;
+  first?: boolean;
+  empty?: boolean;
+}
+
+export interface SlotConfig {
+  id?: number;
+  slotId: number;
+  resourceId?: number;
+  startTime: string;
+  endTime: string;
+  price?: number;
+  enabled: boolean;
 }
 
 

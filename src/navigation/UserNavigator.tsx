@@ -8,9 +8,7 @@ import ServiceExploreScreen from '../screens/user/ServiceExploreScreen';
 import ServiceDetailScreen from '../screens/user/ServiceDetailScreen';
 import MyBookingsScreen from '../screens/user/MyBookingsScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
-import PaymentSelectionScreen from '../screens/user/PaymentSelectionScreen';
 import WalletScreen from '../screens/user/WalletScreen';
-import TopupPaymentScreen from '../screens/user/TopupPaymentScreen';
 
 import { useTheme } from '../contexts/ThemeContext';
 import CustomTabBar from '../components/shared/CustomTabBar';

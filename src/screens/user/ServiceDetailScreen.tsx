@@ -3,6 +3,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import {
   View,
   StyleSheet,
@@ -12,8 +13,8 @@ import {
   Linking,
   TouchableOpacity,
   Text,
-  ActivityIndicator,
 } from 'react-native';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,12 +22,14 @@ import { bookingAPI, serviceAPI } from '../../services/api';
 import { Service, EphemeralSlot, Activity, DynamicBookingRequest, DynamicBookingResponse, Resource } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { format } from 'date-fns';
+import BackIcon from '../../components/shared/icons/BackIcon';
 
 // Extracted Components
 import ServiceImageGallery from '../../components/user/service-details/ServiceImageGallery';
 import ServiceInfo from '../../components/user/service-details/ServiceInfo';
 import ServiceBookingSection from '../../components/user/service-details/ServiceBookingSection';
 import ServiceDetailSkeleton from '../../components/user/service-details/ServiceDetailSkeleton';
+import BookingSummarySheet from '../../components/user/service-details/BookingSummarySheet';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateUUID } from '../../utils/helpers';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
@@ -137,7 +140,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         setSelectedActivity(uniqueActivities[0]);
       }
     } catch (error) {
-      console.error('Error fetching resources:', error);
     } finally {
       setResourcesLoading(false);
     }
@@ -175,10 +177,9 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       let timeSlots: EphemeralSlot[] = [];
 
       if (selectedActivity) {
-        console.log(`🔄 Fetching availability for activity ${selectedActivity.code} on ${dateStr}`);
-        const response = await serviceAPI.getActivityAvailability(service.id, selectedActivity.code, dateStr);
+        const response = await serviceAPI.getActivityAvailability(service.id, (selectedActivity as any).code, dateStr);
         // The API response now follows the EphemeralSlotResponse structure
-        timeSlots = response.data.slots;
+        timeSlots = response.data.slots || response.data.content || [];
       }
       setAvailableSlots(timeSlots);
       // Reset selection when slots are refreshed
@@ -186,7 +187,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       setSelectedSlotPrice(0);
       setIdempotencyKey(null);
     } catch (error) {
-      console.error('❌ Error fetching slot availability:', error);
       Alert.alert('Error', 'Failed to fetch available slots');
       setAvailableSlots([]);
     } finally {
@@ -214,7 +214,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       // Update total price and idempotency key
       const newPrice = availableSlots
         .filter(s => s.slotKey && newKeys.includes(s.slotKey))
-        .reduce((sum, s) => sum + s.displayPrice, 0);
+        .reduce((sum, s) => sum + (s.displayPrice || s.price || 0), 0);
       
       setSelectedSlotPrice(newPrice);
       
@@ -229,8 +229,16 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   };
 
 
-  const handleConfirmBooking = async () => {
-    // Check if user is logged in
+
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // Derived state for booking summary
+  const selectedSlotsList = React.useMemo(() => {
+    return availableSlots.filter(slot => slot.slotKey && selectedSlotKeys.includes(slot.slotKey));
+  }, [availableSlots, selectedSlotKeys]);
+
+  const handleConfirmBooking = () => {
+     // Check if user is logged in
     if (!user) {
       Alert.alert(
         'Login Required',
@@ -265,10 +273,15 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       return;
     }
 
+    // Show confirmation sheet instead of immediate booking
+    setShowConfirmation(true);
+  };
+
+  const handleFinalBooking = async () => {
     const performBooking = async (allowSplit: boolean = false) => {
       const bookingRequest: DynamicBookingRequest = {
         slotKeys: selectedSlotKeys,
-        idempotencyKey: idempotencyKey,
+        idempotencyKey: idempotencyKey!, // Safe assertion as checked before opening sheet
         allowSplit
       };
 
@@ -276,6 +289,9 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         setBookingLoading(true);
         const response = await bookingAPI.createBooking(bookingRequest);
         const bookingData = response.data;
+
+        // Close confirmation sheet on success (or partial)
+        setShowConfirmation(false);
 
         if (bookingData.status === 'PARTIAL_AVAILABLE') {
           setBookingLoading(false);
@@ -316,6 +332,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         );
 
       } catch (error: any) {
+        setShowConfirmation(false);
         // Handle booking failure by refreshing slot list
         let message = 'The selected slot might no longer be available. Please pick another one.';
         if (error.response?.data?.message) {
@@ -395,7 +412,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       >
         <View style={styles.stickyHeaderContent}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.stickyBackButton}>
-             <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+             <BackIcon width={24} height={24} fill={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.stickyTitle, { color: theme.colors.text }]} numberOfLines={1}>
             {service.name}
@@ -438,6 +455,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
             service={service}
           />
 
+
           {showBookingSection && (
             <ServiceBookingSection
               selectedDate={selectedDate}
@@ -453,6 +471,17 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               resourcesLoading={resourcesLoading}
             />
           )}
+
+          <BookingSummarySheet
+            visible={showConfirmation}
+            onClose={() => setShowConfirmation(false)}
+            onConfirm={handleFinalBooking}
+            serviceName={service.name}
+            date={selectedDate}
+            selectedSlots={selectedSlotsList}
+            totalPrice={selectedSlotPrice}
+            loading={bookingLoading}
+          />
         </Animated.View>
       </Animated.ScrollView>
 
@@ -482,7 +511,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
                 activeOpacity={0.8}
               >
                 {bookingLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <BrandedLoader color="#FFFFFF" size={24} />
                 ) : (
                   <Text style={styles.primaryButtonText}>Confirm Booking</Text>
                 )}
@@ -518,6 +547,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -536,42 +566,42 @@ const styles = StyleSheet.create({
     zIndex: 100,
     borderBottomWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 5,
   },
   stickyHeaderContent: {
-    height: 56,
+    height: verticalScale(56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   stickyBackButton: {
     position: 'absolute',
-    left: 10,
-    width: 40,
-    height: 40,
+    left: scale(10),
+    width: moderateScale(40),
+    height: moderateScale(40),
     justifyContent: 'center',
     alignItems: 'center',
   },
   stickyTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
     maxWidth: '70%',
   },
   contentContainer: {
     flex: 1,
-    paddingTop: 40,
-    paddingHorizontal: 24,
-    paddingBottom: 140,
+    paddingTop: verticalScale(40),
+    paddingHorizontal: scale(24),
+    paddingBottom: verticalScale(140),
     zIndex: 10,
-    minHeight: 600,
+    minHeight: verticalScale(600),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
+    shadowOffset: { width: 0, height: verticalScale(-10) },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowRadius: moderateScale(20),
     elevation: 25,
   },
   footerContainer: {
@@ -579,20 +609,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(10),
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 24,
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(24),
     borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.15,
-    shadowRadius: 20,
+    shadowRadius: moderateScale(20),
     elevation: 10,
   },
   detailsFooterContent: {
@@ -611,41 +641,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   priceLabel: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   priceValue: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800',
   },
   totalAmount: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: '800',
   },
   slotCount: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   primaryButton: {
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-    borderRadius: 20,
+    paddingHorizontal: scale(28),
+    paddingVertical: verticalScale(16),
+    borderRadius: moderateScale(20),
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 160,
+    minWidth: scale(160),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 5,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: moderateScale(17),
     fontWeight: '800',
     letterSpacing: 0.5,
   },

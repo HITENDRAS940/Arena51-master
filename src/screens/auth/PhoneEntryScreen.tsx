@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,17 +12,19 @@ import {
   Keyboard,
   Animated,
   Dimensions,
-  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
 import { Alert } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { validatePhoneNumber, getPhoneForAPI } from '../../utils/phoneUtils';
 import { Ionicons } from '@expo/vector-icons';
+import HyperIcon from '../../components/shared/icons/HyperIcon';
+import BackIcon from '../../components/shared/icons/BackIcon';
+import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
 
-const { width } = Dimensions.get('window');
+Dimensions.get('window');
 
 const PhoneEntryScreen = ({ route, navigation }: any) => {
   const { theme } = useTheme();
@@ -40,7 +41,9 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const inputBorderAnim = useRef(new Animated.Value(0)).current;
 
+
   useEffect(() => {
+
     // Entry animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -104,7 +107,6 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
     try {
       const formattedPhone = getPhoneForAPI(phone);
       await authAPI.sendOTP(formattedPhone);
-      Alert.alert('OTP Sent', 'Check your phone for the verification code');
       navigation.navigate('OTPVerification', { 
         phone: formattedPhone,
         redirectTo 
@@ -119,55 +121,63 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.background}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
+
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView 
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
+          {navigation.canGoBack() && (
             <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+              <BackIcon width={24} height={24} fill={theme.colors.text} />
             </TouchableOpacity>
+          )}
 
-            <Animated.View 
-              style={[
-                styles.header, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
-              ]}
-            >
-              <Image 
-                source={require('../../../assets/images/arena_logo.jpg')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Your game. Your venue.</Text>
-              <Text style={styles.subtitle}>Enter your phone number to continue</Text>
-            </Animated.View>
+          <Animated.View
+            style={[
+              styles.header,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
+            ]}
+          >
+            <View style={styles.logoContainer}>
+              <HyperIcon size={150} color={theme.colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: theme.colors.text }]}>Hyper</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Your game. Your venue.</Text>
+          </Animated.View>
 
-            <Animated.View 
-              style={[
-                styles.cardContainer, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-              ]}
-            >
-              <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+          <Animated.View
+            style={[
+              styles.cardContainer,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+            ]}
+          >
+            <View style={styles.card}>
+              
+              {/* Background Watermark Icon */}
+              <View style={styles.watermarkContainer}>
+                <HyperIcon size={200} color={theme.colors.primary} style={{ opacity: 0.05, transform: [{ rotate: '-15deg' }] }} />
+              </View>
+
+              <View style={styles.cardInner}>
                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Phone Number</Text>
-                
+
                 <View style={[
-                  styles.inputWrapper, 
-                  { 
-                    backgroundColor: theme.colors.background,
-                    borderColor: isFocused ? theme.colors.primary : theme.colors.border 
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: '#F9FAFB',
+                    borderColor: isFocused ? theme.colors.primary : '#E5E7EB'
                   }
                 ]}>
                   <View style={styles.countryPicker}>
@@ -175,7 +185,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                     <Text style={[styles.prefix, { color: theme.colors.text }]}>+91</Text>
                     <View style={[styles.inputDivider, { backgroundColor: theme.colors.border }]} />
                   </View>
-                  
+
                   <TextInput
                     style={[styles.input, { color: theme.colors.text }]}
                     placeholder="00000 00000"
@@ -191,42 +201,41 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                   />
                 </View>
 
-                  <TouchableOpacity
-                    onPress={handleSendOTP}
-                    style={[
-                      styles.mainButton, 
-                      { backgroundColor: theme.colors.primary }, 
-                      (loading || phone.length < 10) && styles.buttonDisabled
-                    ]}
-                    disabled={loading || phone.length < 10}
-                    activeOpacity={0.8}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <View style={styles.buttonContent}>
-                        <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Get Verification Code</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                
+                <TouchableOpacity
+                  onPress={handleSendOTP}
+                  style={[
+                    styles.mainButton,
+                    { backgroundColor: theme.colors.primary }
+                  ]}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  {loading ? (
+                    <BrandedLoader color="#FFFFFF" size={24} />
+                  ) : (
+                    <View style={styles.buttonContent}>
+                      <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Get Verification Code</Text>
+                      <ArrowRightIcon size={20} color="#FFFFFF" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+
                 <Text style={[styles.termsText, { color: theme.colors.textSecondary }]}>
                   By tapping "Get Verification Code", you agree to our{' '}
                   <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Terms of Service</Text> and{' '}
                   <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Privacy Policy</Text>
                 </Text>
               </View>
-            </Animated.View>
+            </View>
+          </Animated.View>
 
-            {!isKeyboardVisible && (
-              <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-                <Text style={styles.footerText}>Secure Login Powered by OTP</Text>
-              </Animated.View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+          {!isKeyboardVisible && (
+            <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+              <Text style={styles.footerText}>Secure Login Powered by OTP</Text>
+            </Animated.View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -234,10 +243,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Using the app's background color
-  },
-  background: {
-    flex: 1,
+    backgroundColor: '#f3f4f6',
   },
   keyboardView: {
     flex: 1,
@@ -254,38 +260,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   header: {
     alignItems: 'center',
     marginBottom: 35,
   },
-  logoImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 12,
+  logoContainer: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
     borderRadius: 24,
-  },
-  brandName: {
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 8,
-    color: '#111827',
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '800',
     marginBottom: 8,
-    color: '#374151',
+    color: '#111827',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#6B7280',
     textAlign: 'center',
     maxWidth: '80%',
@@ -293,14 +302,23 @@ const styles = StyleSheet.create({
   cardContainer: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 5,
+    elevation: 6,
   },
   card: {
-    borderRadius: 32,
-    padding: 24,
+    borderRadius: 28,
     overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+  },
+  watermarkContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -1,
+  },
+  cardInner: {
+    padding: 24,
   },
   label: {
     fontSize: 12,
@@ -309,16 +327,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#9CA3AF',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 64,
-    borderRadius: 20,
+    height: 60,
+    borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 16,
     marginBottom: 24,
+    backgroundColor: '#FFFFFF',
   },
   countryPicker: {
     flexDirection: 'row',
@@ -331,31 +350,33 @@ const styles = StyleSheet.create({
   prefix: {
     fontSize: 16,
     fontWeight: '700',
+    color: '#111827',
   },
   inputDivider: {
     width: 1,
     height: 24,
     marginHorizontal: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#E5E7EB',
   },
   input: {
     flex: 1,
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: 1,
+    color: '#111827',
   },
   mainButton: {
     width: '100%',
-    height: 64,
-    borderRadius: 20,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -375,6 +396,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 10,
+    color: '#6B7280',
   },
   termsLink: {
     fontWeight: '600',
@@ -385,7 +407,7 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#9CA3AF',
     textTransform: 'uppercase',

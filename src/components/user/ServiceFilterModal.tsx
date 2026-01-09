@@ -9,8 +9,8 @@ import {
   ScrollView,
   Alert,
   Dimensions,
-  ActivityIndicator,
 } from 'react-native';
+import BrandedLoader from '../shared/BrandedLoader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -28,6 +28,7 @@ interface ServiceFilterModalProps {
     endTime: string;
     city: string;
     activityCode?: string;
+    maxDistanceKm?: number;
   }) => void;
   initialCity: string;
   activityCode?: string;
@@ -74,6 +75,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<string | null>(activityCode || null);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [isDistanceFilter, setIsDistanceFilter] = useState(false);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -128,6 +130,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
       endTime: rangeEnd,
       city: initialCity,
       activityCode: selectedActivity || undefined,
+      maxDistanceKm: isDistanceFilter ? 50 : undefined,
     });
     onClose();
   };
@@ -194,12 +197,46 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* Activity Section - Only show if not already filtering by a specific activity */}
-            {!activityCode && (
-              <View style={styles.section}>
+            {/* Filter Mode Selection */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Search Mode</Text>
+              <View style={styles.filterModeContainer}>
+                <TouchableOpacity 
+                  onPress={() => setIsDistanceFilter(false)}
+                  style={[
+                    styles.modeButton, 
+                    !isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                  ]}
+                >
+                  <Ionicons name="time-outline" size={20} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                  <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => setIsDistanceFilter(true)}
+                  style={[
+                    styles.modeButton, 
+                    isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                  ]}
+                >
+                  <Ionicons name="location-outline" size={20} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                  <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Distance</Text>
+                </TouchableOpacity>
+              </View>
+              {isDistanceFilter && (
+                <Text style={[styles.distanceHint, { color: theme.colors.textSecondary }]}>
+                  Showing venues within 50km of your location.
+                </Text>
+              )}
+            </View>
+
+            {/* Content based on Mode */}
+            {!isDistanceFilter ? (
+              <>
+                {!activityCode && (
+                  <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Select Activity</Text>
                 {loadingActivities ? (
-                  <ActivityIndicator color={theme.colors.primary} style={{ alignSelf: 'flex-start' }} />
+                  <BrandedLoader size={24} color={theme.colors.primary} />
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.activityList}>
                     {activities.map((activity) => {
@@ -300,14 +337,26 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                 })}
               </View>
             </View>
+            </>
+            ) : (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Selected Range</Text>
+                  <View style={[styles.infoBanner, { backgroundColor: theme.colors.primary + '10' }]}>
+                    <Ionicons name="navigate-circle" size={24} color={theme.colors.primary} />
+                    <Text style={[styles.infoBannerText, { color: theme.colors.text }]}>
+                      We'll find the best venues within <Text style={{fontWeight: '800'}}>50km</Text> in {initialCity}.
+                    </Text>
+                  </View>
+                </View>
+            )}
           </ScrollView>
 
           {/* Footer */}
           <View style={[styles.footer, { borderTopColor: theme.colors.border + '20' }]}>
             <TouchableOpacity
-              style={[styles.applyButton, { opacity: (rangeStart && rangeEnd) ? 1 : 0.6 }]}
+              style={[styles.applyButton, { opacity: (isDistanceFilter || (rangeStart && rangeEnd)) ? 1 : 0.6 }]}
               onPress={handleApply}
-              disabled={!(rangeStart && rangeEnd)}
+              disabled={!isDistanceFilter && !(rangeStart && rangeEnd)}
             >
               <LinearGradient
                 colors={[theme.colors.primary, theme.colors.primary + 'EE']}
@@ -466,6 +515,44 @@ const styles = StyleSheet.create({
   unselectedShadow: {
     borderWidth: 1.5,
     borderColor: 'rgba(0,0,0,0.05)',
+  },
+  filterModeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    backgroundColor: '#00000005',
+    gap: 8,
+  },
+  modeButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  distanceHint: {
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '500',
+    opacity: 0.7,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    gap: 12,
+  },
+  infoBannerText: {
+    fontSize: 14,
+    flex: 1,
+    lineHeight: 20,
   },
 });
 

@@ -56,7 +56,6 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 // but follow the "geocode once" rule.
                 detectLocation();
             } catch (e) {
-                console.error('Failed to load cached location', e);
                 detectLocation();
             }
         };
@@ -66,7 +65,6 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const reverseGeocode = async (latitude: number, longitude: number, force: boolean = false) => {
         // Strict Rule: ONLY ONCE per app launch or explicit user action (force)
         if (hasGeocoded.current && !force) {
-            console.log('LocationContext: Skipping reverse geocode (already geocoded this session)');
             return null;
         }
 
@@ -84,7 +82,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 return { city: finalCity, state };
             }
         } catch (error) {
-            console.error('LocationContext: reverseGeocodeAsync failed', error);
+            // console.error('LocationContext: reverseGeocodeAsync failed', error);
         }
         return null;
     };
@@ -148,7 +146,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 }));
             }
         } catch (error) {
-            console.error('LocationContext: detectLocation failed', error);
+            // console.error('LocationContext: detectLocation failed', error);
             setErrorMsg('Failed to get current location');
         } finally {
             setLoading(false);

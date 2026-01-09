@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   Animated,
   Alert,
 } from 'react-native';
@@ -14,17 +14,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
-import { Service, Booking } from '../../types';
+import { Booking } from '../../types';
 import { serviceAPI, bookingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import LoadingState from '../../components/shared/LoadingState';
 import { ActivitySkeletonCard, SkeletonList } from '../../components/shared/Skeletons';
 import { useLocation } from '../../hooks/useLocation';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import CitySelectionModal from '../../components/user/CitySelectionModal';
-import { ACTIVITY_THEMES, DEFAULT_THEME } from '../../contexts/ThemeContext';
+import { ACTIVITY_THEMES, DEFAULT_THEME, theme } from '../../contexts/ThemeContext';
 import { Activity } from '../../types';
+import { ActivityIcons, DiscoveryArrowIcon } from '../../components/shared/icons/activities';
+import ProfileIcon from '../../components/shared/icons/ProfileIcon';
+import HomeIcon from '../../components/shared/icons/HomeIcon';
+import LocationIcon from '../../components/shared/icons/LocationIcon';
 
 const OFFERS = [
   {
@@ -55,7 +58,7 @@ const OFFERS = [
 
 const HomeScreen = ({ navigation }: any) => {
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, redirectData, setRedirectData } = useAuth();
   const insets = useSafeAreaInsets();
   
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -78,6 +81,18 @@ const HomeScreen = ({ navigation }: any) => {
     });
     return () => scrollY.removeListener(id);
   }, [isHeaderActive]);
+  
+  // Handle post-login redirection
+  useEffect(() => {
+    if (redirectData) {
+      const data = redirectData;
+      setRedirectData(null); // Clear it
+      
+      if (data.name) {
+        navigation.navigate(data.name, data.params);
+      }
+    }
+  }, [redirectData]);
 
   useEffect(() => {
      fetchActivities();
@@ -85,8 +100,12 @@ const HomeScreen = ({ navigation }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchLastBooking();
-    }, [])
+      if (user) {
+        fetchLastBooking();
+      } else {
+        setLastBooking(null);
+      }
+    }, [user])
   );
 
   const fetchActivities = async () => {
@@ -103,24 +122,15 @@ const HomeScreen = ({ navigation }: any) => {
 
   const fetchLastBooking = async () => {
     try {
-      const response = await bookingAPI.getUserBookings();
-      // Check if response.data is array directly or inside a property (handling potential mock variations)
-      const data = Array.isArray(response.data) ? response.data : (response.data as any)?.bookings || [];
-      
-      if (Array.isArray(data) && data.length > 0) {
-        // Sort by bookingDate descending
-        const sorted = [...data].sort((a: Booking, b: Booking) => {
-          const dateB = new Date(b.bookingDate || b.date || b.createdAt).getTime();
-          const dateA = new Date(a.bookingDate || a.date || a.createdAt).getTime();
-          return dateB - dateA;
-        });
-        setLastBooking(sorted[0]);
+      const response = await bookingAPI.getLastBooking();
+      if (response.data) {
+        setLastBooking(response.data);
       } else {
         setLastBooking(null);
       }
     } catch (error) {
-      console.log('Failed to fetch bookings', error);
       // Fail silently for UI
+      setLastBooking(null);
     }
   };
 
@@ -166,11 +176,22 @@ const HomeScreen = ({ navigation }: any) => {
               </Text>
               
               <View style={styles.activityIconContainer}>
-                  <Ionicons 
-                      name={themeConfig.icon} 
-                      size={64} 
-                      color="rgba(255,255,255,0.25)" 
-                  />
+                  {(() => {
+                    const IconComponent = ActivityIcons[item.name];
+                    const iconColor = themeConfig.iconColor || "rgba(255,255,255,0.25)";
+                    const fallbackColor = themeConfig.iconColor || "rgba(255,255,255,0.2)";
+                    
+                    if (IconComponent) {
+                      return <IconComponent size={120} color={iconColor} />;
+                    }
+                    return (
+                      <Ionicons 
+                          name={themeConfig.icon} 
+                          size={120} 
+                          color={fallbackColor} 
+                      />
+                    );
+                  })()}
               </View>
             </LinearGradient>
         </TouchableOpacity>
@@ -182,7 +203,7 @@ const HomeScreen = ({ navigation }: any) => {
       <TouchableOpacity
         style={styles.offerCard}
         activeOpacity={0.9}
-        onPress={() => Alert.alert('Offer Copied', `Promo code ${item.code} has been copied to your clipboard!`)}
+        onPress={() => console.log('Offer Copied', item.code)}
       >
         <LinearGradient
           colors={item.colors as any}
@@ -241,7 +262,7 @@ const HomeScreen = ({ navigation }: any) => {
             onPress={() => setShowCityModal(true)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="location" size={14} color={theme.colors.primary} />
+            <LocationIcon size={14} color={theme.colors.primary} />
             <Text style={[styles.stickyLocationText, { color: theme.colors.text }]} numberOfLines={1}>
               {manualCity || location?.city || 'Select...'}
             </Text>
@@ -275,7 +296,7 @@ const HomeScreen = ({ navigation }: any) => {
                   onPress={() => setShowCityModal(true)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                  <Ionicons name="location" size={20} color={theme.colors.primary} />
+                  <LocationIcon size={20} color={theme.colors.primary} />
                   <Text style={[styles.locationText, { color: theme.colors.text }]}>
                       {manualCity || location?.city || 'Select City'}
                   </Text>
@@ -326,16 +347,8 @@ const HomeScreen = ({ navigation }: any) => {
                     <Text style={styles.exploreTitle}>Discover All Venues</Text>
                     <Text style={styles.exploreSubtitle}>Find the perfect Venue in {manualCity || location?.city || 'your city'}</Text>
                 </View>
-                <Ionicons name="arrow-forward-circle" size={44} color="#10B981" style={{zIndex: 2}} />
-                
-                <View style={{ position: 'absolute', bottom: -10, right: -10, zIndex: 1, opacity: 0.1 }}> 
-                   <Ionicons 
-                      name="map" 
-                      size={120} 
-                      color="#FFFFFF" 
-                   />
-                </View>
-           </LinearGradient>
+                <DiscoveryArrowIcon size={60} color="#10B981" style={{zIndex: 2}} />
+            </LinearGradient>
         </TouchableOpacity>
       </View>
 
@@ -349,7 +362,7 @@ const HomeScreen = ({ navigation }: any) => {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#4F46E5', '#7C3AED']}
+              colors={['#1E1B4B', '#312E81']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.guestBannerGradient}
@@ -362,12 +375,7 @@ const HomeScreen = ({ navigation }: any) => {
                   </Text>
                 </View>
                 <View style={styles.guestActionContainer}>
-                  <Ionicons name="arrow-forward-circle" size={40} color="#FFFFFF" />
-                </View>
-
-                {/* Decorative Background Icon */}
-                <View style={styles.brandIconDecor}>
-                  <Ionicons name="sparkles" size={100} color="rgba(255, 255, 255, 0.15)" />
+                  <DiscoveryArrowIcon size={60} color="#FFFFFF" />
                 </View>
               </View>
             </LinearGradient>
@@ -387,7 +395,7 @@ const HomeScreen = ({ navigation }: any) => {
               }}
             >
               <LinearGradient
-                colors={['#10B981', '#059669']}
+                colors={['#0F766E', '#10B981']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.recentBookingGradient}
@@ -458,179 +466,182 @@ const HomeScreen = ({ navigation }: any) => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   headerContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(24),
   },
   headerTopRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 20,
+      marginBottom: verticalScale(20),
   },
   headerTitleMain: {
-      fontSize: 34,
+      fontSize: moderateScale(34),
       fontWeight: '800',
-      lineHeight: 40,
+      fontFamily: theme.fonts.bold,
+      lineHeight: moderateScale(40),
       letterSpacing: -1,
   },
   headerTitleSub: {
-    fontSize: 34,
+    fontSize: moderateScale(34),
     fontWeight: '800', 
-    lineHeight: 40,
+    fontFamily: theme.fonts.bold,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,
   },
   locationBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderRadius: 100,
-      gap: 8,
+      paddingHorizontal: scale(16),
+      paddingVertical: verticalScale(12),
+      borderRadius: moderateScale(100),
+      gap: scale(8),
   },
   locationText: {
-      fontSize: 16,
+      fontSize: moderateScale(16),
       fontWeight: '700',
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 16,
+    paddingHorizontal: scale(20),
+    marginTop: verticalScale(8),
+    marginBottom: verticalScale(16),
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800', 
     letterSpacing: -0.5,
   },
   activityListContainer: {
-     paddingBottom: 8,
+     paddingBottom: verticalScale(8),
   },
   activityListContent: {
-      paddingHorizontal: 20,
-      gap: 16,
-      paddingBottom: 16,
+      paddingHorizontal: scale(20),
+      gap: scale(16),
+      paddingBottom: verticalScale(16),
   },
   activityCard: {
-      width: 140, 
-      height: 180, 
-      borderRadius: 24,
+      width: scale(140), 
+      height: verticalScale(180), 
+      borderRadius: moderateScale(24),
       overflow: 'hidden',
       elevation: 6,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: { width: 0, height: verticalScale(4) },
       shadowOpacity: 0.15,
-      shadowRadius: 8,
+      shadowRadius: moderateScale(8),
       backgroundColor: '#FFFFFF',
   },
   activityCardGradient: {
       flex: 1,
-      padding: 16,
+      padding: moderateScale(16),
       justifyContent: 'space-between',
   },
   activityCardTitle: {
       color: '#FFFFFF',
-      fontSize: 18,
+      fontSize: moderateScale(18),
       fontWeight: '800',
       zIndex: 2,
   },
   activityIconContainer: {
       position: 'absolute',
-      bottom: -15,
-      right: -15,
+      bottom: 10,
+      right: 10,
       zIndex: 1,
       transform: [{rotate: '-10deg'}] 
   },
   exploreButton: {
-      borderRadius: 24,
-      marginTop: 4,
+      borderRadius: moderateScale(24),
+      marginTop: verticalScale(4),
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
+      shadowOffset: { width: 0, height: verticalScale(8) },
       shadowOpacity: 0.2,
-      shadowRadius: 16,
+      shadowRadius: moderateScale(16),
       elevation: 8,
   },
   exploreGradient: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: 24,
-      borderRadius: 24,
+      padding: moderateScale(24),
+      borderRadius: moderateScale(24),
       overflow: 'hidden', 
-      height: 120,
+      height: verticalScale(120),
   },
   exploreContent: {
       flex: 1,
-      marginRight: 16,
+      marginRight: scale(16),
       justifyContent: 'center',
   },
   exploreTitle: {
-      fontSize: 20,
+      fontSize: moderateScale(20),
       fontWeight: '800',
       color: '#FFFFFF',
-      marginBottom: 6,
+      marginBottom: verticalScale(6),
   },
   exploreSubtitle: {
-      fontSize: 13,
+      fontSize: moderateScale(13),
       color: 'rgba(255,255,255,0.7)',
       fontWeight: '500',
   },
   
   // Recent Booking Styles
   recentBookingCard: {
-      borderRadius: 24,
+      borderRadius: moderateScale(24),
       overflow: 'hidden',
-      shadowColor: '#10B981',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
+      shadowColor: '#065F46',
+      shadowOffset: { width: 0, height: verticalScale(8) },
+      shadowOpacity: 0.25,
+      shadowRadius: moderateScale(16),
       elevation: 8,
   },
   recentBookingGradient: {
-      padding: 24,
-      minHeight: 140,
+      padding: moderateScale(24),
+      minHeight: verticalScale(140),
       justifyContent: 'space-between',
   },
   recentBookingHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 16,
+      marginBottom: verticalScale(16),
       zIndex: 2,
   },
   recentIconBox: {
-      width: 48,
-      height: 48,
-      borderRadius: 16,
+      width: moderateScale(48),
+      height: moderateScale(48),
+      borderRadius: moderateScale(16),
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 16,
+      marginRight: scale(16),
   },
   recentInfo: {
       flex: 1,
   },
   recentTitle: {
-      fontSize: 18,
+      fontSize: moderateScale(18),
       fontWeight: '800',
-      marginBottom: 4,
+      marginBottom: verticalScale(4),
   },
   recentDate: {
-      fontSize: 13,
+      fontSize: moderateScale(13),
       fontWeight: '600',
   },
   statusBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 12,
+      paddingHorizontal: scale(12),
+      paddingVertical: verticalScale(6),
+      borderRadius: moderateScale(12),
   },
   statusText: {
-      fontSize: 11,
+      fontSize: moderateScale(11),
       fontWeight: '800',
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -639,29 +650,29 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingTop: 16,
+      paddingTop: verticalScale(16),
       borderTopWidth: 1,
       borderTopColor: 'rgba(255,255,255,0.15)',
       zIndex: 2,
   },
   rebookActionText: {
       color: '#FFFFFF',
-      fontSize: 15,
+      fontSize: moderateScale(15),
       fontWeight: '700',
   },
   // Guest Banner Styles
   guestBanner: {
-    borderRadius: 24,
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
     shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.25,
-    shadowRadius: 16,
+    shadowRadius: moderateScale(16),
     elevation: 8,
   },
   guestBannerGradient: {
-    padding: 24,
-    minHeight: 140,
+    padding: moderateScale(24),
+    minHeight: verticalScale(140),
     justifyContent: 'center',
   },
   guestBannerContent: {
@@ -671,25 +682,32 @@ const styles = StyleSheet.create({
   },
   guestTextContainer: {
     flex: 1,
-    marginRight: 16,
+    marginRight: scale(16),
     zIndex: 2,
   },
   guestActionContainer: {
     zIndex: 2,
   },
   guestBannerTitle: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   guestBannerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: moderateScale(14),
+    color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: moderateScale(20),
   },
   brandIconDecor: {
+    position: 'absolute',
+    bottom: -20,
+    right: -10,
+    zIndex: 1,
+    transform: [{ rotate: '-15deg' }],
+  },
+  recentCardDecor: {
     position: 'absolute',
     bottom: -20,
     right: -10,
@@ -703,52 +721,52 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
     borderBottomWidth: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingHorizontal: scale(20),
+    paddingBottom: verticalScale(12),
   },
   stickyHeaderContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 60,
+    height: verticalScale(60),
   },
   stickyTitle: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   stickyLocation: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-    maxWidth: 150,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(20),
+    gap: scale(6),
+    maxWidth: scale(150),
   },
   stickyLocationText: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '600',
   },
   offerListContent: {
-    paddingHorizontal: 20,
-    gap: 16,
-    paddingBottom: 10,
+    paddingHorizontal: scale(20),
+    gap: scale(16),
+    paddingBottom: verticalScale(10),
   },
   offerCard: {
-    width: 280,
-    height: 140,
-    borderRadius: 24,
+    width: scale(280),
+    height: verticalScale(140),
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowRadius: moderateScale(12),
   },
   offerGradient: {
     flex: 1,
-    padding: 20,
+    padding: moderateScale(20),
     justifyContent: 'center',
   },
   offerContent: {
@@ -761,30 +779,30 @@ const styles = StyleSheet.create({
   },
   offerTitle: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: '900',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
     letterSpacing: -0.5,
   },
   offerDescription: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '600',
-    lineHeight: 18,
+    lineHeight: moderateScale(18),
     maxWidth: '80%',
   },
   offerBadge: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(10),
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
   offerCode: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '800',
     letterSpacing: 1,
   },

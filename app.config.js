@@ -2,11 +2,11 @@ require('dotenv').config();
 
 module.exports = {
   expo: {
-    name: "ARENA51",
+    name: "HYPER",
     slug: "TurfBookingApp",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/arena_logo.jpg",
+    icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
@@ -32,7 +32,7 @@ module.exports = {
     android: {
       package: "com.hitendras940.TurfBookingApp",
       adaptiveIcon: {
-        foregroundImage: "./assets/images/arena_logo.jpg",
+        foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff"
       },
       config: {
@@ -49,6 +49,9 @@ module.exports = {
         projectId: "5aedd132-3f9e-418d-824a-2f74565ea37d"
       }
     },
-    owner: "hitendras940"
+    owner: "hitendras940",
+    plugins: [
+      "expo-font"
+    ]
   }
 };

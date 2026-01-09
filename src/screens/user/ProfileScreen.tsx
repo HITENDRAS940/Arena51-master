@@ -11,9 +11,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Animated,
 } from 'react-native';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
@@ -26,6 +26,7 @@ import { userAPI, walletAPI } from '../../services/api';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { formatCurrency } from '../../utils/helpers';
 import { useIsFocused } from '@react-navigation/native';
+import ProfileIcon from '../../components/shared/icons/ProfileIcon';
 
 const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateUser } = useAuth();
@@ -128,6 +129,7 @@ const ProfileScreen = ({ navigation }: any) => {
       items: [
         {
           icon: 'person-outline',
+          isProfileIcon: true,
           title: 'Edit Name',
           subtitle: 'Update your name',
           onPress: openEditNameModal,
@@ -142,7 +144,7 @@ const ProfileScreen = ({ navigation }: any) => {
           icon: 'card-outline',
           title: 'Payment Methods',
           subtitle: 'Manage your payment options',
-          onPress: () => Alert.alert('Coming Soon', 'Payment methods feature is under development'),
+          onPress: () => console.log('Payment Methods'),
         },
       ],
     },
@@ -153,13 +155,13 @@ const ProfileScreen = ({ navigation }: any) => {
           icon: 'notifications-outline',
           title: 'Notifications',
           subtitle: 'Manage notification settings',
-          onPress: () => Alert.alert('Coming Soon', 'Notification settings feature is under development'),
+          onPress: () => console.log('Notifications'),
         },
         {
           icon: 'language-outline',
           title: 'Language',
           subtitle: 'Choose your preferred language',
-          onPress: () => Alert.alert('Coming Soon', 'Language settings feature is under development'),
+          onPress: () => console.log('Language'),
         },
       ],
     },
@@ -170,25 +172,25 @@ const ProfileScreen = ({ navigation }: any) => {
           icon: 'help-circle-outline',
           title: 'Help & Support',
           subtitle: 'Get help and contact support',
-          onPress: () => Alert.alert('Coming Soon', 'Help & support feature is under development'),
+          onPress: () => console.log('Help & Support'),
         },
         {
           icon: 'star-outline',
           title: 'Rate App',
           subtitle: 'Rate our app on the store',
-          onPress: () => Alert.alert('Thank You!', 'Rate app feature is under development'),
+          onPress: () => console.log('Rate App'),
         },
         {
           icon: 'document-text-outline',
           title: 'Terms & Privacy',
           subtitle: 'Read our terms and privacy policy',
-          onPress: () => Alert.alert('Coming Soon', 'Terms & privacy feature is under development'),
+          onPress: () => console.log('Terms & Privacy'),
         },
         {
           icon: 'information-circle-outline',
           title: 'About',
           subtitle: 'App version and information',
-          onPress: () => Alert.alert('TurfBooking', 'Version 1.0.0'),
+          onPress: () => console.log('Version 1.0.0'),
         },
       ],
     },
@@ -209,7 +211,11 @@ const ProfileScreen = ({ navigation }: any) => {
       >
         <View style={styles.menuItemLeft}>
           <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-            <Ionicons name={item.icon} size={22} color="#FFFFFF" />
+            {item.isProfileIcon ? (
+              <ProfileIcon size={22} color="#FFFFFF" />
+            ) : (
+              <Ionicons name={item.icon} size={22} color="#FFFFFF" />
+            )}
           </View>
           <View style={styles.menuItemContent}>
             <Text style={[styles.menuItemText, { color: '#FFFFFF' }]}>{item.title}</Text>
@@ -219,7 +225,11 @@ const ProfileScreen = ({ navigation }: any) => {
         
         {/* Decorative Background Icon */}
         <View style={styles.menuCardDecorativeIcon}>
-          <Ionicons name={item.icon} size={80} color="rgba(255, 255, 255, 0.1)" />
+          {item.isProfileIcon ? (
+            <ProfileIcon size={80} color="rgba(255, 255, 255, 0.1)" />
+          ) : (
+            <Ionicons name={item.icon} size={80} color="rgba(255, 255, 255, 0.1)" />
+          )}
         </View>
       </LinearGradient>
     </TouchableOpacity>
@@ -240,7 +250,6 @@ const ProfileScreen = ({ navigation }: any) => {
         titleMain="Your profile."
         titleSub="Your identity."
         description="Login to manage your account, track your wallet balance, and customize your experience."
-        icon="person"
         onLoginPress={() => navigation.navigate('Auth', { 
           screen: 'PhoneEntry', 
           params: { redirectTo: { name: 'User', params: { screen: 'Profile' } } } 
@@ -318,7 +327,7 @@ const ProfileScreen = ({ navigation }: any) => {
             <View style={[styles.roleBadge, { backgroundColor: theme.colors.card, elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, shadowOffset: {width:0, height:2} }]}>
               <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} />
               <Text style={[styles.roleText, { color: theme.colors.textSecondary }]}>
-                {user?.role === 'ROLE_USER' ? 'Verified User' : 'Admin Access'}
+                Verified User
               </Text>
             </View>
           </View>
@@ -374,7 +383,7 @@ const ProfileScreen = ({ navigation }: any) => {
                 disabled={isSavingName}
               >
                 {isSavingName ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <BrandedLoader size={20} color="#FFFFFF" />
                 ) : (
                   <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Save</Text>
                 )}

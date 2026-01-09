@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BackIcon from './icons/BackIcon';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface GradientHeaderProps {
@@ -53,7 +54,7 @@ const GradientHeader: React.FC<GradientHeaderProps> = ({
                 onPress={handleBack} 
                 style={styles.backButton}
               >
-                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                <BackIcon width={24} height={24} fill="#FFFFFF" />
               </TouchableOpacity>
             ) : (
               <View style={{ width: 40 }} />

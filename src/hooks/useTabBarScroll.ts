@@ -34,8 +34,6 @@ export const useTabBarScroll = (navigation: any, options: { isRootTab?: boolean 
         const currentOffset = event.nativeEvent.contentOffset.y;
         const diff = currentOffset - offset.current;
 
-        // console.log('Scroll:', { currentOffset, diff, isVisible: isTabBarVisible.current, isRootTab: options.isRootTab });
-
         // Ignore bounces (iOS)
         if (currentOffset <= 0) {
             if (!isTabBarVisible.current) {

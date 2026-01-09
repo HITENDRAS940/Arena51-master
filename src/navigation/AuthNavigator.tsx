@@ -10,8 +10,8 @@ const Stack = createNativeStackNavigator();
 const AuthNavigator = () => {
   const { user } = useAuth();
   
-  // If user exists and is new, go directly to SetName screen
-  const initialRouteName = user?.isNewUser ? 'SetName' : 'PhoneEntry';
+  // If user exists but name is missing, go directly to SetName screen
+  const initialRouteName = (user && !user.name) ? 'SetName' : 'PhoneEntry';
 
   return (
     <Stack.Navigator 

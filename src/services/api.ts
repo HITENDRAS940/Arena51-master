@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../constants/config';
-import { BookingRequest, BookingResponse, UserBookingRequest, UserBookingResponse, EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, PagedWalletTransactions } from '../types';
+import { EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, PagedWalletTransactions } from '../types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -105,10 +105,19 @@ export const serviceAPI = {
   getSlotStatus: (serviceId: number, date: string) => Promise.resolve({ data: {} } as any),
 };
 
+// Admin APIs
+export const adminAPI = {
+  getAdminBookings: (page: number = 0, size: number = 10) => api.get('/admin/bookings', { params: { page, size } }),
+  getAdminStats: () => api.get('/admin/stats'),
+  getServiceBookings: (serviceId: number, date: string) => api.get(`/admin/services/${serviceId}/bookings`, { params: { date } }),
+  getAllBookings: () => api.get('/admin/bookings/all'),
+};
+
 // Booking APIs
 export const bookingAPI = {
   createBooking: (data: DynamicBookingRequest) => api.post<DynamicBookingResponse>('/api/slots/book', data),
   getUserBookings: () => api.get<UserBooking[]>('/user/bookings'),
+  getLastBooking: () => api.get<UserBooking>('/user/bookings/last'),
   cancelBooking: (id: number) => Promise.resolve({ data: {} }),
 };
 
@@ -118,47 +127,18 @@ export const walletAPI = {
   getTransactions: () => api.get<PagedWalletTransactions>('api/wallet/transactions'),
 };
 
-// Admin APIs
-export const adminAPI = {
-  getDashboardStats: () => Promise.resolve({ data: {} } as any),
-  getAllBookings: () => Promise.resolve({ data: [] } as any),
-  createService: (data: any) => Promise.resolve({ data: {} } as any),
-  updateService: (id: number, data: any) => Promise.resolve({ data: {} } as any),
-  deleteService: (id: number) => Promise.resolve({ data: {} } as any),
-  updateSlotPricing: (data: any) => Promise.resolve({ data: {} } as any),
-
-  // Get services for specific admin
-  getAdminServices: (userId: number) => Promise.resolve({ data: [] } as any),
-
-  // Get bookings for a specific service
-  getServiceBookings: async (serviceId: number, date?: string) => Promise.resolve({ data: { bookings: [] } } as any),
-
-  // New Service Creation Flow APIs
-  createServiceDetails: (data: { name: string; location: string; description: string; contactNumber?: string }) => Promise.resolve({ data: {} } as any),
-  updateServiceDetails: (serviceId: number, data: { name: string; location: string; description: string; contactNumber?: string }) => Promise.resolve({ data: {} } as any),
-  getServiceSlots: (serviceId: number) => Promise.resolve({ data: { slots: [] } } as any),
-  uploadServiceImages: (serviceId: number, formData: FormData) => Promise.resolve({ data: {} } as any),
-  deleteServiceImages: (serviceId: number, imageUrls: string[]) => Promise.resolve({ data: {} } as any),
-  updateSlotPrice: (serviceId: number, slotId: number, price: number) => Promise.resolve({ data: {} } as any),
-  enableSlot: (serviceId: number, slotId: number) => Promise.resolve({ data: {} } as any),
-  disableSlot: (serviceId: number, slotId: number) => Promise.resolve({ data: {} } as any),
-  setServiceAvailable: (serviceId: number) => Promise.resolve({ data: {} } as any),
-  setServiceNotAvailable: (serviceId: number) => Promise.resolve({ data: {} } as any),
-  getServiceAvailability: (serviceId: number) => Promise.resolve({ data: {} } as any),
-
-  // Manual Booking by Admin
-  createManualBooking: (data: { serviceId: number; slotIds: number[]; bookingDate: string }) => Promise.resolve({ data: {} } as any),
-
-  // Disable Slot for a Date (One-off)
-  disableSlotForDate: (data: { serviceId: number; slotId: number; date: string; reason: string }) => Promise.resolve({ data: {} } as any),
-
-  getDisabledSlotsForDate: (serviceId: number, date: string) => Promise.resolve({ data: [] } as any),
-
-  // User Management for Manager
-  getUsers: (page: number = 0, size: number = 10) => api.get(`/manager/users`, { params: { page, size } }),
+// Location APIs
+export const locationAPI = {
+  calculateDistance: (params: { serviceId: number; userLatitude: number; userLongitude: number }) =>
+    api.post('/api/location/calculate-distance', params),
+  filterServicesByDistance: (params: {
+    userLatitude: number;
+    userLongitude: number;
+    maxDistanceKm: number;
+    minDistanceKm: number;
+    city: string;
+  }) => api.get('/services/distance/filter', { params }),
 };
-
-
 
 // Export combined API object for convenience
 export { api };
@@ -167,6 +147,7 @@ export default {
   auth: authAPI,
   user: userAPI,
   service: serviceAPI,
+  location: locationAPI,
   booking: bookingAPI,
   admin: adminAPI,
 };

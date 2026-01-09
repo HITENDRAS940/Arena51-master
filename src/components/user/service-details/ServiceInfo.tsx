@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import LocationIcon from '../../shared/icons/LocationIcon';
+import MapPinIcon from '../../shared/icons/MapPinIcon';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Service } from '../../../types';
 
@@ -13,22 +17,14 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
   const { theme } = useTheme();
 
   // ✅ Safely parse coordinates
-  const lat = service.latitude != null ? Number(service.latitude) : null;
-  const lng = service.longitude != null ? Number(service.longitude) : null;
+  const { lat, lng, hasValidCoords } = useMemo(() => {
+    const l = service.latitude != null ? Number(service.latitude) : null;
+    const g = service.longitude != null ? Number(service.longitude) : null;
+    const valid = l != null && g != null && !Number.isNaN(l) && !Number.isNaN(g);
+    return { lat: l, lng: g, hasValidCoords: valid };
+  }, [service.latitude, service.longitude]);
 
-  const hasValidCoords =
-    lat != null &&
-    lng != null &&
-    !Number.isNaN(lat) &&
-    !Number.isNaN(lng);
-
-  const renderSectionHeader = (title: string) => (
-    <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{title}.</Text>
-    </View>
-  );
-
-  const openInMaps = () => {
+  const openInMaps = useCallback(() => {
     const label = encodeURIComponent(service.name);
 
     if (hasValidCoords && lat !== null && lng !== null) {
@@ -51,7 +47,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
         Linking.openURL(url).catch(err => console.error('An error occurred', err));
       }
     }
-  };
+  }, [service.name, service.location, hasValidCoords, lat, lng]);
 
   const getAmenityIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lowercaseName = name.toLowerCase();
@@ -69,268 +65,273 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
     if (lowercaseName.includes('seat') || lowercaseName.includes('bench')) return 'people';
     if (lowercaseName.includes('equipment') || lowercaseName.includes('rental')) return 'construct';
     if (lowercaseName.includes('first aid') || lowercaseName.includes('medical')) return 'medical';
+    if (lowercaseName.includes('parking') || lowercaseName.includes('park')) return 'car-sport';
     return 'checkmark-circle';
   };
 
-  const amenities = (service.amenities && Array.isArray(service.amenities))
-    ? service.amenities.map(name => ({
-        name,
-        icon: getAmenityIcon(name)
-      }))
-    : [
-        { name: 'Parking', icon: 'car' },
-        { name: 'Water', icon: 'water' },
-        { name: 'Changing Room', icon: 'shirt' },
-        { name: 'Floodlights', icon: 'flashlight' }
-      ];
+  const amenities = useMemo(() => {
+    return (service.amenities && Array.isArray(service.amenities))
+      ? service.amenities.map(name => ({
+          name,
+          icon: getAmenityIcon(name)
+        }))
+      : [
+          { name: 'Parking', icon: 'car' },
+          { name: 'Water', icon: 'water' },
+          { name: 'Changing Room', icon: 'shirt' },
+          { name: 'Floodlights', icon: 'flashlight' }
+        ];
+  }, [service.amenities]);
+
+  const renderSectionHeader = (title: string) => (
+    <View style={styles.sectionHeader}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{title}.</Text>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       {/* Header Section */}
-      <View style={styles.headerSection}>
-        <Text
-          style={[styles.serviceName, { color: theme.colors.text }]}
-        >
+      <Animated.View 
+        style={styles.headerSection}
+        entering={FadeInDown.duration(600).delay(100)}
+      >
+        <Text style={[styles.serviceName, { color: theme.colors.text }]}>
           {service.name}
         </Text>
 
         <View style={styles.statsRow}>
-          <View style={[styles.ratingBadge, { backgroundColor: '#FBBF2415' }]}>
-            <Ionicons name="star" size={14} color="#FBBF24" />
-            <Text style={[styles.ratingText, { color: '#D97706' }]}>{service.rating || 'New'}</Text>
+          <View style={[styles.ratingBadge, { backgroundColor: '#FBBF2420' }]}>
+            <Ionicons name="star" size={moderateScale(14)} color="#F59E0B" />
+            <Text style={[styles.ratingText, { color: '#B45309' }]}>{service.rating || 'New'}</Text>
           </View>
-          <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+          <View style={[styles.locationBadge, { backgroundColor: theme.colors.surface }]}>
+             <LocationIcon size={moderateScale(14)} color={theme.colors.textSecondary} />
+             <Text style={[styles.locationText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                {service.location}
+             </Text>
+          </View>
         </View>
-
-        <TouchableOpacity
-          style={styles.locationContainer}
-          onPress={openInMaps}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.locationIcon, { backgroundColor: theme.colors.navy + '10' }]}>
-            <Ionicons name="location" size={14} color={theme.colors.navy} />
-          </View>
-          <Text
-            style={[styles.locationText, { color: theme.colors.textSecondary }]}
-          >
-            {service.location}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {/* About Section */}
-      <View style={styles.section}>
+      <Animated.View 
+        style={styles.section}
+        entering={FadeInDown.duration(600).delay(200)}
+      >
         {renderSectionHeader('About')}
-        <View style={[styles.infoCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View style={[styles.infoCard, { 
+          backgroundColor: theme.colors.card, 
+          borderColor: theme.colors.border,
+          shadowColor: theme.colors.shadow,
+        }]}>
           <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
-            {service.description || 'Welcome to EzTurf! This premium venue offers top-notch facilities for your favorite sports activities. Book now for an amazing experience.'}
+            {service.description || 'Welcome to this premium venue offering top-notch facilities for your favorite sports activities. Book now for an amazing experience.'}
           </Text>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Amenities Section */}
-      <View style={styles.section}>
+      <Animated.View 
+        style={styles.section}
+        entering={FadeInDown.duration(600).delay(300)}
+      >
         {renderSectionHeader('Amenities')}
         <View style={styles.amenitiesGrid}>
           {amenities.map((amenity, index) => (
-            <View
+            <Animated.View
               key={index}
-              style={[
-                styles.amenityItem,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  shadowColor: theme.colors.shadow
-                }
-              ]}
-            >
-              <LinearGradient
-                colors={[theme.colors.navy, theme.colors.navy + 'DD']}
-                style={styles.amenityIconGradient}
+              entering={FadeInRight.delay(300 + (index * 50)).duration(400)}
+                style={[
+                  styles.amenityItem,
+                  {
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border,
+                    shadowColor: theme.colors.shadow,
+                  }
+                ]}
               >
-                <Ionicons name={amenity.icon as any} size={14} color="#FFFFFF" />
-              </LinearGradient>
-              <Text style={[styles.amenityText, { color: theme.colors.text }]} numberOfLines={2}>
+              <View style={[styles.amenityIconBox, { backgroundColor: theme.colors.background }]}>
+                 <Ionicons name={amenity.icon as any} size={moderateScale(18)} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.amenityText, { color: theme.colors.text }]} numberOfLines={1}>
                 {amenity.name}
               </Text>
-            </View>
+            </Animated.View>
           ))}
         </View>
-      </View>
+      </Animated.View>
 
       {/* Location Map Card */}
-      <View style={styles.section}>
+      <Animated.View 
+        style={styles.section}
+        entering={FadeInDown.duration(600).delay(400)}
+      >
         {renderSectionHeader('Location')}
         <TouchableOpacity
-          style={[styles.mapCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          style={[styles.mapCard, { 
+            backgroundColor: theme.colors.card,
+            shadowColor: theme.colors.shadow,
+          }]}
           onPress={openInMaps}
           activeOpacity={0.9}
         >
-          <View style={styles.mapInfo}>
-            <View style={styles.mapIconCircle}>
-                <Ionicons name="map" size={24} color={theme.colors.primary} />
-            </View>
-            <View style={styles.mapTextContainer}>
-              <Text style={[styles.mapLabel, { color: theme.colors.text }]}>Open in Maps</Text>
-              <Text style={[styles.mapAddress, { color: theme.colors.textSecondary }]} numberOfLines={2}>
-                {service.location}
-              </Text>
-            </View>
-            <View style={[styles.mapBadge, { backgroundColor: theme.colors.navy + '10' }]}>
-              <Ionicons name="chevron-forward" size={20} color={theme.colors.navy} />
-            </View>
-          </View>
-          
-          <View style={[styles.hintContainer, { backgroundColor: theme.colors.background }]}>
-              <Ionicons name="information-circle-outline" size={16} color={theme.colors.textSecondary} />
-              <Text style={[styles.hintText, { color: theme.colors.textSecondary }]}>
-                  Tap to view detailed directions
-              </Text>
-          </View>
+          <LinearGradient
+             colors={[theme.colors.card, theme.colors.surface]}
+             style={styles.mapGradient}
+          >
+             <View style={styles.mapContent}>
+                <View style={styles.mapIconCircle}>
+                    <MapPinIcon size={moderateScale(40)} color={theme.colors.primary} />
+                </View>
+                <View style={styles.mapTextContainer}>
+                  <Text style={[styles.mapLabel, { color: theme.colors.text }]}>View on Map</Text>
+                  <Text style={[styles.mapAddress, { color: theme.colors.textSecondary }]} numberOfLines={2}>
+                    {service.location}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={moderateScale(20)} color={theme.colors.textSecondary} />
+             </View>
+          </LinearGradient>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 20,
+    paddingBottom: verticalScale(20),
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
+    paddingTop: verticalScale(10),
   },
   serviceName: {
-    fontSize: 28,
+    fontSize: moderateScale(32),
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: verticalScale(12),
     letterSpacing: -0.5,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: scale(10),
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 6,
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(10),
+    gap: scale(4),
   },
   ratingText: {
-    fontSize: 15,
+    fontSize: moderateScale(13),
     fontWeight: '700',
   },
-  divider: {
-    width: 1,
-    height: 14,
-  },
-  reviewCount: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  locationContainer: {
+  locationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  locationIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(10),
+    gap: scale(4),
+    flex: 1, // Take remaining space
   },
   locationText: {
-    fontSize: 15,
+    fontSize: moderateScale(13),
     fontWeight: '500',
     flex: 1,
   },
   section: {
-    marginBottom: 26,
+    marginBottom: verticalScale(32),
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 12,
+    marginBottom: verticalScale(16),
+    gap: scale(6),
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: moderateScale(20),
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
+  sectionTitleDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+    marginTop: verticalScale(4),
+  },
   infoCard: {
-    padding: 20,
-    borderRadius: 24,
+    padding: moderateScale(20),
+    borderRadius: moderateScale(24),
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   description: {
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: moderateScale(15),
+    lineHeight: moderateScale(24),
     fontWeight: '400',
+    opacity: 0.8,
   },
   amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: scale(10),
   },
   amenityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
+    padding: moderateScale(12),
+    borderRadius: moderateScale(16),
     borderWidth: 1,
-    gap: 10,
-    width: '48%',
-    marginBottom: 10,
+    gap: scale(10),
+    width: '48%', // Approx 2 items per row
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 3,
   },
-  amenityIconGradient: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  amenityIconBox: {
+    width: moderateScale(36),
+    height: moderateScale(36),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
   amenityText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: moderateScale(13),
+    fontWeight: '600',
     flex: 1,
   },
   mapCard: {
-    borderRadius: 24,
-    borderWidth: 1.5,
+    borderRadius: moderateScale(24),
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  mapInfo: {
-    padding: 20,
+  mapGradient: {
+    padding: moderateScale(20),
+  },
+  mapContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: scale(16),
   },
   mapIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+    width: moderateScale(48),
+    height: moderateScale(48),
+    borderRadius: moderateScale(24),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -338,35 +339,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mapLabel: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   mapAddress: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '400',
-    lineHeight: 18,
+    lineHeight: moderateScale(18),
+    opacity: 0.7,
   },
-  mapBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hintContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      borderTopWidth: 1,
-      borderTopColor: '#E5E7EB', // Slightly lighter border for separator
-  },
-  hintText: {
-      fontSize: 12,
-      fontWeight: '500',
-  }
 });
 
 export default React.memo(ServiceInfo);

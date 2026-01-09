@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import BasketballIcon from './icons/activities/BasketballIcon';
+import FootballIcon from './icons/activities/FootballIcon';
+import CricketIcon from './icons/activities/CricketIcon';
 
 const LOADING_ITEMS = [
-  { icon: 'basketball', label: 'Slam Dunk' }, 
-  { icon: 'football', label: 'Kick Off' },
+  { icon: 'basketball', label: 'Slam Dunk', custom: BasketballIcon }, 
+  { icon: 'football', label: 'Kick Off', custom: FootballIcon },
   { icon: 'tennisball', label: 'Game, Set, Match' },
-  { icon: 'baseball', label: 'Home Run' },
+  { icon: 'baseball', label: 'Home Run', custom: CricketIcon },
   { icon: 'trophy', label: 'Victory Awaits' }
 ] as const;
 
@@ -76,11 +79,20 @@ const LoadingState = ({ message = 'Services Loading...' }: { message?: string })
             alignItems: 'center',
           }}
         >
-          <Ionicons 
-            name={LOADING_ITEMS[currentIndex].icon as any} 
-            size={48} 
-            color={theme.colors.primary} 
-          />
+          {(() => {
+            const item = LOADING_ITEMS[currentIndex];
+            const Icon = (item as any).custom;
+            if (Icon) {
+              return <Icon size={48} color={theme.colors.primary} />;
+            }
+            return (
+              <Ionicons 
+                name={item.icon as any} 
+                size={48} 
+                color={theme.colors.primary} 
+              />
+            );
+          })()}
           <Text style={[styles.sportLabel, { color: theme.colors.primary }]}>
             {LOADING_ITEMS[currentIndex].label}
           </Text>

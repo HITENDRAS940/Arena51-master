@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions, ActivityIndicator, Linking, Platform } from 'react-native';
-import Animated, { withSpring, FadeInDown } from 'react-native-reanimated';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import BrandedLoader from '../shared/BrandedLoader';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Service } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Alert } from 'react-native';
-import { ACTIVITY_THEMES, DEFAULT_THEME } from '../../contexts/ThemeContext';
 
 interface ServiceCardProps {
   service: Service;
   onPress: () => void;
   showBookButton?: boolean;
 }
+
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import LocationIcon from '../shared/icons/LocationIcon';
+import { DiscoveryArrowIcon } from '../shared/icons/activities';
+import DistanceIcon from '../shared/icons/DistanceIcon';
+
+import { useLocationContext } from '../../contexts/LocationContext';
+import api from '../../services/api';
+
+// ... (existing imports)
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ 
   service, 
@@ -21,6 +30,33 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { theme } = useTheme();
+  const { location } = useLocationContext();
+  const [distanceInfo, setDistanceInfo] = useState<{ formattedDistance: string } | null>(null);
+  const [distanceLoading, setDistanceLoading] = useState(false);
+
+  React.useEffect(() => {
+    const fetchDistance = async () => {
+      if (location?.latitude && location?.longitude && service.id) {
+        setDistanceLoading(true);
+        try {
+          const response = await api.location.calculateDistance({
+            serviceId: service.id,
+            userLatitude: location.latitude,
+            userLongitude: location.longitude
+          });
+          if (response.data) {
+             setDistanceInfo(response.data);
+          }
+        } catch (error) {
+           // Silent fail, keep default state
+        } finally {
+          setDistanceLoading(false);
+        }
+      }
+    };
+    
+    fetchDistance();
+  }, [location?.latitude, location?.longitude, service.id]);
   
   // Get images array, fallback to single image if images array is empty/undefined
   const images = service.images && service.images.length > 0 ? service.images : [service.image];
@@ -55,7 +91,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             resizeMode="cover"
             onLoadStart={() => handleImageLoadStart(0)}
             onLoadEnd={() => handleImageLoadEnd(0)}
-            onError={() => console.log(`Failed to load image: ${images[0]}`)}
             // @ts-ignore
             sharedTransitionTag={`img-${service.id}`}
           />
@@ -81,13 +116,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 resizeMode="cover"
                 onLoadStart={() => handleImageLoadStart(index)}
                 onLoadEnd={() => handleImageLoadEnd(index)}
-                onError={() => console.log(`Failed to load image: ${imageUrl}`)}
                 // @ts-ignore
                 sharedTransitionTag={index === 0 ? `img-${service.id}` : undefined}
               />
               {imageLoading[index] && (
                 <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                  <BrandedLoader size={20} color={theme.colors.primary} />
                 </View>
               )}
               <LinearGradient
@@ -114,13 +148,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               {service.name}
             </Animated.Text>
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={14} color="#F59E0B" />
+              <Ionicons name="star" size={moderateScale(14)} color="#F59E0B" />
               <Text style={styles.ratingText}>{service.rating || 'New'}</Text>
             </View>
           </View>
-
+ 
           <View style={styles.locationRow}>
-            <Ionicons name="location" size={14} color="#E2E8F0" />
+            <LocationIcon size={moderateScale(14)} color="#E2E8F0" />
             <Animated.Text 
               style={styles.location} 
               numberOfLines={1}
@@ -131,7 +165,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             </Animated.Text>
           </View>
         </Animated.View>
-
+ 
         {hasMultipleImages && (
           <View style={styles.imageCounter}>
             <Text style={styles.imageCounterText}>
@@ -142,29 +176,19 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       </View>
       
       <View style={[styles.footer, { borderTopColor: theme.colors.border + '20' }]}>
-        {/* Left Side - Activities Icons */}
-        <View style={styles.activitiesContainer}>
-          {(service.activities && service.activities.length > 0 ? service.activities : ['Football', 'Cricket']).slice(0, 3).map((activityName, index) => {
-            const themeConfig = ACTIVITY_THEMES[activityName] || DEFAULT_THEME;
-            return (
-              <View 
-                key={index} 
-                style={[styles.activityIconCircle, { backgroundColor: theme.colors.lightGray }]}
-              >
-                <Ionicons 
-                  name={themeConfig.icon} 
-                  size={14} 
-                  color={theme.colors.navy} 
-                />
-              </View>
-            );
-          })}
-          {((service.activities && service.activities.length > 0 ? service.activities : ['Football', 'Cricket']).length) > 3 && (
-            <Text style={[styles.moreActivitiesText, { color: theme.colors.textSecondary }]}>
-              +{((service.activities && service.activities.length > 0 ? service.activities : ['Football', 'Cricket']).length) - 3}
-            </Text>
-          )}
+        {/* Left Side - Distance or Instant Booking Status */}
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusIconWrapper]}>
+            <DistanceIcon size={moderateScale(30)} color={theme.colors.primary} />
+          </View>
+          <Text style={[styles.statusText, { color: theme.colors.text }]}>
+            {distanceLoading 
+              ? 'Calculating distance...' 
+              : distanceInfo?.formattedDistance || 'Instant Booking'}
+          </Text>
         </View>
+        
+        {/* ... (rest of footer) */}
 
         {/* Right Side - Book Now Button */}
         {showBookButton && (
@@ -181,12 +205,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             >
               <View style={styles.buttonContent}>
                 <Text style={styles.bookButtonText}>Book Now</Text>
-                <Ionicons name="chevron-forward-circle" size={24} color="#FFFFFF" />
-              </View>
-              
-              {/* Subtle background decoration */}
-              <View style={styles.buttonDecorIcon}>
-                <Ionicons name="football" size={40} color="#FFFFFF" />
+                <DiscoveryArrowIcon size={moderateScale(24)} color="#FFFFFF" />
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -198,37 +217,37 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
-    marginBottom: 20,
+    borderRadius: moderateScale(20),
+    marginBottom: verticalScale(20),
     overflow: 'hidden',
     // Use theme shadow color if available, or fallback
     shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, // Reduced height
+    shadowOffset: { width: 0, height: verticalScale(2) }, // Reduced height
     shadowOpacity: 0.08, // Very subtle
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 3, // Standard Material Card elevation
     borderWidth: 1, 
     // borderColor and backgroundColor handled via inline styles with theme
   },
   image: {
     width: '100%',
-    height: 220,
+    height: verticalScale(160),
     backgroundColor: '#F1F5F9',
   },
   imageWrapper: {
     position: 'relative',
-    width: Dimensions.get('window').width - 32, // Simplified for testing
-    height: 220,
+    width: Dimensions.get('window').width - scale(32), // Simplified for testing
+    height: verticalScale(160),
   },
   imageScrollView: {
-    height: 220,
+    height: verticalScale(160),
   },
   imageGradient: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
+    height: verticalScale(80),
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -244,34 +263,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: moderateScale(16),
   },
   imageCounter: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: moderateScale(16),
+    right: moderateScale(16),
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
   },
   imageCounterText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   name: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '700',
     color: '#FFFFFF',
     flex: 1,
-    marginRight: 8,
+    marginRight: scale(8),
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -280,23 +299,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 4,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
+    gap: scale(4),
   },
   ratingText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '700',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: scale(4),
   },
   location: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#E2E8F0',
     fontWeight: '500',
   },
@@ -304,43 +323,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: moderateScale(12),
     borderTopWidth: 1,
     // borderTopColor handled via inline style
   },
-  activitiesContainer: {
-    flex: 1,
+  statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(8),
   },
-  activityIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  statusIconWrapper: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
-  moreActivitiesText: {
-    fontSize: 12,
+  statusText: {
+    fontSize: moderateScale(13),
     fontWeight: '700',
-    marginLeft: 2,
+    letterSpacing: 0.3,
   },
 
   bookButtonContainer: {
     borderRadius: 100, // Capsule container
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 6,
   },
   bookButton: {
-    height: 48,
-    paddingLeft: 20,
-    paddingRight: 12,
+    height: verticalScale(40),
+    paddingLeft: scale(20),
+    paddingRight: scale(12),
     borderRadius: 100,
     position: 'relative',
     overflow: 'hidden',
@@ -349,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: scale(10),
     height: '100%',
     zIndex: 2,
   },
@@ -363,7 +379,7 @@ const styles = StyleSheet.create({
   },
   bookButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '800',
     letterSpacing: 0.5,
   },
