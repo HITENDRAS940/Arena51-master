@@ -6,15 +6,16 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Modal,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import BrandedLoader from '../shared/BrandedLoader';
+
 import { useTheme } from '../../contexts/ThemeContext';
 import { serviceAPI } from '../../services/api';
 import { Service } from '../../types';
+import DraggableModal from '../shared/DraggableModal';
 
 interface ServiceSearchModalProps {
   visible: boolean;
@@ -140,129 +141,111 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
   );
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
+    <DraggableModal
       visible={visible}
-      onRequestClose={handleClose}
+      onClose={handleClose}
+      height="85%"
+      containerStyle={{ backgroundColor: theme.colors.background }}
     >
-      <View style={styles.modalOverlay}>
-        <TouchableOpacity 
-          style={styles.overlayDismiss} 
-          activeOpacity={1} 
-          onPress={handleClose} 
-        />
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Search.</Text>
-              <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-                {city || 'Everywhere'}.
-              </Text>
-            </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
+      <View style={styles.modalContent}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Search.</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+              {city || 'Everywhere'}.
+            </Text>
           </View>
-
-          <View style={styles.searchSection}>
-            <View
-              style={[
-                styles.searchInputContainer,
-                { 
-                  borderColor: theme.colors.border + '40', 
-                  backgroundColor: theme.colors.surface,
-                },
-              ]}
-            >
-              <Ionicons name="search" size={20} color={theme.colors.primary} />
-              <TextInput
-                style={[styles.searchInput, { color: theme.colors.text }]}
-                placeholder={
-                  activityName
-                    ? `Find ${activityName.toLowerCase()}...`
-                    : 'Search venues...'
-                }
-                placeholderTextColor={theme.colors.textSecondary + '80'}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoFocus={true}
-                returnKeyType="search"
-                onSubmitEditing={() => Keyboard.dismiss()}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                  <Ionicons name="close-circle" size={20} color={theme.colors.gray} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-
-          {searching ? (
-            <View style={styles.centerContainer}>
-              <BrandedLoader size={32} color={theme.colors.primary} />
-              <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
-                Finding best venues...
-              </Text>
-            </View>
-          ) : searchQuery.trim().length >= 3 && searchResults.length === 0 ? (
-            <View style={styles.centerContainer}>
-              <View style={[styles.noResultsIcon, { backgroundColor: theme.colors.surface }]}>
-                <Ionicons name="search-outline" size={48} color={theme.colors.gray} />
-              </View>
-              <Text style={[styles.noResultsText, { color: theme.colors.text }]}>
-                No venues found
-              </Text>
-              <Text style={[styles.noResultsSubtext, { color: theme.colors.textSecondary }]}>
-                Try searching with a different name or location
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={searchResults}
-              renderItem={renderSearchResult}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={
-                !searchQuery.trim() ? (
-                  <View style={styles.initialState}>
-                    <Ionicons name="rocket-outline" size={60} color={theme.colors.border} />
-                    <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
-                      Type to explore venues
-                    </Text>
-                  </View>
-                ) : null
-              }
-            />
-          )}
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
         </View>
+
+        <View style={styles.searchSection}>
+          <View
+            style={[
+              styles.searchInputContainer,
+              { 
+                borderColor: theme.colors.border + '40', 
+                backgroundColor: theme.colors.surface,
+              },
+            ]}
+          >
+            <Ionicons name="search" size={20} color={theme.colors.primary} />
+            <TextInput
+              style={[styles.searchInput, { color: theme.colors.text }]}
+              placeholder={
+                activityName
+                  ? `Find ${activityName.toLowerCase()}...`
+                  : 'Search venues...'
+              }
+              placeholderTextColor={theme.colors.textSecondary + '80'}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={true}
+              returnKeyType="search"
+              onSubmitEditing={() => Keyboard.dismiss()}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color={theme.colors.gray} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        {searching ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
+              Finding best venues...
+            </Text>
+          </View>
+        ) : searchQuery.trim().length >= 3 && searchResults.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <View style={[styles.noResultsIcon, { backgroundColor: theme.colors.surface }]}>
+              <Ionicons name="search-outline" size={48} color={theme.colors.gray} />
+            </View>
+            <Text style={[styles.noResultsText, { color: theme.colors.text }]}>
+              No venues found
+            </Text>
+            <Text style={[styles.noResultsSubtext, { color: theme.colors.textSecondary }]}>
+              Try searching with a different name or location
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={searchResults}
+            renderItem={renderSearchResult}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={
+              !searchQuery.trim() ? (
+                <View style={styles.initialState}>
+                  <Ionicons name="rocket-outline" size={60} color={theme.colors.border} />
+                  <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
+                    Type to explore venues
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
       </View>
-    </Modal>
+    </DraggableModal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  overlayDismiss: {
-    flex: 1,
-  },
   modalContent: {
-    height: '75%',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 8,
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 24,
+    paddingTop: 8,
   },
   headerTitle: {
     fontSize: 24,

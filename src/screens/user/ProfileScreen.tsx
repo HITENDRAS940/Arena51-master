@@ -12,8 +12,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
@@ -27,6 +28,7 @@ import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { formatCurrency } from '../../utils/helpers';
 import { useIsFocused } from '@react-navigation/native';
 import ProfileIcon from '../../components/shared/icons/ProfileIcon';
+import DraggableModal from '../../components/shared/DraggableModal';
 
 const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateUser, setRedirectData } = useAuth();
@@ -349,59 +351,57 @@ const ProfileScreen = ({ navigation }: any) => {
       </Animated.ScrollView>
 
 
-      <Modal
+      <DraggableModal
         visible={isEditingName}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsEditingName(false)}
+        onClose={() => setIsEditingName(false)}
+        height="auto"
+        containerStyle={{ backgroundColor: theme.colors.surface }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+          style={styles.modalInner}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Name</Text>
-            
-            <TextInput
-              style={[
-                styles.input, 
-                { 
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.background,
-                  borderColor: theme.colors.border 
-                }
-              ]}
-              value={newName}
-              onChangeText={setNewName}
-              placeholder="Enter your name"
-              placeholderTextColor={theme.colors.textSecondary}
-              autoFocus={true}
-            />
+          <Text style={[styles.modalTitle, { color: theme.colors.text }]}>Edit Name</Text>
+          
+          <TextInput
+            style={[
+              styles.input, 
+              { 
+                color: theme.colors.text,
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.border 
+              }
+            ]}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Enter your name"
+            placeholderTextColor={theme.colors.textSecondary}
+            autoFocus={true}
+          />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.colors.border }]}
-                onPress={() => setIsEditingName(false)}
-                disabled={isSavingName}
-              >
-                <Text style={[styles.modalButtonText, { color: theme.colors.text }]}>Cancel</Text>
-              </TouchableOpacity>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton, { borderColor: theme.colors.border }]}
+              onPress={() => setIsEditingName(false)}
+              disabled={isSavingName}
+            >
+              <Text style={[styles.modalButtonText, { color: theme.colors.text }]}>Cancel</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, { backgroundColor: theme.colors.navy }]}
-                onPress={handleUpdateName}
-                disabled={isSavingName}
-              >
-                {isSavingName ? (
-                  <BrandedLoader size={20} color="#FFFFFF" />
-                ) : (
-                  <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Save</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.saveButton, { backgroundColor: theme.colors.navy }]}
+              onPress={handleUpdateName}
+              disabled={isSavingName}
+            >
+              {isSavingName ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Save</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
+      </DraggableModal>
     </ScreenWrapper>
   );
 };
@@ -584,14 +584,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: {
-    borderRadius: 20,
+  modalInner: {
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingTop: 8,
   },
   modalTitle: {
     fontSize: 20,

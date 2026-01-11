@@ -85,35 +85,13 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
 
   const renderSectionHeader = (title: string) => (
     <View style={styles.sectionHeader}>
+      <View style={[styles.sectionTitleBar, { backgroundColor: theme.colors.primary }]} />
       <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{title}.</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header Section */}
-      <Animated.View 
-        style={styles.headerSection}
-        entering={FadeInDown.duration(600).delay(100)}
-      >
-        <Text style={[styles.serviceName, { color: theme.colors.text }]}>
-          {service.name}
-        </Text>
-
-        <View style={styles.statsRow}>
-          <View style={[styles.ratingBadge, { backgroundColor: '#FBBF2420' }]}>
-            <Ionicons name="star" size={moderateScale(14)} color="#F59E0B" />
-            <Text style={[styles.ratingText, { color: '#B45309' }]}>{service.rating || 'New'}</Text>
-          </View>
-          <View style={[styles.locationBadge, { backgroundColor: theme.colors.surface }]}>
-             <LocationIcon size={moderateScale(14)} color={theme.colors.textSecondary} />
-             <Text style={[styles.locationText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                {service.location}
-             </Text>
-          </View>
-        </View>
-      </Animated.View>
-
       {/* About Section */}
       <Animated.View 
         style={styles.section}
@@ -201,6 +179,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: verticalScale(20),
     paddingBottom: verticalScale(20),
   },
   headerSection: {
@@ -208,10 +187,11 @@ const styles = StyleSheet.create({
     paddingTop: verticalScale(10),
   },
   serviceName: {
-    fontSize: moderateScale(32),
-    fontWeight: '800',
-    marginBottom: verticalScale(12),
-    letterSpacing: -0.5,
+    fontSize: moderateScale(28),
+    fontWeight: '900',
+    marginBottom: verticalScale(6),
+    letterSpacing: -1,
+    lineHeight: moderateScale(36),
   },
   statsRow: {
     flexDirection: 'row',
@@ -255,15 +235,16 @@ const styles = StyleSheet.create({
     gap: scale(6),
   },
   sectionTitle: {
-    fontSize: moderateScale(20),
-    fontWeight: '700',
-    letterSpacing: -0.5,
+    fontSize: moderateScale(17),
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    textTransform: 'uppercase',
+    opacity: 0.9,
   },
-  sectionTitleDot: {
-    width: moderateScale(6),
-    height: moderateScale(6),
-    borderRadius: moderateScale(3),
-    marginTop: verticalScale(4),
+  sectionTitleBar: {
+    width: moderateScale(4),
+    height: moderateScale(16),
+    borderRadius: moderateScale(2),
   },
   infoCard: {
     padding: moderateScale(20),
@@ -288,27 +269,29 @@ const styles = StyleSheet.create({
   amenityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: moderateScale(12),
+    padding: moderateScale(10),
     borderRadius: moderateScale(16),
-    borderWidth: 1,
+    borderWidth: 1.5,
     gap: scale(10),
-    width: '48%', // Approx 2 items per row
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    width: '48%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.04,
+    shadowRadius: moderateScale(8),
+    elevation: 2,
   },
   amenityIconBox: {
-    width: moderateScale(36),
-    height: moderateScale(36),
-    borderRadius: moderateScale(12),
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: moderateScale(10),
     justifyContent: 'center',
     alignItems: 'center',
   },
   amenityText: {
-    fontSize: moderateScale(13),
-    fontWeight: '600',
+    fontSize: moderateScale(12),
+    fontWeight: '700',
     flex: 1,
+    letterSpacing: -0.1,
   },
   mapCard: {
     borderRadius: moderateScale(24),

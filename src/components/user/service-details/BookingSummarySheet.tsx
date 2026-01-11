@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform, Dimensions } from 'react-native';
-import BrandedLoader from '../../shared/BrandedLoader';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions, ActivityIndicator } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { EphemeralSlot } from '../../../types';
 import { format } from 'date-fns';
+import DraggableModal from '../../shared/DraggableModal';
 
 interface BookingSummarySheetProps {
   visible: boolean;
@@ -31,72 +32,69 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
   const { theme } = useTheme();
 
   return (
-    <Modal
+    <DraggableModal
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      onClose={onClose}
+      height="65%"
+      containerStyle={{ backgroundColor: theme.colors.background }}
     >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.dismissArea} onPress={onClose} activeOpacity={1} />
-        <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
-          <View style={styles.header}>
-            <View style={[styles.dragHandle, { backgroundColor: theme.colors.border }]} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>Summary.</Text>
+      <View style={styles.sheet}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Summary.</Text>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Main Info Card */}
+          <View style={[styles.summaryCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+            <View style={styles.summaryItem}>
+              <Ionicons name="business-outline" size={20} color={theme.colors.primary} />
+              <View style={styles.summaryText}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>VENUE</Text>
+                <Text style={[styles.value, { color: theme.colors.text }]}>{serviceName}</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.summaryItem}>
+              <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
+              <View style={styles.summaryText}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
+                <Text style={[styles.value, { color: theme.colors.text }]}>
+                  {format(date, 'MMMM dd, yyyy')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.summaryItem}>
+              <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
+              <View style={styles.summaryText}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>SLOTS</Text>
+                <View style={styles.slotsList}>
+                  {selectedSlots.map((slot, index) => (
+                    <Text key={index} style={[styles.value, { color: theme.colors.text }]}>
+                      {slot.startTime} - {slot.endTime}{index < selectedSlots.length - 1 ? ',' : ''}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            </View>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Main Info Card */}
-            <View style={[styles.summaryCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-              <View style={styles.summaryItem}>
-                <Ionicons name="business-outline" size={20} color={theme.colors.primary} />
-                <View style={styles.summaryText}>
-                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>VENUE</Text>
-                  <Text style={[styles.value, { color: theme.colors.text }]}>{serviceName}</Text>
-                </View>
-              </View>
+          {/* Price section */}
+          <View style={styles.priceContainer}>
+            <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Total Price</Text>
+            <Text style={[styles.priceValue, { color: theme.colors.text }]}>₹{totalPrice}</Text>
+          </View>
+        </ScrollView>
 
-              <View style={styles.divider} />
-
-              <View style={styles.summaryItem}>
-                <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} />
-                <View style={styles.summaryText}>
-                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>DATE</Text>
-                  <Text style={[styles.value, { color: theme.colors.text }]}>
-                    {format(date, 'MMMM dd, yyyy')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.summaryItem}>
-                <Ionicons name="time-outline" size={20} color={theme.colors.primary} />
-                <View style={styles.summaryText}>
-                  <Text style={[styles.label, { color: theme.colors.textSecondary }]}>SLOTS</Text>
-                  <View style={styles.slotsList}>
-                    {selectedSlots.map((slot, index) => (
-                      <Text key={index} style={[styles.value, { color: theme.colors.text }]}>
-                        {slot.startTime} - {slot.endTime}{index < selectedSlots.length - 1 ? ',' : ''}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Price section */}
-            <View style={styles.priceContainer}>
-              <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Total Price</Text>
-              <Text style={[styles.priceValue, { color: theme.colors.text }]}>₹{totalPrice}</Text>
-            </View>
-          </ScrollView>
-
-          <View style={[styles.footer, { paddingBottom: Math.max(24, Platform.OS === 'ios' ? 40 : 24) }]}>
-            <TouchableOpacity
-              onPress={onConfirm}
-              disabled={loading}
-              style={styles.confirmButtonWrapper}
+        <View style={[styles.footer, { paddingBottom: Math.max(24, Platform.OS === 'ios' ? 40 : 24) }]}>
+          <TouchableOpacity
+            onPress={onConfirm}
+            disabled={loading}
+            style={styles.confirmButtonWrapper}
             >
               <LinearGradient
                 colors={[theme.colors.primary, theme.colors.secondary || theme.colors.primary]}
@@ -105,43 +103,25 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
                 style={styles.confirmButton}
               >
                 {loading ? (
-                  <BrandedLoader size={24} color="#FFFFFF" />
+                  <ActivityIndicator size={24} color="#FFFFFF" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Confirm Booking</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
-          </View>
         </View>
       </View>
-    </Modal>
+    </DraggableModal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  dismissArea: {
-    flex: 1,
-  },
   sheet: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 12,
-    maxHeight: '80%',
+    flex: 1,
   },
   header: {
     alignItems: 'center',
     paddingBottom: 24,
-  },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 20,
   },
   title: {
     fontSize: 24,

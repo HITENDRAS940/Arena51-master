@@ -179,4 +179,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TimeSlotCard;
+export default React.memo(TimeSlotCard);

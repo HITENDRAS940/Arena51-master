@@ -32,7 +32,8 @@ const isBookingCancellable = (booking: UserBooking) => {
 const getStatusColor = (status: string, colors: any) => {
   switch (status.toUpperCase()) {
     case 'CONFIRMED': return colors.success || '#10B981';
-    case 'PENDING': return colors.warning || '#F59E0B';
+    case 'PENDING':
+    case 'PAYMENT_PENDING': return colors.warning || '#F59E0B';
     case 'CANCELLED': return colors.error || '#EF4444';
     case 'COMPLETED': return colors.primary;
     default: return colors.textSecondary;
@@ -66,6 +67,7 @@ const getStatusTheme = (status: string, theme: any) => {
         badgeBg: 'rgba(255,255,255,0.25)',
       };
     case 'PENDING':
+    case 'PAYMENT_PENDING':
       return {
         gradient: ['#F59E0B', '#D97706'],
         text: '#FFFFFF',
@@ -132,7 +134,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusTheme.badgeBg }]}>
             <Text style={[styles.statusText, { color: statusTheme.text }]}>
-              {booking.status}
+              {booking.status === 'PAYMENT_PENDING' ? 'PENDING' : booking.status}
             </Text>
           </View>
         </View>

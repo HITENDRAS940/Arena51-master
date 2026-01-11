@@ -12,8 +12,9 @@ import {
   Keyboard,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
 import { Alert } from 'react-native';
@@ -211,7 +212,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                   activeOpacity={0.8}
                 >
                   {loading ? (
-                    <BrandedLoader color="#FFFFFF" size={24} />
+                    <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     <View style={styles.buttonContent}>
                       <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Get Verification Code</Text>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Skeleton from '../../shared/Skeleton';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -14,10 +15,18 @@ const ServiceDetailSkeleton = () => {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Gallery Placeholder */}
-        <Skeleton height={400} width={screenWidth} borderRadius={0} />
+        <Skeleton height={280} width={screenWidth} borderRadius={0} />
 
         {/* Content Card Overlap */}
-        <View style={[styles.contentContainer, { backgroundColor: theme.colors.background }]}>
+        <View style={[
+          styles.contentContainer, 
+          { 
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: moderateScale(50),
+            borderTopRightRadius: moderateScale(50),
+            marginTop: -verticalScale(40),
+          }
+        ]}>
           {/* Header Section */}
           <View style={styles.headerSection}>
             <Skeleton width="70%" height={32} borderRadius={8} style={{ marginBottom: 12 }} />
@@ -94,9 +103,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    marginTop: -32,
     paddingTop: 40,
     paddingHorizontal: 24,
     zIndex: 10,

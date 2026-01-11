@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -145,6 +145,30 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     }
   }, [activityId]);
 
+  const renderServiceItem = useCallback(({ item, index }: { item: any; index: number }) => {
+    if (loading) {
+      return (
+        <View style={[styles.cardWrapper, { marginBottom: 16 }]}>
+          <ServiceSkeletonCard />
+        </View>
+      );
+    }
+    return (
+      <Reanimated.View 
+        entering={FadeInDown.delay(index * 100).duration(600).springify()}
+        style={styles.cardWrapper}
+      >
+        <ServiceCard
+          service={item}
+          onPress={() => navigation.navigate('ServiceDetail', { 
+            serviceId: item.id,
+            initialService: item 
+          })}
+        />
+      </Reanimated.View>
+    );
+  }, [loading, navigation]);
+
   const handleLoadMore = () => {
     if (!hasMore || loadingMore || loading || isFilterActive || !effectiveCity) return;
     fetchServices(effectiveCity, page + 1, true); 
@@ -195,7 +219,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     if (loadingMore) {
       return (
         <View style={styles.footerLoader}>
-          <BrandedLoader size={24} color={theme.colors.primary} />
+          <ActivityIndicator size="small" color={theme.colors.primary} />
         </View>
       );
     }
@@ -389,29 +413,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         
       <Animated.FlatList<any>
         data={loading ? [1, 2, 3, 4] : services}
-        renderItem={({ item, index }: { item: any; index: number }) => {
-          if (loading) {
-            return (
-              <View style={[styles.cardWrapper, { marginBottom: 16 }]}>
-                <ServiceSkeletonCard />
-              </View>
-            );
-          }
-          return (
-            <Reanimated.View 
-              entering={FadeInDown.delay(index * 100).duration(600).springify()}
-              style={styles.cardWrapper}
-            >
-              <ServiceCard
-                service={item}
-                onPress={() => navigation.navigate('ServiceDetail', { 
-                  serviceId: item.id,
-                  initialService: item 
-                })}
-              />
-            </Reanimated.View>
-          );
-        }}
+        renderItem={renderServiceItem}
         keyExtractor={(item: any, index: number) => 
           loading ? `skeleton-${index}` : item.id.toString()
         }
@@ -434,6 +436,10 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
           { useNativeDriver: true }
         )}
         scrollEventThrottle={16}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

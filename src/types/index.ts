@@ -206,7 +206,7 @@ export interface UserBookingResponse {
 
 export interface AmountBreakdown {
   slotSubtotal: number;
-  platformFeePercent?: number;
+  platformFeePercent: number;
   platformFee: number;
   totalAmount: number;
   currency: string;
@@ -216,22 +216,65 @@ export interface DynamicBookingRequest {
   slotKeys: string[];
   idempotencyKey: string;
   allowSplit?: boolean;
+  paymentMethod?: string;
+}
+
+export interface UPIDetails {
+  upiId: string;
+  merchantName: string;
+  amount: number;
+  currency: string;
+  transactionRef: string;
 }
 
 export interface DynamicBookingResponse {
-  id?: number;
-  reference?: string;
-  serviceId?: number;
-  serviceName?: string;
-  startTime?: string;
-  endTime?: string;
-  bookingDate?: string;
-  createdAt?: string;
-  status: 'SUCCESS' | 'FAILED' | 'PARTIAL_AVAILABLE';
-  bookingType?: 'SINGLE_RESOURCE' | 'MULTI_RESOURCE';
-  childBookings?: DynamicBookingResponse[];
-  message?: string;
-  amountBreakdown: AmountBreakdown | null;
+  id: number;
+  reference: string;
+  serviceId: number;
+  serviceName: string;
+  resourceId?: number;
+  resourceName?: string;
+  startTime: string;
+  endTime: string;
+  bookingDate: string;
+  createdAt: string;
+  amountBreakdown: AmountBreakdown;
+  upiDetails?: UPIDetails;
+  bookingType: string;
+  message: string;
+  childBookings: string[];
+  status: 'SUCCESS' | 'FAILED' | 'PARTIAL_AVAILABLE' | 'PAYMENT_PENDING' | 'EXPIRED' | string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  lockExpiresAt?: string; // Kept for frontend timer logic
+}
+
+export interface CancelBookingResponse {
+  id: number;
+  reference: string;
+  serviceId: number;
+  serviceName: string;
+  resourceId: number;
+  resourceName: string;
+  startTime: string;
+  endTime: string;
+  bookingDate: string;
+  createdAt: string;
+  amountBreakdown: AmountBreakdown;
+  bookingType: string;
+  message: string;
+  childBookings: string[];
+  status: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+  };
 }
 
 // New specialized interface for User Bookings
@@ -250,6 +293,9 @@ export interface UserBooking {
   createdAt: string;
   serviceId: number;
   reference?: string;
+  lockExpiresAt?: string;
+  upiId?: string;
+  merchantName?: string;
 }
 
 // Keep the general/admin Booking interface for now to avoid breaking other screens

@@ -2,17 +2,20 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  Modal,
   StyleSheet,
   TouchableOpacity,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BrandedLoader from '../shared/BrandedLoader';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import DraggableModal from '../shared/DraggableModal';
+
 import { useTheme } from '../../contexts/ThemeContext';
 import { serviceAPI } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import LocationIcon from '../shared/icons/LocationIcon';
 
 interface CitySelectionModalProps {
   visible: boolean;
@@ -77,10 +80,9 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
         onClose();
       }}
     >
-      <Ionicons 
-        name="location-sharp" 
-        size={20} 
-        color={currentCity === item ? theme.colors.navy : theme.colors.gray} 
+      <LocationIcon
+        size={moderateScale(18)}
+        color={currentCity === item ? theme.colors.navy : theme.colors.textSecondary}
       />
       <Text style={[
         styles.cityText, 
@@ -95,158 +97,152 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
   );
 
   return (
-    <Modal
+    <DraggableModal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onClose={onClose}
+      containerStyle={{ backgroundColor: theme.colors.background }}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Select City</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Find services in your area</Text>
-          </View>
-          <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <Ionicons name="close" size={20} color={theme.colors.text} />
-          </TouchableOpacity>
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Select City</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Find services in your area</Text>
         </View>
-
-        <View style={styles.content}>
-          {/* Search Bar */}
-          <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-            <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              placeholder="Search for your city..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-
-          {/* Use Current Location Card */}
-          <TouchableOpacity
-            style={[styles.currentLocationCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
-            onPress={() => {
-              onUseCurrentLocation();
-              onClose();
-            }}
-            activeOpacity={0.7}
-          >
-            <LinearGradient
-              colors={[theme.colors.navy, theme.colors.navy + 'DD']}
-              style={styles.locationIconGradient}
-            >
-              <Ionicons name="navigate" size={18} color="#FFFFFF" />
-            </LinearGradient>
-            <View style={styles.locationCardContent}>
-              <Text style={[styles.locationCardTitle, { color: theme.colors.text }]}>Current Location</Text>
-              <Text style={[styles.locationCardSubtitle, { color: theme.colors.textSecondary }]}>Using GPS for better accuracy</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.border} />
-          </TouchableOpacity>
-
-          <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>POPULAR CITIES</Text>
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <BrandedLoader size={32} color={theme.colors.primary} />
-            </View>
-          ) : (
-            <FlatList
-              data={filteredCities}
-              renderItem={renderCityItem}
-              keyExtractor={(item) => item}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                    No cities found
-                  </Text>
-                </View>
-              }
-            />
-          )}
-        </View>
+        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Ionicons name="close" size={20} color={theme.colors.text} />
+        </TouchableOpacity>
       </View>
-    </Modal>
+
+      <View style={styles.content}>
+        {/* Search Bar */}
+        <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search for your city..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Use Current Location Card */}
+        <TouchableOpacity
+          style={[styles.currentLocationCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          onPress={() => {
+            onUseCurrentLocation();
+            onClose();
+          }}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={[theme.colors.navy, theme.colors.navy + 'DD']}
+            style={styles.locationIconGradient}
+          >
+            <Ionicons name="navigate" size={18} color="#FFFFFF" />
+          </LinearGradient>
+          <View style={styles.locationCardContent}>
+            <Text style={[styles.locationCardTitle, { color: theme.colors.text }]}>Current Location</Text>
+            <Text style={[styles.locationCardSubtitle, { color: theme.colors.textSecondary }]}>Using GPS for better accuracy</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={theme.colors.border} />
+        </TouchableOpacity>
+
+        <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>POPULAR CITIES</Text>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredCities}
+            renderItem={renderCityItem}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+                  No cities found
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </View>
+    </DraggableModal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 24,
+    paddingHorizontal: scale(24),
+    paddingTop: verticalScale(10),
+    paddingBottom: verticalScale(24),
   },
   title: {
-    fontSize: 28,
+    fontSize: moderateScale(28),
     fontWeight: '800',
     letterSpacing: -1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 24,
-    gap: 12,
+    borderRadius: moderateScale(16),
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(14),
+    marginBottom: verticalScale(24),
+    gap: scale(12),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.03,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 2,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '500',
   },
   currentLocationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(20),
     borderWidth: 1,
-    marginBottom: 30,
-    gap: 16,
+    marginBottom: verticalScale(30),
+    gap: scale(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowRadius: moderateScale(12),
     elevation: 3,
   },
   locationIconGradient: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: scale(22),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -254,45 +250,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   locationCardTitle: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
   },
   locationCardSubtitle: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '500',
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    marginBottom: 16,
-    marginLeft: 4,
+    marginBottom: verticalScale(16),
+    marginLeft: scale(4),
   },
   listContent: {
-    paddingBottom: 40,
+    paddingBottom: verticalScale(40),
   },
   cityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    marginBottom: 10,
-    gap: 14,
+    paddingVertical: verticalScale(18),
+    paddingHorizontal: scale(16),
+    borderRadius: moderateScale(16),
+    marginBottom: verticalScale(10),
+    gap: scale(14),
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   cityText: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '700',
     flex: 1,
   },
   activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: scale(6),
+    height: scale(6),
+    borderRadius: scale(3),
   },
   loadingContainer: {
     flex: 1,
@@ -300,11 +296,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyContainer: {
-    padding: 40,
+    padding: moderateScale(40),
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '500',
   },
 });

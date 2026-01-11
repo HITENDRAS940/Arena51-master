@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import AuthNavigator from './AuthNavigator';
 import UserNavigator from './UserNavigator';
 
-import { View, StyleSheet } from 'react-native';
-import BrandedLoader from '../components/shared/BrandedLoader';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+
 import { useTheme } from '../contexts/ThemeContext';
 
 const Stack = createNativeStackNavigator();
@@ -17,7 +17,7 @@ const AppNavigator = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <BrandedLoader size={48} color={theme.colors.primary} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }

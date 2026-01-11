@@ -13,8 +13,10 @@ import {
   Linking,
   TouchableOpacity,
   Text,
+  ActivityIndicator,
+  AppState,
 } from 'react-native';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +32,7 @@ import ServiceInfo from '../../components/user/service-details/ServiceInfo';
 import ServiceBookingSection from '../../components/user/service-details/ServiceBookingSection';
 import ServiceDetailSkeleton from '../../components/user/service-details/ServiceDetailSkeleton';
 import BookingSummarySheet from '../../components/user/service-details/BookingSummarySheet';
+import UPIPaymentModal from '../../components/user/service-details/UPIPaymentModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateUUID } from '../../utils/helpers';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
@@ -73,9 +76,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stickyTitle: {
-    fontSize: moderateScale(18),
-    fontWeight: '700',
+    fontSize: moderateScale(16),
+    fontWeight: '800',
     maxWidth: '70%',
+    letterSpacing: -0.2,
   },
   contentContainer: {
     flex: 1,
@@ -85,10 +89,28 @@ const styles = StyleSheet.create({
     zIndex: 10,
     minHeight: verticalScale(600),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(-10) },
-    shadowOpacity: 0.1,
-    shadowRadius: moderateScale(20),
-    elevation: 25,
+    shadowOffset: { width: 0, height: verticalScale(-15) },
+    shadowOpacity: 0.12,
+    shadowRadius: moderateScale(25),
+    elevation: 30,
+    borderTopLeftRadius: moderateScale(50),
+    borderTopRightRadius: moderateScale(50),
+    overflow: 'hidden',
+  },
+  pullBarContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(8),
+    position: 'absolute',
+    top: 0,
+    zIndex: 100,
+  },
+  pullBar: {
+    width: scale(36),
+    height: verticalScale(4),
+    borderRadius: moderateScale(2),
+    opacity: 0.25,
   },
   footerContainer: {
     position: 'absolute',
@@ -166,6 +188,43 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  resumeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: scale(16),
+    borderRadius: moderateScale(16),
+    marginTop: verticalScale(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  resumeTitle: {
+    color: '#FFF',
+    fontSize: moderateScale(15),
+    fontWeight: '800',
+  },
+  resumeSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: moderateScale(12),
+    marginTop: 2,
+  },
+  resumeAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(10),
+  },
+  resumeActionText: {
+    color: '#FFF',
+    fontSize: moderateScale(12),
+    fontWeight: '700',
+    marginRight: 4,
+  },
 });
 
 const ServiceDetailScreen = ({ route, navigation }: any) => {
@@ -192,15 +251,21 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [resourcesLoading, setResourcesLoading] = useState(false);
   
+  // UPI Payment State
+  const [pendingBooking, setPendingBooking] = useState<any>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
   // Refs
   const scrollViewRef = React.useRef<any>(null);
   
-  // Animation values
-  const scrollY = React.useRef(new Animated.Value(0)).current;
-  const contentOpacity = React.useRef(new Animated.Value(1)).current;
-  
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+
+  // Animation values
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+  const entranceAnim = React.useRef(new Animated.Value(0)).current;
+  const bookingEntranceAnim = React.useRef(new Animated.Value(0)).current;
+  const footerCrossfadeAnim = React.useRef(new Animated.Value(0)).current; // 0 for detail, 1 for booking
 
   // Sticky Header Animations
   const headerOpacity = scrollY.interpolate({
@@ -215,9 +280,64 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     extrapolate: 'clamp',
   });
 
+  const galleryTranslate = scrollY.interpolate({
+    inputRange: [0, 280],
+    outputRange: [0, -140], // Parallax effect
+    extrapolate: 'clamp',
+  });
+
+  const galleryOpacity = scrollY.interpolate({
+    inputRange: [0, 200, 280],
+    outputRange: [1, 1, 0],
+    extrapolate: 'clamp',
+  });
+
   useEffect(() => {
     fetchServiceDetails();
+    checkPendingBooking();
+    
+    // Entrance Animation
+    Animated.timing(entranceAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
   }, []);
+
+  // Refresh status on App Foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        checkPendingBooking();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  const checkPendingBooking = async () => {
+    try {
+      const response = await bookingAPI.getLastBooking();
+      const booking = response.data;
+      
+      if (booking && booking.status === 'PAYMENT_PENDING') {
+        // Check if lock is still valid
+        const expires = new Date(booking.lockExpiresAt!).getTime();
+        const now = new Date().getTime();
+        
+        if (expires > now) {
+          setPendingBooking(booking);
+        } else {
+          setPendingBooking(null);
+        }
+      } else {
+        setPendingBooking(null);
+      }
+    } catch (error) {
+      // Error checking pending booking silently
+
+    }
+  };
 
   React.useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
@@ -234,6 +354,32 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     if (showBookingSection && service) {
       fetchAvailableSlots();
+      // Animate booking section entrance
+      Animated.timing(bookingEntranceAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+      
+      // Crossfade footer
+      Animated.timing(footerCrossfadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Animate out
+      Animated.timing(bookingEntranceAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      
+      Animated.timing(footerCrossfadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   }, [selectedDate, showBookingSection, service, selectedActivity]);
 
@@ -241,7 +387,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     const restored = route.params?.restoredBooking;
     if (restored && activities.length > 0) {
-      console.log('Restoring booking session...', restored);
+      // Restoring booking session silently
+
       
       // Restore activity
       if (restored.selectedActivityCode) {
@@ -451,7 +598,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       const bookingRequest: DynamicBookingRequest = {
         slotKeys: selectedSlotKeys,
         idempotencyKey: idempotencyKey!, // Safe assertion as checked before opening sheet
-        allowSplit
+        allowSplit,
+        paymentMethod: 'MANUAL_UPI',
       };
 
       try {
@@ -486,19 +634,13 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         }
 
         // Confirm booking directly and redirect
-        // Alert.alert(
-        //   'Booking Request Submitted',
-        //   'Your booking request has been submitted successfully and is awaiting manual confirmation.',
-        //   [
-        //     { 
-        //       text: 'View Bookings', 
-        //       onPress: () => {
-        //         navigation.popToTop();
-        //         navigation.navigate('MainTabs', { screen: 'Bookings' });
-        //       } 
-        //     }
-        //   ]
-        // );
+        if (bookingData.status === 'PAYMENT_PENDING') {
+          setBookingLoading(false);
+          setShowConfirmation(false);
+          setPendingBooking(bookingData);
+          setShowPaymentModal(true);
+          return;
+        }
         
         navigation.navigate('BookingSuccess');
 
@@ -591,56 +733,112 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         </View>
       </Animated.View>
       
+      {/* Refactored Gallery - Absolute positioned for native translateY */}
+      <Animated.View 
+        style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          zIndex: 1,
+          opacity: galleryOpacity,
+          transform: [{ translateY: galleryTranslate }]
+        }}
+      >
+        <ServiceImageGallery
+          serviceId={service.id}
+          images={service.images || []}
+          serviceName={service.name}
+          location={service.location}
+          rating={service.rating}
+          scrollY={scrollY}
+          onBackPress={() => navigation.goBack()}
+        />
+      </Animated.View>
+      
       <Animated.ScrollView 
         ref={scrollViewRef} 
         style={styles.scrollView}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: true }
         )}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <ServiceImageGallery
-          serviceId={service.id}
-          images={images}
-          serviceName={service.name}
-          scrollY={scrollY}
-          onBackPress={() => navigation.goBack()}
-        />
+        {/* Gallery Spacer */}
+        <View style={{ height: 280 }} />
         
         <Animated.View 
           style={[
             styles.contentContainer, 
             { 
               backgroundColor: theme.colors.background,
-              opacity: contentOpacity,
-              marginTop: -32,
-              borderTopLeftRadius: 40,
-              borderTopRightRadius: 40,
+              opacity: entranceAnim,
+              transform: [{
+                translateY: entranceAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [40, 0]
+                })
+              }],
+              marginTop: -verticalScale(20),
+              borderTopLeftRadius: moderateScale(50),
+              borderTopRightRadius: moderateScale(50),
             }
           ]}
         >
+          <View style={styles.pullBarContainer}>
+            <View style={[styles.pullBar, { backgroundColor: theme.colors.border }]} />
+          </View>
+
           <ServiceInfo 
             service={service}
           />
 
 
-          {showBookingSection && (
-            <ServiceBookingSection
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
-              availableSlots={availableSlots}
-              selectedSlotKeys={selectedSlotKeys}
-              onSlotToggle={toggleSlotSelection}
-              slotsLoading={slotsLoading}
-              onClose={() => setShowBookingSection(false)}
-              resources={activities as any} // Activities displayed in the same chip UI
-              selectedResource={selectedActivity as any}
-              onResourceSelect={handleActivitySelect as any}
-              resourcesLoading={resourcesLoading}
-            />
+          <Animated.View 
+            style={{
+              opacity: bookingEntranceAnim,
+              transform: [{
+                translateY: bookingEntranceAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0]
+                })
+              }]
+            }}
+          >
+            {showBookingSection && (
+              <ServiceBookingSection
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                availableSlots={availableSlots}
+                selectedSlotKeys={selectedSlotKeys}
+                onSlotToggle={toggleSlotSelection}
+                slotsLoading={slotsLoading}
+                onClose={() => setShowBookingSection(false)}
+                resources={activities as any} // Activities displayed in the same chip UI
+                selectedResource={selectedActivity as any}
+                onResourceSelect={handleActivitySelect as any}
+                resourcesLoading={resourcesLoading}
+              />
+            )}
+          </Animated.View>
+
+          {pendingBooking && (
+            <TouchableOpacity 
+              style={[styles.resumeBanner, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setShowPaymentModal(true)}
+            >
+              <View>
+                <Text style={styles.resumeTitle}>Payment Initiated.</Text>
+                <Text style={styles.resumeSubtitle}>Complete your booking to secure the slot.</Text>
+              </View>
+              <View style={styles.resumeAction}>
+                <Text style={styles.resumeActionText}>Complete</Text>
+                <Ionicons name="chevron-forward" size={16} color="#FFF" />
+              </View>
+            </TouchableOpacity>
           )}
 
           <BookingSummarySheet
@@ -653,66 +851,131 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
             totalPrice={selectedSlotPrice}
             loading={bookingLoading}
           />
+
+          {pendingBooking && (
+            <UPIPaymentModal
+              visible={showPaymentModal}
+              onClose={() => setShowPaymentModal(false)}
+              onConfimPayment={() => {
+                setShowPaymentModal(false);
+                Alert.alert('Payment Recorded', 'Your payment is being verified. You can check the status in My Bookings.');
+                checkPendingBooking();
+              }}
+              amount={pendingBooking.upiDetails?.amount || pendingBooking.amountBreakdown?.totalAmount}
+              upiId={pendingBooking.upiDetails?.upiId || 'merchant@upi'}
+              merchantName={pendingBooking.upiDetails?.merchantName || 'Arena 51'}
+              reference={pendingBooking.upiDetails?.transactionRef || pendingBooking.reference || 'BOOKING'}
+              lockExpiresAt={pendingBooking.lockExpiresAt}
+            />
+          )}
         </Animated.View>
       </Animated.ScrollView>
 
       {/* Floating Modern Footer */}
-      <View style={[styles.footerContainer, { paddingBottom: Math.max(20, insets.bottom + 10) }]}>
+      <Animated.View 
+        style={[
+          styles.footerContainer, 
+          { 
+            paddingBottom: Math.max(20, insets.bottom + 10),
+            transform: [{
+              translateY: entranceAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [100, 0]
+              })
+            }]
+          }
+        ]}
+      >
         <View style={[styles.footer, { 
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
         }]}>
-          {showBookingSection ? (
-            <View style={styles.bookingFooterContent}>
-              <View style={styles.selectionInfo}>
-                <Text style={[styles.totalAmount, { color: theme.colors.text }]}>₹{selectedSlotPrice}</Text>
-                <Text style={[styles.slotCount, { color: theme.colors.textSecondary }]}>
-                  {selectedSlotKeys.length > 0 ? `${selectedSlotKeys.length} slots selected` : 'No slot selected'}
-                </Text>
-              </View>
-              
-              <TouchableOpacity
-                style={[
-                   styles.primaryButton, 
-                   { backgroundColor: theme.colors.primary },
-                   selectedSlotKeys.length === 0 && { opacity: 0.5 }
-                ]}
-                onPress={handleConfirmBooking}
-                disabled={selectedSlotKeys.length === 0 || bookingLoading}
-                activeOpacity={0.8}
-              >
-                {bookingLoading ? (
-                  <BrandedLoader color="#FFFFFF" size={24} />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Confirm Booking</Text>
-                )}
-              </TouchableOpacity>
+          {/* Detail View Footer Content */}
+          <Animated.View 
+            style={[
+              styles.detailsFooterContent,
+              {
+                opacity: footerCrossfadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 0]
+                }),
+                transform: [{
+                  translateX: footerCrossfadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -20]
+                  })
+                }],
+                position: showBookingSection ? 'absolute' : 'relative',
+                width: '100%',
+                pointerEvents: showBookingSection ? 'none' : 'auto'
+              }
+            ]}
+          >
+            <View>
+              <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Starting from</Text>
+              <Text style={[styles.priceValue, { color: theme.colors.primary }]}>
+                {minPrice !== null ? `₹${minPrice}/hr` : 'Check Slots'}
+              </Text>
             </View>
-          ) : (
-            <View style={styles.detailsFooterContent}>
-              <View>
-                <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Starting from</Text>
-                <Text style={[styles.priceValue, { color: theme.colors.primary }]}>
-                  {minPrice !== null ? `₹${minPrice}/hr` : 'Check Slots'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={handleBookNow}
-                activeOpacity={0.8}
+            <TouchableOpacity
+              onPress={handleBookNow}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[theme.colors.primary, theme.colors.primary + 'DD']}
+                style={styles.primaryButton}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
-                <LinearGradient
-                  colors={[theme.colors.primary, theme.colors.primary + 'DD']}
-                  style={styles.primaryButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Text style={styles.primaryButtonText}>Explore Slots</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+                <Text style={styles.primaryButtonText}>Explore Slots</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Booking View Footer Content */}
+          <Animated.View 
+            style={[
+              styles.bookingFooterContent,
+              {
+                opacity: footerCrossfadeAnim,
+                transform: [{
+                  translateX: footerCrossfadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }],
+                position: !showBookingSection ? 'absolute' : 'relative',
+                width: '100%',
+                pointerEvents: !showBookingSection ? 'none' : 'auto'
+              }
+            ]}
+          >
+            <View style={styles.selectionInfo}>
+              <Text style={[styles.totalAmount, { color: theme.colors.text }]}>₹{selectedSlotPrice}</Text>
+              <Text style={[styles.slotCount, { color: theme.colors.textSecondary }]}>
+                {selectedSlotKeys.length > 0 ? `${selectedSlotKeys.length} slots selected` : 'No slot selected'}
+              </Text>
             </View>
-          )}
+            
+            <TouchableOpacity
+              style={[
+                  styles.primaryButton, 
+                  { backgroundColor: theme.colors.primary },
+                  selectedSlotKeys.length === 0 && { opacity: 0.5 }
+              ]}
+              onPress={handleConfirmBooking}
+              disabled={selectedSlotKeys.length === 0 || bookingLoading}
+              activeOpacity={0.8}
+            >
+              {bookingLoading ? (
+                <ActivityIndicator color="#FFFFFF" size={24} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Confirm Booking</Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
         </View>
-      </View>
+      </Animated.View>
 
     </ScreenWrapper>
   );

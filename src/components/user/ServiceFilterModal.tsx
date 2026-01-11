@@ -2,20 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Modal,
   StyleSheet,
   TouchableOpacity,
   FlatList,
   ScrollView,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import BrandedLoader from '../shared/BrandedLoader';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { serviceAPI } from '../../services/api';
 import { Activity } from '../../types';
+import DraggableModal from '../shared/DraggableModal';
 
 const { width } = Dimensions.get('window');
 
@@ -104,15 +105,12 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
 
   const handleSlotPress = (time: string) => {
     if (!rangeStart || (rangeStart && rangeEnd)) {
-      // Start a new selection
       setRangeStart(time);
       setRangeEnd(null);
     } else {
-      // We have rangeStart but no rangeEnd
       if (time > rangeStart) {
         setRangeEnd(time);
       } else {
-        // Tapped an earlier time, reset start
         setRangeStart(time);
       }
     }
@@ -160,7 +158,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
         ]}
         onPress={() => {
           setSelectedDate(item);
-          setRangeStart(null); // Reset range on date change
+          setRangeStart(null);
           setRangeEnd(null);
         }}
       >
@@ -175,228 +173,210 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
   };
 
   return (
-    <Modal
+    <DraggableModal
       visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
+      onClose={onClose}
+      height="85%"
+      containerStyle={{ backgroundColor: theme.colors.background }}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Filter Search</Text>
-              <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
-                {!rangeStart ? 'Select start time' : !rangeEnd ? `Select end time after ${rangeStart}` : 'Perfect! Your range is ready.'}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
+      <View style={styles.modalInner}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Filter Search</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+              {!rangeStart ? 'Select start time' : !rangeEnd ? `Select end time after ${rangeStart}` : 'Perfect! Your range is ready.'}
+            </Text>
           </View>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* Filter Mode Selection */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Search Mode</Text>
-              <View style={styles.filterModeContainer}>
-                <TouchableOpacity 
-                  onPress={() => setIsDistanceFilter(false)}
-                  style={[
-                    styles.modeButton, 
-                    !isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
-                  ]}
-                >
-                  <Ionicons name="time-outline" size={20} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
-                  <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setIsDistanceFilter(true);
-                    onApply({
-                      date: new Date().toISOString().split('T')[0],
-                      startTime: '00:00',
-                      endTime: '23:59',
-                      city: initialCity,
-                      activityCode: activityCode,
-                      maxDistanceKm: 50,
-                    });
-                    onClose();
-                  }}
-                  style={[
-                    styles.modeButton, 
-                    isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
-                  ]}
-                >
-                  <Ionicons name="location-outline" size={20} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
-                  <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Distance</Text>
-                </TouchableOpacity>
-              </View>
-              {isDistanceFilter && (
-                <Text style={[styles.distanceHint, { color: theme.colors.textSecondary }]}>
-                  Showing venues within 50km of your location.
-                </Text>
-              )}
-            </View>
-
-            {/* Content based on Mode */}
-            {!isDistanceFilter ? (
-              <>
-                {!activityCode && (
-                  <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Select Activity</Text>
-                {loadingActivities ? (
-                  <BrandedLoader size={24} color={theme.colors.primary} />
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.activityList}>
-                    {activities.map((activity) => {
-                      // Use activity.code for logic, but ensure it's unique. 
-                      // Fallback to name if code is missing to avoid 'all-selected' bug
-                      const selectionKey = activity.code || activity.name;
-                      const isSelected = selectedActivity === selectionKey;
-                      
-                      return (
-                        <TouchableOpacity
-                          key={activity.id}
-                          onPress={() => setSelectedActivity(isSelected ? null : selectionKey)}
-                          style={[
-                            styles.activityBadge,
-                            { 
-                              backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
-                              borderColor: isSelected ? theme.colors.primary : theme.colors.border
-                            }
-                          ]}
-                        >
-                          <Text style={[
-                            styles.activityText,
-                            { color: isSelected ? '#FFF' : theme.colors.text }
-                          ]}>
-                            {activity.name}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                )}
-              </View>
-            )}
-            {/* Date Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick a Day</Text>
-              <FlatList
-                data={dates}
-                renderItem={renderDateItem}
-                keyExtractor={(item) => item.toISOString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.dateList}
-              />
-            </View>
-
-            {/* Time Section */}
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick Range</Text>
-              <View style={styles.slotsGrid}>
-                {DEFAULT_SLOTS.map((slot) => {
-                  const isStart = rangeStart === slot.value;
-                  const isEnd = rangeEnd === slot.value;
-                  const inRange = isSlotInRange(slot.value);
-                  const isDisabled = isSlotInPast(slot.value);
-
-                  return (
-                    <TouchableOpacity
-                      key={slot.value}
-                      style={[
-                        styles.slotItem,
-                        {
-                          backgroundColor: (isStart || isEnd)
-                            ? theme.colors.primary
-                            : inRange
-                              ? theme.colors.primary + '20'
-                              : isDisabled
-                                ? theme.colors.background
-                                : theme.colors.surface,
-                          borderColor: (isStart || isEnd) ? theme.colors.primary : theme.colors.border,
-                        },
-                        isDisabled && { opacity: 0.3 }
-                      ]}
-                      onPress={() => !isDisabled && handleSlotPress(slot.value)}
-                      disabled={isDisabled}
-                    >
-                      <Text style={[
-                        styles.slotText,
-                        { 
-                          color: (isStart || isEnd) 
-                            ? '#FFF' 
-                            : inRange
-                              ? theme.colors.primary
-                              : isDisabled 
-                                ? theme.colors.textSecondary 
-                                : theme.colors.text 
-                        }
-                      ]}>
-                        {slot.label}
-                      </Text>
-                      {(isStart || isEnd) && (
-                        <View style={styles.slotIndicator}>
-                          <Text style={styles.slotIndicatorText}>{isStart ? 'START' : 'END'}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-            </>
-            ) : (
-                <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Selected Range</Text>
-                  <View style={[styles.infoBanner, { backgroundColor: theme.colors.primary + '10' }]}>
-                    <Ionicons name="navigate-circle" size={24} color={theme.colors.primary} />
-                    <Text style={[styles.infoBannerText, { color: theme.colors.text }]}>
-                      We'll find the best venues within <Text style={{fontWeight: '800'}}>50km</Text> in {initialCity}.
-                    </Text>
-                  </View>
-                </View>
-            )}
-          </ScrollView>
-
-          {/* Footer */}
-          <View style={[styles.footer, { borderTopColor: theme.colors.border + '20' }]}>
-            <TouchableOpacity
-              style={[styles.applyButton, { opacity: (isDistanceFilter || (rangeStart && rangeEnd)) ? 1 : 0.6 }]}
-              onPress={handleApply}
-              disabled={!isDistanceFilter && !(rangeStart && rangeEnd)}
-            >
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.primary + 'EE']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.applyGradient}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Search Mode</Text>
+            <View style={styles.filterModeContainer}>
+              <TouchableOpacity 
+                onPress={() => setIsDistanceFilter(false)}
+                style={[
+                  styles.modeButton, 
+                  !isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                ]}
               >
-                <Text style={styles.applyButtonText}>Show Venues</Text>
-                <Ionicons name="search" size={20} color="#FFF" />
-              </LinearGradient>
-            </TouchableOpacity>
+                <Ionicons name="time-outline" size={20} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => {
+                  setIsDistanceFilter(true);
+                  onApply({
+                    date: new Date().toISOString().split('T')[0],
+                    startTime: '00:00',
+                    endTime: '23:59',
+                    city: initialCity,
+                    activityCode: activityCode,
+                    maxDistanceKm: 50,
+                  });
+                  onClose();
+                }}
+                style={[
+                  styles.modeButton, 
+                  isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                ]}
+              >
+                <Ionicons name="location-outline" size={20} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Distance</Text>
+              </TouchableOpacity>
+            </View>
+            {isDistanceFilter && (
+              <Text style={[styles.distanceHint, { color: theme.colors.textSecondary }]}>
+                Showing venues within 50km of your location.
+              </Text>
+            )}
           </View>
+
+          {!isDistanceFilter ? (
+            <>
+              {!activityCode && (
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Select Activity</Text>
+                  {loadingActivities ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                  ) : (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.activityList}>
+                      {activities.map((activity) => {
+                        const selectionKey = activity.code || activity.name;
+                        const isSelected = selectedActivity === selectionKey;
+                        
+                        return (
+                          <TouchableOpacity
+                            key={activity.id}
+                            onPress={() => setSelectedActivity(isSelected ? null : selectionKey)}
+                            style={[
+                              styles.activityBadge,
+                              { 
+                                backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
+                                borderColor: isSelected ? theme.colors.primary : theme.colors.border
+                              }
+                            ]}
+                          >
+                            <Text style={[
+                              styles.activityText,
+                              { color: isSelected ? '#FFF' : theme.colors.text }
+                            ]}>
+                              {activity.name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              )}
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick a Day</Text>
+                <FlatList
+                  data={dates}
+                  renderItem={renderDateItem}
+                  keyExtractor={(item) => item.toISOString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.dateList}
+                />
+              </View>
+
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick Range</Text>
+                <View style={styles.slotsGrid}>
+                  {DEFAULT_SLOTS.map((slot) => {
+                    const isStart = rangeStart === slot.value;
+                    const isEnd = rangeEnd === slot.value;
+                    const inRange = isSlotInRange(slot.value);
+                    const isDisabled = isSlotInPast(slot.value);
+
+                    return (
+                      <TouchableOpacity
+                        key={slot.value}
+                        style={[
+                          styles.slotItem,
+                          {
+                            backgroundColor: (isStart || isEnd)
+                              ? theme.colors.primary
+                              : inRange
+                                ? theme.colors.primary + '20'
+                                : isDisabled
+                                  ? theme.colors.background
+                                  : theme.colors.surface,
+                            borderColor: (isStart || isEnd) ? theme.colors.primary : theme.colors.border,
+                          },
+                          isDisabled && { opacity: 0.3 }
+                        ]}
+                        onPress={() => !isDisabled && handleSlotPress(slot.value)}
+                        disabled={isDisabled}
+                      >
+                        <Text style={[
+                          styles.slotText,
+                          { 
+                            color: (isStart || isEnd) 
+                              ? '#FFF' 
+                              : inRange
+                                ? theme.colors.primary
+                                : isDisabled 
+                                  ? theme.colors.textSecondary 
+                                  : theme.colors.text 
+                          }
+                        ]}>
+                          {slot.label}
+                        </Text>
+                        {(isStart || isEnd) && (
+                          <View style={styles.slotIndicator}>
+                            <Text style={styles.slotIndicatorText}>{isStart ? 'START' : 'END'}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </>
+          ) : (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Selected Range</Text>
+              <View style={[styles.infoBanner, { backgroundColor: theme.colors.primary + '10' }]}>
+                <Ionicons name="navigate-circle" size={24} color={theme.colors.primary} />
+                <Text style={[styles.infoBannerText, { color: theme.colors.text }]}>
+                  We'll find the best venues within <Text style={{fontWeight: '800'}}>50km</Text> in {initialCity}.
+                </Text>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={[styles.footer, { borderTopColor: theme.colors.border + '20' }]}>
+          <TouchableOpacity
+            style={[styles.applyButton, { opacity: (isDistanceFilter || (rangeStart && rangeEnd)) ? 1 : 0.6 }]}
+            onPress={handleApply}
+            disabled={!isDistanceFilter && !(rangeStart && rangeEnd)}
+          >
+            <LinearGradient
+              colors={[theme.colors.primary, theme.colors.primary + 'EE']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.applyGradient}
+            >
+              <Text style={styles.applyButtonText}>Show Venues</Text>
+              <Ionicons name="search" size={20} color="#FFF" />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </DraggableModal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modalInner: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    height: '75%',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 8,
   },
   header: {
     flexDirection: 'row',

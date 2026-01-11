@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import TimeSlotCard from '../../user/TimeSlotCard';
 import { SkeletonList, TimeSlotSkeleton } from '../../shared/Skeletons';
 import { ActivityIcons } from '../../shared/icons/activities';
-import { moderateScale } from 'react-native-size-matters';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 interface ServiceBookingSectionProps {
   selectedDate: Date;
@@ -46,6 +46,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
 
   const renderHeader = (title: string) => (
     <View style={styles.sectionHeader}>
+      <View style={[styles.sectionTitleBar, { backgroundColor: theme.colors.primary }]} />
       <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{title}.</Text>
     </View>
   );
@@ -250,9 +251,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: moderateScale(17),
     fontWeight: '800',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
+    textTransform: 'uppercase',
+    opacity: 0.9,
+  },
+  sectionTitleBar: {
+    width: moderateScale(4),
+    height: moderateScale(16),
+    borderRadius: moderateScale(2),
   },
   bookingHeaderRow: {
     flexDirection: 'row',
@@ -299,9 +307,10 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   dateChipNumber: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     zIndex: 2,
+    letterSpacing: -0.5,
   },
   dateIconContainer: {
     position: 'absolute',
@@ -355,16 +364,17 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   resourceChip: {
-    width: (Dimensions.get('window').width - 58) / 3,
-    height: 110,
-    borderRadius: 24,
+    flex: 1,
+    minWidth: '30%',
+    height: verticalScale(100),
+    borderRadius: moderateScale(20),
     borderWidth: 1.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.04,
+    shadowRadius: moderateScale(8),
     elevation: 2,
-    padding: 4,
+    padding: 2,
     overflow: 'hidden',
   },
   chipContent: {
@@ -382,10 +392,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   resourceChipText: {
-    fontSize: 13,
+    fontSize: moderateScale(11),
     fontWeight: '800',
     letterSpacing: -0.2,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   selectedShadow: {
     shadowColor: '#1E1B4B',
@@ -406,4 +417,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ServiceBookingSection;
+export default React.memo(ServiceBookingSection);

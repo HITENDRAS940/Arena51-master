@@ -12,7 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -145,7 +145,7 @@ const WalletScreen = () => {
         
         {loading ? (
           <View style={styles.loaderContainer}>
-            <BrandedLoader size={48} color={theme.colors.primary} />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
         ) : (
           <FlatList

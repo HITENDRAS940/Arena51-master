@@ -125,6 +125,7 @@ export const bookingAPI = {
   getUserBookings: () => api.get<UserBooking[]>('/user/bookings'),
   getLastBooking: () => api.get<UserBooking>('/user/bookings/last'),
   cancelBooking: (id: number) => Promise.resolve({ data: {} }),
+  cancelBookingByReference: (reference: string) => api.post(`/api/slots/cancel/${reference}`),
 };
 
 // Wallet APIs

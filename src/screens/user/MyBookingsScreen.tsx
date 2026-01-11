@@ -8,10 +8,9 @@ import {
   RefreshControl,
   Alert,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingAPI } from '../../services/api';
 import { UserBooking } from '../../types';

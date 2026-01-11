@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
-import BrandedLoader from '../shared/BrandedLoader';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image, ActivityIndicator } from 'react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Service } from '../../types';
@@ -121,7 +121,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               />
               {imageLoading[index] && (
                 <View style={styles.loadingOverlay}>
-                  <BrandedLoader size={20} color={theme.colors.primary} />
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
                 </View>
               )}
               <LinearGradient
@@ -380,4 +380,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ServiceCard;
+export default React.memo(ServiceCard);

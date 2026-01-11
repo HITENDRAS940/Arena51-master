@@ -24,7 +24,8 @@ module.exports = {
           "paytmmp",
           "bhim",
           "amazonpay",
-          "credpay"
+          "credpay",
+          "upi"
         ],
         ITSAppUsesNonExemptEncryption: false
       }

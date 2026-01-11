@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+
 import { Booking } from '../../types';
 import { serviceAPI, bookingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -175,7 +175,7 @@ const HomeScreen = ({ navigation }: any) => {
       });
   };
 
-  const renderActivityItem = ({ item }: { item: Activity }) => {
+  const renderActivityItem = useCallback(({ item }: { item: Activity }) => {
       const themeConfig = ACTIVITY_THEMES[item.name] || DEFAULT_THEME;
       
       return (
@@ -215,14 +215,14 @@ const HomeScreen = ({ navigation }: any) => {
             </LinearGradient>
         </TouchableOpacity>
       );
-  };
+  }, [handleActivityPress, theme]);
 
-  const renderOfferItem = ({ item }: { item: typeof OFFERS[0] }) => {
+  const renderOfferItem = useCallback(({ item }: { item: typeof OFFERS[0] }) => {
     return (
       <TouchableOpacity
         style={styles.offerCard}
         activeOpacity={0.9}
-        onPress={() => console.log('Offer Copied', item.code)}
+        onPress={() => {}}
       >
         <LinearGradient
           colors={item.colors as any}
@@ -248,7 +248,7 @@ const HomeScreen = ({ navigation }: any) => {
         </LinearGradient>
       </TouchableOpacity>
     );
-  };
+  }, []);
   const renderMainHeader = () => (
     <Animated.View style={[
       styles.headerContainer, 
@@ -378,6 +378,10 @@ const HomeScreen = ({ navigation }: any) => {
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={styles.activityListContent}
+                initialNumToRender={5}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews={true}
               />
             )}
         </View>
@@ -504,6 +508,10 @@ const HomeScreen = ({ navigation }: any) => {
             contentContainerStyle={styles.offerListContent}
             snapToInterval={280 + 16}
             decelerationRate="fast"
+            initialNumToRender={3}
+            maxToRenderPerBatch={3}
+            windowSize={3}
+            removeClippedSubviews={true}
           />
         </View>
         </Animated.ScrollView>
@@ -538,14 +546,14 @@ const styles = StyleSheet.create({
   },
   headerTitleMain: {
       fontSize: moderateScale(34),
-      fontWeight: '800',
+      fontWeight: 'condensedBold',
       fontFamily: theme.fonts.bold,
       lineHeight: moderateScale(40),
       letterSpacing: -1,
   },
   headerTitleSub: {
     fontSize: moderateScale(34),
-    fontWeight: '800', 
+    fontWeight: 'condensedBold', 
     fontFamily: theme.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
