@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   StatusBar,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import BrandedLoader from '../../components/shared/BrandedLoader';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { walletAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
 import { WalletTransaction } from '../../types';
 import { format } from 'date-fns';
 
@@ -24,12 +27,15 @@ const { width } = Dimensions.get('window');
 
 const WalletScreen = () => {
   const { theme } = useTheme();
+  const { user, setRedirectData } = useAuth();
   const navigation = useNavigation<any>();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const scrollY = new Animated.Value(0);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  // fetchData defined below
 
   const fetchData = async () => {
     try {
@@ -48,13 +54,32 @@ const WalletScreen = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const onRefresh = () => {
+    if (!user) return;
     setRefreshing(true);
     fetchData();
   };
+
+  if (!user) {
+    return (
+      <AuthPlaceholder
+        titleMain="Your wallet."
+        titleSub="Your money."
+        description="Login to view your balance, transaction history, and manage your payments."
+        onLoginPress={() => {
+          setRedirectData({ name: 'Wallet' });
+          navigation.navigate('Auth', { screen: 'PhoneEntry' });
+        }}
+      />
+    );
+  }
 
   const renderTransactionItem = ({ item }: { item: WalletTransaction }) => {
     const isCredit = item.type === 'CREDIT' || item.type === 'REFUND';
@@ -114,7 +139,9 @@ const WalletScreen = () => {
       </Animated.View>
 
       <View style={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Transactions.</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 0 }]}>Transactions.</Text>
+        </View>
         
         {loading ? (
           <View style={styles.loaderContainer}>
@@ -127,8 +154,19 @@ const WalletScreen = () => {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: false } // height interpolation requires false for non-native transforms usually, but layout is fine. 
+                                         // Actually headerHeight uses scrollY, so we should try to keep it native if possible.
+                                         // But height cannot be animated with native driver.
+            )}
+            scrollEventThrottle={16}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+                progressViewOffset={250}
+              />
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>

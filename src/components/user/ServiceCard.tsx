@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
 import BrandedLoader from '../shared/BrandedLoader';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Service } from '../../types';
@@ -35,6 +34,11 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   const [distanceLoading, setDistanceLoading] = useState(false);
 
   React.useEffect(() => {
+    if (service.distance) {
+      setDistanceInfo({ formattedDistance: typeof service.distance === 'number' ? `${service.distance.toFixed(1)} km` : `${service.distance}` });
+      return;
+    }
+
     const fetchDistance = async () => {
       if (location?.latitude && location?.longitude && service.id) {
         setDistanceLoading(true);
@@ -56,7 +60,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     };
     
     fetchDistance();
-  }, [location?.latitude, location?.longitude, service.id]);
+  }, [location?.latitude, location?.longitude, service.id, service.distance]);
   
   // Get images array, fallback to single image if images array is empty/undefined
   const images = service.images && service.images.length > 0 ? service.images : [service.image];
@@ -85,14 +89,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       <View style={styles.imageContainer}>
       {!hasMultipleImages ? (
         <View style={styles.imageWrapper}>
-          <Animated.Image 
+          <Image 
             source={{ uri: images[0] }} 
             style={styles.image}
             resizeMode="cover"
             onLoadStart={() => handleImageLoadStart(0)}
             onLoadEnd={() => handleImageLoadEnd(0)}
-            // @ts-ignore
-            sharedTransitionTag={`img-${service.id}`}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -110,14 +112,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         >
           {images.map((imageUrl, index) => (
             <View key={index} style={styles.imageWrapper}>
-              <Animated.Image 
+              <Image 
                 source={{ uri: imageUrl }} 
                 style={styles.image}
                 resizeMode="cover"
                 onLoadStart={() => handleImageLoadStart(index)}
                 onLoadEnd={() => handleImageLoadEnd(index)}
-                // @ts-ignore
-                sharedTransitionTag={index === 0 ? `img-${service.id}` : undefined}
               />
               {imageLoading[index] && (
                 <View style={styles.loadingOverlay}>
@@ -134,19 +134,16 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       )}
         
         {/* Content Overlay */}
-        <Animated.View 
+        <View 
           style={styles.contentOverlay}
-          entering={FadeInDown.duration(600).delay(200)}
         >
           <View style={styles.header}>
-            <Animated.Text 
+            <Text 
               style={styles.name} 
               numberOfLines={1}
-              // @ts-ignore
-              sharedTransitionTag={`name-${service.id}`}
             >
               {service.name}
-            </Animated.Text>
+            </Text>
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={moderateScale(14)} color="#F59E0B" />
               <Text style={styles.ratingText}>{service.rating || 'New'}</Text>
@@ -155,16 +152,14 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
  
           <View style={styles.locationRow}>
             <LocationIcon size={moderateScale(14)} color="#E2E8F0" />
-            <Animated.Text 
+            <Text 
               style={styles.location} 
               numberOfLines={1}
-              // @ts-ignore
-              sharedTransitionTag={`loc-${service.id}`}
             >
               {service.location}
-            </Animated.Text>
+            </Text>
           </View>
-        </Animated.View>
+        </View>
  
         {hasMultipleImages && (
           <View style={styles.imageCounter}>

@@ -24,9 +24,8 @@ const AppNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        <Stack.Screen name="User" component={UserNavigator} />
-      ) : (
+      <Stack.Screen name="User" component={UserNavigator} />
+      {!isAuthenticated && (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       )}
     </Stack.Navigator>

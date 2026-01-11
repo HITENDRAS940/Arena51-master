@@ -29,7 +29,7 @@ import { useIsFocused } from '@react-navigation/native';
 import ProfileIcon from '../../components/shared/icons/ProfileIcon';
 
 const ProfileScreen = ({ navigation }: any) => {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, setRedirectData } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [isEditingName, setIsEditingName] = useState(false);
@@ -250,10 +250,20 @@ const ProfileScreen = ({ navigation }: any) => {
         titleMain="Your profile."
         titleSub="Your identity."
         description="Login to manage your account, track your wallet balance, and customize your experience."
-        onLoginPress={() => navigation.navigate('Auth', { 
-          screen: 'PhoneEntry', 
-          params: { redirectTo: { name: 'User', params: { screen: 'Profile' } } } 
-        })}
+        onLoginPress={() => {
+          navigation.navigate('Auth', { 
+            screen: 'PhoneEntry', 
+            params: { 
+              redirectTo: { 
+                name: 'User', 
+                params: { 
+                  screen: 'MainTabs',
+                  params: { screen: 'Profile' } 
+                } 
+              } 
+            } 
+          });
+        }}
       />
     );
   }

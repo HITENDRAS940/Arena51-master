@@ -15,10 +15,15 @@ import {
   Inter_700Bold 
 } from '@expo-google-fonts/inter';
 
+import AnimatedSplashScreen from './src/components/shared/AnimatedSplashScreen';
+
 // Keep the splash screen visible while we fetch resources
 preventAutoHideAsync();
 
 const AppContent = () => {
+  const [showSplash, setShowSplash] = React.useState(true);
+  const [appIsReady, setAppIsReady] = React.useState(false);
+  
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
@@ -26,21 +31,37 @@ const AppContent = () => {
     'Inter-Bold': Inter_700Bold,
   });
 
-  const onLayoutRootView = React.useCallback(async () => {
+  React.useEffect(() => {
     if (fontsLoaded || fontError) {
-      await hideAsync();
+      setAppIsReady(true);
     }
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) {
+  const onSplashFinished = React.useCallback(async () => {
+    setShowSplash(false);
+  }, []);
+
+  const onLayoutRootView = React.useCallback(async () => {
+    if (appIsReady) {
+      // This tells the native splash screen to hide immediately
+      // The AnimatedSplashScreen is already rendered underneath
+      await hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
     return null;
   }
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      {showSplash ? (
+        <AnimatedSplashScreen onAnimationComplete={onSplashFinished} />
+      ) : (
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      )}
     </View>
   );
 };

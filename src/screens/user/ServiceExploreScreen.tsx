@@ -8,6 +8,7 @@ import {
   Animated,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
 import BrandedLoader from '../../components/shared/BrandedLoader';
@@ -163,10 +164,11 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
               minDistanceKm: 0,
               city: activeFilterParams.city
             });
+            // Map the specific response format [ { id, name, location, availability, images: [] } ]
             const mappedServices = (response.data as any[]).map(s => ({
               ...s,
-              image: s.image || (s.images && s.images[0]) || '',
-              rating: s.rating || 0
+              image: s.images && s.images.length > 0 ? s.images[0] : (s.image || ''),
+              rating: s.rating || 0 // Explicitly fallback if not in response
             }));
             setServices(mappedServices);
           } else {
@@ -227,7 +229,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     try {
       let response;
       if (params.maxDistanceKm !== undefined && location) {
-        // Distance based filtering
+        // Distance based filtering - New POST flow
         response = await api.location.filterServicesByDistance({
           userLatitude: location.latitude,
           userLongitude: location.longitude,
@@ -235,9 +237,11 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
           minDistanceKm: 0,
           city: params.city
         });
+        
+        // Map response: [ { id, name, location, availability, images: [] } ]
         const mappedServices = (response.data as any[]).map(s => ({
           ...s,
-          image: s.image || (s.images && s.images[0]) || '',
+          image: s.images && s.images.length > 0 ? s.images[0] : (s.image || ''),
           rating: s.rating || 0
         }));
         setServices(mappedServices);
@@ -265,8 +269,24 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
+  const mainHeaderTranslateY = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0, -150],
+    extrapolate: 'clamp',
+  });
+
+  const renderMainHeader = () => (
+    <Animated.View style={[
+      styles.headerContainer,
+      { 
+        position: 'absolute',
+        top: insets.top + 20,
+        left: 0,
+        right: 0,
+        zIndex: 5,
+        transform: [{ translateY: mainHeaderTranslateY }]
+      }
+    ]}>
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeftSection}>
           {navigation.canGoBack() && (
@@ -290,12 +310,12 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         <View style={styles.headerRightActionsGroup}>
           <View style={styles.headerActionButtons}>
             <TouchableOpacity onPress={() => setShowSearchModal(true)} style={styles.headerActionIconGroup}>
-              <Ionicons name="search" size={24} color={theme.colors.text} />
+              <Ionicons name="search" size={30} color={theme.colors.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.headerActionIconGroup}>
               <Ionicons 
                 name={isFilterActive ? "funnel" : "funnel-outline"} 
-                size={24} 
+                size={30} 
                 color={isFilterActive ? theme.colors.warning : theme.colors.text} 
               />
             </TouchableOpacity>
@@ -303,7 +323,6 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         </View>
       </View>
       
-      {/* Active Filter Badge - Below everything if active */}
       {isFilterActive && (
         <View style={styles.activeFilterBadgeContainer}>
           <View style={[styles.filterBadge, { backgroundColor: theme.colors.warning + '15', borderColor: theme.colors.warning + '40' }]}>
@@ -321,7 +340,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
           </View>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -366,6 +385,8 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         </View>
       </Animated.View>
         
+      {renderMainHeader()}
+        
       <Animated.FlatList<any>
         data={loading ? [1, 2, 3, 4] : services}
         renderItem={({ item, index }: { item: any; index: number }) => {
@@ -394,7 +415,11 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         keyExtractor={(item: any, index: number) => 
           loading ? `skeleton-${index}` : item.id.toString()
         }
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <View style={{ 
+            height: isFilterActive ? 150 : 110,
+          }} />
+        }
         contentContainerStyle={[
           styles.list, 
           { paddingTop: insets.top + 20 },
@@ -413,8 +438,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            progressViewOffset={insets.top + 40}
+            progressViewOffset={insets.top + (isFilterActive ? 150 : 110) + 20}
           />
         }
         ListEmptyComponent={

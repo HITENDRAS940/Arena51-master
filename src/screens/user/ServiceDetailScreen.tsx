@@ -34,9 +34,143 @@ import { useAuth } from '../../contexts/AuthContext';
 import { generateUUID } from '../../utils/helpers';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 0,
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    borderBottomWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.05,
+    shadowRadius: moderateScale(10),
+    elevation: 5,
+  },
+  stickyHeaderContent: {
+    height: verticalScale(56),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: scale(20),
+  },
+  stickyBackButton: {
+    position: 'absolute',
+    left: scale(10),
+    width: moderateScale(40),
+    height: moderateScale(40),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stickyTitle: {
+    fontSize: moderateScale(18),
+    fontWeight: '700',
+    maxWidth: '70%',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingTop: verticalScale(40),
+    paddingHorizontal: scale(24),
+    paddingBottom: verticalScale(140),
+    zIndex: 10,
+    minHeight: verticalScale(600),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(-10) },
+    shadowOpacity: 0.1,
+    shadowRadius: moderateScale(20),
+    elevation: 25,
+  },
+  footerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(10),
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(24),
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(8) },
+    shadowOpacity: 0.15,
+    shadowRadius: moderateScale(20),
+    elevation: 10,
+  },
+  detailsFooterContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bookingFooterContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectionInfo: {
+    flex: 1,
+    marginRight: scale(8),
+  },
+  priceLabel: {
+    fontSize: moderateScale(12),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: verticalScale(2),
+  },
+  priceValue: {
+    fontSize: moderateScale(22),
+    fontWeight: '800',
+  },
+  totalAmount: {
+    fontSize: moderateScale(24),
+    fontWeight: '800',
+  },
+  slotCount: {
+    fontSize: moderateScale(13),
+    fontWeight: '500',
+    marginTop: verticalScale(2),
+  },
+  primaryButton: {
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(16),
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: scale(130),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(4) },
+    shadowOpacity: 0.2,
+    shadowRadius: moderateScale(8),
+    elevation: 5,
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: moderateScale(17),
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+});
+
 const ServiceDetailScreen = ({ route, navigation }: any) => {
   const { serviceId } = route.params;
-  const { user } = useAuth();
+  const { user, setRedirectData } = useAuth();
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [minPrice, setMinPrice] = useState<number | null>(null);
@@ -103,6 +237,40 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     }
   }, [selectedDate, showBookingSection, service, selectedActivity]);
 
+  // Restore booking session if coming back from Auth
+  useEffect(() => {
+    const restored = route.params?.restoredBooking;
+    if (restored && activities.length > 0) {
+      console.log('Restoring booking session...', restored);
+      
+      // Restore activity
+      if (restored.selectedActivityCode) {
+        const activity = activities.find((a: Activity) => a.code === restored.selectedActivityCode);
+        if (activity) setSelectedActivity(activity);
+      }
+      
+      // Restore date
+      if (restored.selectedDate) {
+        setSelectedDate(new Date(restored.selectedDate));
+      }
+      
+      // Restore slots
+      if (restored.selectedSlotKeys) {
+        setSelectedSlotKeys(restored.selectedSlotKeys);
+      }
+      
+      setShowBookingSection(true);
+      
+      // Scroll to booking section
+      requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      });
+      
+      // Clear the params so they don't restore again on refresh
+      navigation.setParams({ restoredBooking: undefined });
+    }
+  }, [route.params?.restoredBooking, activities]);
+
   const fetchServiceDetails = async () => {
     try {
       const response = await serviceAPI.getServiceById(serviceId);
@@ -164,9 +332,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const fetchAvailableSlots = async () => {
     if (!service) return;
 
-    // Guard: If we're still loading resources or waiting for an activity selection,
-    // don't attempt to fetch slots and don't reset the loading state.
-    // This prevents the "No Slots Available" flash.
     if (resourcesLoading || (activities.length > 0 && !selectedActivity)) {
       return;
     }
@@ -178,21 +343,29 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
       if (selectedActivity) {
         const response = await serviceAPI.getActivityAvailability(service.id, (selectedActivity as any).code, dateStr);
-        // The API response now follows the EphemeralSlotResponse structure
         timeSlots = response.data.slots || response.data.content || [];
       }
       setAvailableSlots(timeSlots);
-      // Reset selection when slots are refreshed
-      setSelectedSlotKeys([]);
-      setSelectedSlotPrice(0);
-      setIdempotencyKey(null);
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch available slots');
-      setAvailableSlots([]);
     } finally {
       setSlotsLoading(false);
     }
   };
+
+  // Sync price and idempotency whenever selection or available slots change
+  useEffect(() => {
+    if (availableSlots.length > 0 && selectedSlotKeys.length > 0) {
+      const newPrice = availableSlots
+        .filter(s => s.slotKey && selectedSlotKeys.includes(s.slotKey))
+        .reduce((sum, s) => sum + (s.displayPrice || s.price || 0), 0);
+      
+      setSelectedSlotPrice(newPrice);
+      if (!idempotencyKey) setIdempotencyKey(generateUUID());
+    } else if (selectedSlotKeys.length === 0) {
+      setSelectedSlotPrice(0);
+      setIdempotencyKey(null);
+    }
+  }, [selectedSlotKeys, availableSlots]);
 
   const toggleSlotSelection = (slot: EphemeralSlot) => {
     if (!slot.available) {
@@ -204,31 +377,20 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
     setSelectedSlotKeys(prev => {
       const isSelected = prev.includes(slot.slotKey!);
-      let newKeys;
       if (isSelected) {
-        newKeys = prev.filter(key => key !== slot.slotKey);
+        return prev.filter(key => key !== slot.slotKey);
       } else {
-        newKeys = [...prev, slot.slotKey!];
+        return [...prev, slot.slotKey!];
       }
-
-      // Update total price and idempotency key
-      const newPrice = availableSlots
-        .filter(s => s.slotKey && newKeys.includes(s.slotKey))
-        .reduce((sum, s) => sum + (s.displayPrice || s.price || 0), 0);
-      
-      setSelectedSlotPrice(newPrice);
-      
-      if (newKeys.length > 0) {
-        if (!idempotencyKey) setIdempotencyKey(generateUUID());
-      } else {
-        setIdempotencyKey(null);
-      }
-
-      return newKeys;
     });
   };
 
-
+  const handleActivitySelect = (activity: Activity) => {
+    setSelectedActivity(activity);
+    setSelectedSlotKeys([]);
+    setSelectedSlotPrice(0);
+    setIdempotencyKey(null);
+  };
 
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -237,9 +399,27 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     return availableSlots.filter(slot => slot.slotKey && selectedSlotKeys.includes(slot.slotKey));
   }, [availableSlots, selectedSlotKeys]);
 
+  // Restore booking session if coming back from Auth - REMOVED per user request
+  // useEffect(() => {
+  //   if (route.params?.restoredBooking) {
+  //     fetchResources();
+  //   }
+  // }, [route.params?.restoredBooking]);
+
   const handleConfirmBooking = () => {
      // Check if user is logged in
     if (!user) {
+      const redirectInfo = { 
+        name: 'User', 
+        params: {
+          screen: 'ServiceDetail',
+          params: { 
+            serviceId,
+            // restoredBooking removed: User must re-select slots
+          }
+        }
+      };
+
       Alert.alert(
         'Login Required',
         'Please login to continue with your booking.',
@@ -249,18 +429,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
             text: 'Login', 
             onPress: () => navigation.navigate('Auth', { 
               screen: 'PhoneEntry',
-              params: { 
-                redirectTo: { 
-                  name: 'User', 
-                  params: {
-                    screen: 'HomeTab',
-                    params: {
-                      screen: 'ServiceDetail',
-                      params: { serviceId }
-                    }
-                  }
-                } 
-              }
+              params: { redirectTo: redirectInfo }
             }) 
           }
         ]
@@ -317,19 +486,21 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         }
 
         // Confirm booking directly and redirect
-        Alert.alert(
-          'Booking Request Submitted',
-          'Your booking request has been submitted successfully and is awaiting manual confirmation.',
-          [
-            { 
-              text: 'View Bookings', 
-              onPress: () => {
-                navigation.popToTop();
-                navigation.navigate('MainTabs', { screen: 'Bookings' });
-              } 
-            }
-          ]
-        );
+        // Alert.alert(
+        //   'Booking Request Submitted',
+        //   'Your booking request has been submitted successfully and is awaiting manual confirmation.',
+        //   [
+        //     { 
+        //       text: 'View Bookings', 
+        //       onPress: () => {
+        //         navigation.popToTop();
+        //         navigation.navigate('MainTabs', { screen: 'Bookings' });
+        //       } 
+        //     }
+        //   ]
+        // );
+        
+        navigation.navigate('BookingSuccess');
 
       } catch (error: any) {
         setShowConfirmation(false);
@@ -367,7 +538,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     });
-  }, [fetchResources]);
+  }, [fetchResources, serviceId]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -467,7 +638,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               onClose={() => setShowBookingSection(false)}
               resources={activities as any} // Activities displayed in the same chip UI
               selectedResource={selectedActivity as any}
-              onResourceSelect={setSelectedActivity as any}
+              onResourceSelect={handleActivitySelect as any}
               resourcesLoading={resourcesLoading}
             />
           )}
@@ -548,137 +719,5 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 };
 
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 0,
-  },
-  stickyHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(2) },
-    shadowOpacity: 0.05,
-    shadowRadius: moderateScale(10),
-    elevation: 5,
-  },
-  stickyHeaderContent: {
-    height: verticalScale(56),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: scale(20),
-  },
-  stickyBackButton: {
-    position: 'absolute',
-    left: scale(10),
-    width: moderateScale(40),
-    height: moderateScale(40),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stickyTitle: {
-    fontSize: moderateScale(18),
-    fontWeight: '700',
-    maxWidth: '70%',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingTop: verticalScale(40),
-    paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(140),
-    zIndex: 10,
-    minHeight: verticalScale(600),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(-10) },
-    shadowOpacity: 0.1,
-    shadowRadius: moderateScale(20),
-    elevation: 25,
-  },
-  footerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: scale(20),
-    paddingTop: verticalScale(10),
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scale(20),
-    paddingVertical: verticalScale(14),
-    borderRadius: moderateScale(24),
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(8) },
-    shadowOpacity: 0.15,
-    shadowRadius: moderateScale(20),
-    elevation: 10,
-  },
-  detailsFooterContent: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bookingFooterContent: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectionInfo: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: moderateScale(12),
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: verticalScale(2),
-  },
-  priceValue: {
-    fontSize: moderateScale(22),
-    fontWeight: '800',
-  },
-  totalAmount: {
-    fontSize: moderateScale(24),
-    fontWeight: '800',
-  },
-  slotCount: {
-    fontSize: moderateScale(13),
-    fontWeight: '500',
-    marginTop: verticalScale(2),
-  },
-  primaryButton: {
-    paddingHorizontal: scale(28),
-    paddingVertical: verticalScale(16),
-    borderRadius: moderateScale(20),
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: scale(160),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(4) },
-    shadowOpacity: 0.2,
-    shadowRadius: moderateScale(8),
-    elevation: 5,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(17),
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-});
 
 export default ServiceDetailScreen;

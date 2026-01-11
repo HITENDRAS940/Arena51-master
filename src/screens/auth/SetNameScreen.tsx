@@ -1,32 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
-  Animated,
-  StatusBar,
   Keyboard,
+  Animated,
+  Dimensions,
+  StatusBar,
+  Alert,
 } from 'react-native';
-import BrandedLoader from '../../components/shared/BrandedLoader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { userAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import HyperIcon from '../../components/shared/icons/HyperIcon';
-import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { User } from '../../types';
 
-const SetNameScreen = () => {
+Dimensions.get('window');
+
+const SetNameScreen = ({ route, navigation }: any) => {
+  const { token, userId, phone, isNewUser, redirectTo } = route.params || {};
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  
-  const { updateProfile } = useAuth();
+
+  const { login } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -34,6 +41,7 @@ const SetNameScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
+  const inputBorderAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Entry animation
@@ -71,18 +79,67 @@ const SetNameScreen = () => {
     };
   }, []);
 
-  const handleContinue = async () => {
-    if (name.trim().length < 3) {
-      Alert.alert('Invalid Name', 'Please enter your full name (at least 3 characters).');
+  const handleInputFocus = () => {
+    setIsFocused(true);
+    Animated.timing(inputBorderAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleInputBlur = () => {
+    setIsFocused(false);
+    Animated.timing(inputBorderAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleSetName = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      Alert.alert('Invalid Name', 'Please enter your name');
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      Alert.alert('Invalid Name', 'Name must be at least 2 characters long');
       return;
     }
 
     setLoading(true);
     try {
-      await updateProfile(name.trim());
-      // AuthContext handles navigation via isAuthenticated state change
+      // First, save the token so API calls work
+      if (token) {
+        await AsyncStorage.setItem('token', token);
+      }
+
+      // Call API to set the name
+      await userAPI.setName(trimmedName);
+
+      // Create user object and login
+      const userData: User = {
+        id: userId,
+        token: token,
+        phone: phone,
+        role: 'ROLE_USER',
+        name: trimmedName,
+      };
+
+      await login(userData);
+
+      // Navigate to redirect destination or home
+      if (redirectTo) {
+        navigation.navigate(redirectTo.name, redirectTo.params);
+      } else {
+        navigation.navigate('User', { screen: 'HomeTab' });
+      }
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile. Please try again.');
+      // If setting name fails, remove the token
+      await AsyncStorage.removeItem('token');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to set name');
     } finally {
       setLoading(false);
     }
@@ -91,95 +148,100 @@ const SetNameScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.background}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          <Animated.View
-            style={[
-              styles.header,
-              { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
+          <ScrollView 
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
             ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.logoContainer}>
-              <HyperIcon size={150} color={theme.colors.primary} />
-            </View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Welcome.</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-              How should we address you?
-            </Text>
-          </Animated.View>
+            <Animated.View 
+              style={[
+                styles.header, 
+                { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
+              ]}
+            >
+              <Text style={styles.brandName}>Welcome to Hyper</Text>
+              <Text style={styles.title}>Create Your Profile</Text>
+              <Text style={styles.subtitle}>Let's get you set up. What should we call you?</Text>
+            </Animated.View>
 
-          <Animated.View
-            style={[
-              styles.cardContainer,
-              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-            ]}
-          >
-            <View style={styles.card}>
-              
-              {/* Background Watermark Icon */}
-              <View style={styles.watermarkContainer}>
-                <HyperIcon size={200} color={theme.colors.primary} style={{ opacity: 0.05, transform: [{ rotate: '-15deg' }] }} />
-              </View>
-
-              <View style={styles.cardInner}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>FULL NAME</Text>
+            <Animated.View 
+              style={[
+                styles.cardContainer, 
+                { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+              ]}
+            >
+              <LinearGradient
+                colors={['#1F2937', '#111827']}
+                style={styles.card}
+              >
+                <Text style={styles.label}>Full Name</Text>
 
                 <View style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: '#F9FAFB',
-                    borderColor: isFocused ? theme.colors.primary : '#E5E7EB'
-                  }
+                  styles.inputWrapper, 
+                  { borderColor: isFocused ? '#10B981' : 'rgba(255, 255, 255, 0.1)' }
                 ]}>
+                  <Ionicons name="person-outline" size={20} color="rgba(255, 255, 255, 0.3)" style={styles.inputIcon} />
                   <TextInput
-                    style={[styles.input, { color: theme.colors.text }]}
-                    placeholder="John Doe"
-                    placeholderTextColor={theme.colors.textSecondary + '80'}
+                    style={styles.input}
+                    placeholder="Enter your full name"
+                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
                     value={name}
                     onChangeText={setName}
-                    autoFocus
                     editable={!loading}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    selectionColor={theme.colors.primary}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    selectionColor="#10B981"
+                    autoCapitalize="words"
+                    autoComplete="name"
+                    maxLength={50}
                   />
                 </View>
 
                 <TouchableOpacity
-                  onPress={handleContinue}
-                  style={[
-                    styles.mainButton,
-                    { backgroundColor: theme.colors.primary },
-                    (loading || name.trim().length < 3) && styles.buttonDisabled
-                  ]}
-                  disabled={loading || name.trim().length < 3}
+                  style={styles.mainButton}
+                  onPress={handleSetName}
+                  disabled={loading || name.trim().length < 2}
                   activeOpacity={0.8}
                 >
-                  {loading ? (
-                    <BrandedLoader color="#FFFFFF" size={24} />
-                  ) : (
-                    <View style={styles.buttonContent}>
-                      <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Start Exploring</Text>
-                      <ArrowRightIcon size={20} color="#FFFFFF" />
-                    </View>
-                  )}
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.gradientButton, (loading || name.trim().length < 2) && styles.buttonDisabled]}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <View style={styles.buttonContent}>
+                        <Text style={styles.buttonText}>Complete Setup</Text>
+                        <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </LinearGradient>
                 </TouchableOpacity>
-              </View>
-            </View>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+                <Text style={styles.infoText}>
+                  You can always update your name later in your profile settings.
+                </Text>
+              </LinearGradient>
+            </Animated.View>
+
+            {!isKeyboardVisible && (
+              <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+                <Text style={styles.footerText}>Ready to book your first slot?</Text>
+              </Animated.View>
+            )}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     </View>
   );
 };
@@ -187,7 +249,10 @@ const SetNameScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FFFFFF',
+  },
+  background: {
+    flex: 1,
   },
   keyboardView: {
     flex: 1,
@@ -199,55 +264,40 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 35,
+    marginBottom: 40,
+    marginTop: 20,
   },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    marginBottom: 16,
-    borderRadius: 24,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
+  brandName: {
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: -0.5,
     marginBottom: 8,
     color: '#111827',
-    textAlign: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#374151',
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
-    maxWidth: '80%',
+    maxWidth: '85%',
+    lineHeight: 20,
   },
   cardContainer: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 15 },
+    shadowOpacity: 0.15,
+    shadowRadius: 25,
+    elevation: 10,
   },
   card: {
-    borderRadius: 28,
-    overflow: 'hidden',
-    backgroundColor: '#F9FAFB',
-  },
-  watermarkContainer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: -1,
-  },
-  cardInner: {
+    borderRadius: 32,
     padding: 24,
+    overflow: 'hidden',
   },
   label: {
     fontSize: 12,
@@ -255,36 +305,40 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginLeft: 4,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: '#9CA3AF',
+    letterSpacing: 2,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 60,
-    borderRadius: 16,
+    height: 64,
+    borderRadius: 20,
     borderWidth: 1.5,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    letterSpacing: 0.5,
-    color: '#111827',
+    color: '#FFFFFF',
   },
   mainButton: {
     width: '100%',
-    height: 60,
-    borderRadius: 16,
+    marginBottom: 16,
+  },
+  gradientButton: {
+    height: 64,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#1E1B4B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
   },
@@ -300,6 +354,23 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  infoText: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: 'rgba(255, 255, 255, 0.4)',
+    lineHeight: 18,
+  },
+  footer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 'auto',
+    paddingTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 });
 

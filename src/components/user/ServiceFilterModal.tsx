@@ -212,7 +212,18 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                   <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={() => setIsDistanceFilter(true)}
+                  onPress={() => {
+                    setIsDistanceFilter(true);
+                    onApply({
+                      date: new Date().toISOString().split('T')[0],
+                      startTime: '00:00',
+                      endTime: '23:59',
+                      city: initialCity,
+                      activityCode: activityCode,
+                      maxDistanceKm: 50,
+                    });
+                    onClose();
+                  }}
                   style={[
                     styles.modeButton, 
                     isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }

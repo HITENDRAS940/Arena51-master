@@ -34,32 +34,37 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Smart Production logging
-    console.error('🌐 API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-
     const status = error.response?.status;
 
     if (status === 401 || status === 403) {
-      // Session expired, invalid or forbidden - Production apps force logout here
-      console.warn(`🔑 Session error (${status}), performing smart logout...`);
-      await AsyncStorage.multiRemove(['token', 'user']);
+      const storedToken = await AsyncStorage.getItem('token');
+      // Handle various "empty" token states
+      const hasNoToken = !storedToken || storedToken === 'null' || storedToken === 'undefined' || storedToken === '';
 
-      if (logoutCallback) {
-        logoutCallback();
-      }
-
-      // Special handling for 403: Silent failure as requested (no error UI shown)
-      if (status === 403) {
-        // Halt current request execution and wait for AuthContext to redirect/unmount
-        return new Promise(() => { });
+      if (hasNoToken) {
+        if (status === 403) {
+          // Return a robust empty structure to prevent crashes in screens
+          return Promise.resolve({
+            data: { content: [], data: [], balance: 0 },
+            status: 403,
+            __isSilencedError: true
+          });
+        }
+      } else {
+        console.warn(`🔑 Session error (${status}), performing smart logout...`);
+        await AsyncStorage.multiRemove(['token', 'user']);
+        if (logoutCallback) logoutCallback();
       }
     }
+
+    // Log other real errors
+    console.error('🌐 API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: status,
+      data: error.response?.data,
+      message: error.message
+    });
 
     return Promise.reject(error);
   }
@@ -73,6 +78,7 @@ export const authAPI = {
 
 // User APIs
 export const userAPI = {
+  getProfile: () => api.get('/user/profile'),
   setName: (name: string) => api.post('/user/setname', { name }),
 };
 
@@ -137,7 +143,7 @@ export const locationAPI = {
     maxDistanceKm: number;
     minDistanceKm: number;
     city: string;
-  }) => api.get('/services/distance/filter', { params }),
+  }) => api.post('/api/location/filter-services-by-distance', params),
 };
 
 // Export combined API object for convenience

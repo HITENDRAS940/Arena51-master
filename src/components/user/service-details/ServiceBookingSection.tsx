@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { EphemeralSlot } from '../../../types';
@@ -7,6 +7,8 @@ import { format, addDays, isSameDay, isToday, isTomorrow } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 import TimeSlotCard from '../../user/TimeSlotCard';
 import { SkeletonList, TimeSlotSkeleton } from '../../shared/Skeletons';
+import { ActivityIcons } from '../../shared/icons/activities';
+import { moderateScale } from 'react-native-size-matters';
 
 interface ServiceBookingSectionProps {
   selectedDate: Date;
@@ -57,29 +59,65 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
             <ActivityIndicator size="small" color={theme.colors.navy} />
           ) : (
             <View style={styles.resourceList}>
-              {resources.map((activity) => (
-                <TouchableOpacity
-                  key={activity.id}
-                  style={[
-                    styles.resourceChip,
-                    { 
-                      backgroundColor: selectedResource?.id === activity.id ? theme.colors.navy : theme.colors.surface,
-                      borderColor: selectedResource?.id === activity.id ? theme.colors.navy : theme.colors.border
-                    }
-                  ]}
-                  onPress={() => onResourceSelect(activity as any)}
-                  activeOpacity={0.7}
-                >
-                  <Text 
+              {resources.map((activity) => {
+                const isSelected = selectedResource?.id === activity.id;
+                
+                // Get activity icon based on name
+                let IconComponent = ActivityIcons['Football']; // Default fallback
+                const activityName = activity.name || '';
+                
+                // Try to find a match in ActivityIcons keys
+                const matchingKey = Object.keys(ActivityIcons).find(key => 
+                  activityName.toLowerCase().includes(key.toLowerCase()) ||
+                  key.toLowerCase().includes(activityName.toLowerCase())
+                );
+                
+                if (matchingKey) {
+                  IconComponent = ActivityIcons[matchingKey];
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={activity.id}
                     style={[
-                      styles.resourceChipText,
-                      { color: selectedResource?.id === activity.id ? '#FFFFFF' : theme.colors.text }
+                      styles.resourceChip,
+                      { 
+                        backgroundColor: isSelected ? theme.colors.navy : theme.colors.surface,
+                        borderColor: isSelected ? theme.colors.navy : theme.colors.border
+                      },
+                      isSelected && styles.selectedShadow
                     ]}
+                    onPress={() => onResourceSelect(activity as any)}
+                    activeOpacity={0.7}
                   >
-                    {activity.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <View style={styles.chipContent}>
+                      <View style={[
+                        styles.chipIconContainer
+                      ]}>
+                        <IconComponent 
+                          size={moderateScale(40)} 
+                          color={isSelected ? '#FFFFFF' : theme.colors.navy} 
+                        />
+                      </View>
+                      <Text 
+                        style={[
+                          styles.resourceChipText,
+                          { color: isSelected ? '#FFFFFF' : theme.colors.text }
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {activity.name}
+                      </Text>
+                      
+                      {isSelected && (
+                        <View style={styles.selectedIndicator}>
+                          <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
         </View>
@@ -317,21 +355,48 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   resourceChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
+    width: (Dimensions.get('window').width - 58) / 3,
+    height: 110,
+    borderRadius: 24,
     borderWidth: 1.5,
-    minWidth: '30%',
-    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 1,
+    shadowRadius: 10,
+    elevation: 2,
+    padding: 4,
+    overflow: 'hidden',
+  },
+  chipContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+  },
+  chipIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   resourceChipText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+    textAlign: 'center',
+  },
+  selectedShadow: {
+    shadowColor: '#1E1B4B',
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 4,
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
   },
   resourceDescription: {
     fontSize: 13,

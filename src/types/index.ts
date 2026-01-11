@@ -58,6 +58,7 @@ export interface Service {
   longitude?: number;
   activities?: string[];
   amenities?: string[];
+  distance?: number | string;
 }
 
 export interface ServiceSearchDto {

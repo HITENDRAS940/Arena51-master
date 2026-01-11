@@ -9,12 +9,34 @@ import ServiceDetailScreen from '../screens/user/ServiceDetailScreen';
 import MyBookingsScreen from '../screens/user/MyBookingsScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import WalletScreen from '../screens/user/WalletScreen';
+import BookingSuccessScreen from '../screens/user/BookingSuccessScreen';
 
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import CustomTabBar from '../components/shared/CustomTabBar';
+import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
+
+const RedirectHandler = () => {
+  const { isAuthenticated, redirectData, setRedirectData } = useAuth();
+  const navigation = useNavigation<any>();
+
+  React.useEffect(() => {
+    if (isAuthenticated && redirectData) {
+      const { name, params } = redirectData;
+      setRedirectData(null); // Clear first to avoid loops
+      
+      // Small delay to ensure navigator is ready after auth swap
+      setTimeout(() => {
+        navigation.navigate(name, params);
+      }, 100);
+    }
+  }, [isAuthenticated, redirectData]);
+
+  return null;
+};
 
 // Only HomeScreen lives in this stack - all other screens are in the root stack
 const HomeStack = () => (
@@ -50,23 +72,26 @@ const TabNavigator = () => {
 // Root Navigator - Tab Navigator + all other screens without tabs
 const UserNavigator = () => {
   return (
-    <RootStack.Navigator
-      screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        animationDuration: 200,
-      }}
-    >
-      {/* Main Tabs */}
-      <RootStack.Screen name="MainTabs" component={TabNavigator} />
+    <>
+      <RedirectHandler />
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: 200,
+        }}
+      >
+        {/* Main Tabs */}
+        <RootStack.Screen name="MainTabs" component={TabNavigator} />
       
       {/* Screens WITHOUT tab bar - they are outside the Tab Navigator */}
       <RootStack.Screen name="AllServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="CategoryServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+      <RootStack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
       <RootStack.Screen name="Wallet" component={WalletScreen} />
-    </RootStack.Navigator>
-
+      </RootStack.Navigator>
+    </>
   );
 };
 

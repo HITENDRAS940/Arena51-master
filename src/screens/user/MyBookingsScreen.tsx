@@ -3,12 +3,15 @@ import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   RefreshControl,
   Alert,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingAPI } from '../../services/api';
 import { UserBooking } from '../../types';
@@ -22,7 +25,7 @@ import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
 
 const MyBookingsScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, setRedirectData } = useAuth();
   const insets = useSafeAreaInsets();
   const [bookings, setBookings] = useState<UserBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +52,14 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
   });
 
   const headerTranslate = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [-10, 0],
+    inputRange: [0, 60, 100],
+    outputRange: [-100, -10, 0],
+    extrapolate: 'clamp',
+  });
+
+  const mainHeaderTranslateY = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, -100],
     extrapolate: 'clamp',
   });
 
@@ -96,9 +105,13 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
   };
 
   const onRefresh = useCallback(() => {
+    if (!user) {
+      setRefreshing(false);
+      return;
+    }
     setRefreshing(true);
     fetchBookings();
-  }, []);
+  }, [user]);
 
   const handleBookingPress = useCallback((booking: UserBooking) => {
     // Navigate to booking details screen (implement if needed)
@@ -145,8 +158,12 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
   }, [confirmCancelBooking]);
 
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (user) {
+      fetchBookings();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   // Clear route params after showing success message
   useEffect(() => {
@@ -177,8 +194,18 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
     />
   );
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
+  const renderMainHeader = () => (
+    <Animated.View style={[
+      styles.headerContainer,
+      { 
+        position: 'absolute',
+        top: insets.top + verticalScale(20),
+        left: 0,
+        right: 0,
+        zIndex: 5,
+        transform: [{ translateY: mainHeaderTranslateY }]
+      }
+    ]}>
       <View style={styles.headerTitleGroup}>
         <Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
           Your games.
@@ -187,7 +214,7 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
           Your history.
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 
   if (!user) {
@@ -196,10 +223,20 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         titleMain="Your games."
         titleSub="Your history."
         description="Login to view your previous bookings, manage upcoming games, and rebook your favorite venues."
-        onLoginPress={() => navigation.navigate('Auth', { 
-          screen: 'PhoneEntry', 
-          params: { redirectTo: { name: 'User', params: { screen: 'Bookings' } } } 
-        })}
+        onLoginPress={() => {
+          navigation.navigate('Auth', {
+            screen: 'PhoneEntry',
+            params: { 
+              redirectTo: { 
+                name: 'User', 
+                params: { 
+                  screen: 'MainTabs', 
+                  params: { screen: 'Bookings' } 
+                } 
+              } 
+            }
+          });
+        }}
       />
     );
   }
@@ -228,11 +265,17 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         </View>
       </Animated.View>
 
+      {renderMainHeader()}
+
       <Animated.FlatList
         data={loading ? [1, 2, 3, 4] : bookings}
         renderItem={renderBookingCard}
         keyExtractor={(item, index) => (typeof item === 'number' ? `skeleton-${index}` : item.id.toString())}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={
+          <View style={{ 
+            height: verticalScale(100),
+          }} />
+        }
         contentContainerStyle={[
           styles.listContent,
           { paddingTop: insets.top + verticalScale(20) },
@@ -248,8 +291,7 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-            progressViewOffset={insets.top + verticalScale(20)}
+            progressViewOffset={insets.top + 80}
           />
         }
         ListEmptyComponent={!loading ? renderEmptyState : null}

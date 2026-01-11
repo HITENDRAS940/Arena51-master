@@ -8,11 +8,6 @@ import SetNameScreen from '../screens/auth/SetNameScreen';
 const Stack = createNativeStackNavigator();
 
 const AuthNavigator = () => {
-  const { user } = useAuth();
-  
-  // If user exists but name is missing, go directly to SetName screen
-  const initialRouteName = (user && !user.name) ? 'SetName' : 'PhoneEntry';
-
   return (
     <Stack.Navigator 
       screenOptions={{ 
@@ -20,7 +15,7 @@ const AuthNavigator = () => {
         animation: 'slide_from_right',
         animationDuration: 200,
       }}
-      initialRouteName={initialRouteName}
+      initialRouteName="PhoneEntry"
     >
       <Stack.Screen name="PhoneEntry" component={PhoneEntryScreen} />
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />

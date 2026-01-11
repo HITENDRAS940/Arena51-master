@@ -8,12 +8,15 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
+import BrandedLoader from '../../components/shared/BrandedLoader';
 import { Booking } from '../../types';
 import { serviceAPI, bookingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -64,7 +67,9 @@ const HomeScreen = ({ navigation }: any) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const scrollY = React.useRef(new Animated.Value(0)).current;
+  const entranceAnimation = React.useRef(new Animated.Value(0)).current; // For entrance animation
 
   // Location bits
   const { location, manualCity, setCityManually, detectAndSetToCurrentCity, loading: locationLoading } = useLocation();
@@ -73,6 +78,13 @@ const HomeScreen = ({ navigation }: any) => {
   const { onScroll: onTabBarScroll } = useTabBarScroll(navigation, { isRootTab: false });
 
   useEffect(() => {
+    // Trigger entrance animation
+    Animated.timing(entranceAnimation, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
     const id = scrollY.addListener(({ value }) => {
       const active = value > 60;
       if (active !== isHeaderActive) {
@@ -117,6 +129,7 @@ const HomeScreen = ({ navigation }: any) => {
         console.error("Failed to fetch activities", error);
     } finally {
         setLoading(false);
+        setRefreshing(false);
     }
   };
 
@@ -143,6 +156,12 @@ const HomeScreen = ({ navigation }: any) => {
   const headerTranslate = scrollY.interpolate({
     inputRange: [0, 60, 100],
     outputRange: [-100, -10, 0],
+    extrapolate: 'clamp',
+  });
+
+  const mainHeaderTranslateY = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [0, -120],
     extrapolate: 'clamp',
   });
 
@@ -230,230 +249,265 @@ const HomeScreen = ({ navigation }: any) => {
       </TouchableOpacity>
     );
   };
+  const renderMainHeader = () => (
+    <Animated.View style={[
+      styles.headerContainer, 
+      { 
+        position: 'absolute',
+        top: Math.max(insets.top + 20, 20),
+        left: 0,
+        right: 0,
+        zIndex: 5,
+        transform: [{ translateY: mainHeaderTranslateY }]
+      }
+    ]}>
+      <View style={styles.headerTopRow}>
+          <View>
+              <Animated.Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
+                  Your game.
+              </Animated.Text>
+              <Animated.Text style={[styles.headerTitleSub, { color: theme.colors.textSecondary }]}>
+                  Your venue.
+              </Animated.Text>
+          </View>
+          
+          <TouchableOpacity 
+              style={[styles.locationBadge, { backgroundColor: theme.colors.card, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: {width:0, height:4} }]}
+              onPress={() => setShowCityModal(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+              <LocationIcon size={20} color={theme.colors.primary} />
+              <Text style={[styles.locationText, { color: theme.colors.text }]}>
+                  {manualCity || location?.city || 'Select city...'}
+              </Text>
+          </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
 
   return (
     <ScreenWrapper 
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       safeAreaEdges={['left', 'right']}
     >
-      
-
-      {/* Sticky Header */}
-      <Animated.View 
-        pointerEvents={isHeaderActive ? 'auto' : 'none'}
-        style={[
-          styles.stickyHeader, 
-          { 
-            backgroundColor: theme.colors.background,
-            paddingTop: insets.top,
-            opacity: headerOpacity,
-            transform: [{ translateY: headerTranslate }],
-            borderBottomColor: theme.colors.border,
-          }
-        ]}
-      >
-        <View style={styles.stickyHeaderContent}>
-          <View>
-            <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>HOME</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={[styles.stickyLocation, { backgroundColor: theme.colors.card }]}
-            onPress={() => setShowCityModal(true)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <LocationIcon size={14} color={theme.colors.primary} />
-            <Text style={[styles.stickyLocationText, { color: theme.colors.text }]} numberOfLines={1}>
-              {manualCity || location?.city || 'Select...'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-
-      <Animated.ScrollView
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true, listener: onTabBarScroll }
-        )}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
-      >
-        {/* Custom Header */}
-        <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top + 20, 20) }]}>
-          <View style={styles.headerTopRow}>
-              <View>
-                  <Animated.Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
-                      Your game.
-                  </Animated.Text>
-                  <Animated.Text style={[styles.headerTitleSub, { color: theme.colors.textSecondary }]}>
-                      Your venue.
-                  </Animated.Text>
-              </View>
-              
-              <TouchableOpacity 
-                  style={[styles.locationBadge, { backgroundColor: theme.colors.card, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: {width:0, height:4} }]}
-                  onPress={() => setShowCityModal(true)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                  <LocationIcon size={20} color={theme.colors.primary} />
-                  <Text style={[styles.locationText, { color: theme.colors.text }]}>
-                      {manualCity || location?.city || 'Select City'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color={theme.colors.textSecondary} />
-              </TouchableOpacity>
-          </View>
-        </View>
-      
-      {/* Activity List */}
-      <View style={styles.sectionHeaderContainer}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Choose your Sport</Text>
-      </View>
-      <View style={styles.activityListContainer}>
-          {loading ? (
-            <SkeletonList
-                count={3}
-                horizontal
-                renderItem={() => <ActivitySkeletonCard />}
-                contentContainerStyle={styles.activityListContent}
-            />
-          ) : (
-            <FlatList
-              data={activities}
-              renderItem={renderActivityItem}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.activityListContent}
-            />
-          )}
-      </View>
-
-      {/* Discover All Card */}
-      <View style={{ padding: 20 }}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>All Venues</Text>
-        <TouchableOpacity
-          style={[styles.exploreButton, { backgroundColor: theme.colors.card }]}
-          onPress={() => navigation.navigate('AllServices', { city: manualCity || location?.city })}
-          activeOpacity={0.9}
+      <Animated.View style={{ 
+        flex: 1,
+        opacity: entranceAnimation,
+        transform: [{
+          translateY: entranceAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [20, 0]
+          })
+        }]
+      }}>
+        {/* Sticky Header */}
+        <Animated.View 
+          pointerEvents={isHeaderActive ? 'auto' : 'none'}
+          style={[
+            styles.stickyHeader, 
+            { 
+              backgroundColor: theme.colors.background,
+              paddingTop: insets.top,
+              opacity: headerOpacity,
+              transform: [{ translateY: headerTranslate }],
+              borderBottomColor: theme.colors.border,
+            }
+          ]}
         >
-           <LinearGradient
-                colors={['#1F2937', '#111827']} 
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.exploreGradient}
+          <View style={styles.stickyHeaderContent}>
+            <View>
+              <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>HOME</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.stickyLocation, { backgroundColor: theme.colors.card }]}
+              onPress={() => setShowCityModal(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-                <View style={[styles.exploreContent, { zIndex: 2 }]}>
-                    <Text style={styles.exploreTitle}>Discover All Venues</Text>
-                    <Text style={styles.exploreSubtitle}>Find the perfect Venue in {manualCity || location?.city || 'your city'}</Text>
-                </View>
-                <DiscoveryArrowIcon size={60} color="#10B981" style={{zIndex: 2}} />
-            </LinearGradient>
-        </TouchableOpacity>
-      </View>
+              <LocationIcon size={14} color={theme.colors.primary} />
+              <Text style={[styles.stickyLocationText, { color: theme.colors.text }]} numberOfLines={1}>
+                {manualCity || location?.city || 'Select...'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
-      {/* Recent Booking / Guest Login Banner */}
-      {!user ? (
-        <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>Jump Back In</Text>
-          <TouchableOpacity 
-            style={[styles.guestBanner, { backgroundColor: theme.colors.card }]}
-            onPress={() => navigation.navigate('Auth')}
+        {renderMainHeader()}
+
+        <Animated.ScrollView
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true, listener: onTabBarScroll }
+          )}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchActivities();
+                if (user) fetchLastBooking();
+              }}
+              progressViewOffset={200}
+            />
+          }
+        >
+          <View style={{ 
+            height: (insets.top + 20) + 100,
+          }} />
+        
+        {/* Activity List */}
+        <View style={styles.sectionHeaderContainer}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Choose your Sport</Text>
+        </View>
+        <View style={styles.activityListContainer}>
+            {loading ? (
+              <SkeletonList
+                  count={3}
+                  horizontal
+                  renderItem={() => <ActivitySkeletonCard />}
+                  contentContainerStyle={styles.activityListContent}
+              />
+            ) : (
+              <FlatList
+                data={activities}
+                renderItem={renderActivityItem}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.activityListContent}
+              />
+            )}
+        </View>
+
+        {/* Discover All Card */}
+        <View style={{ padding: 20 }}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>All Venues</Text>
+          <TouchableOpacity
+            style={[styles.exploreButton, { backgroundColor: theme.colors.card }]}
+            onPress={() => navigation.navigate('AllServices', { city: manualCity || location?.city })}
             activeOpacity={0.9}
           >
-            <LinearGradient
-              colors={['#1E1B4B', '#312E81']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.guestBannerGradient}
-            >
-              <View style={styles.guestBannerContent}>
-                <View style={styles.guestTextContainer}>
-                  <Text style={styles.guestBannerTitle}>See Your History</Text>
-                  <Text style={styles.guestBannerSubtitle}>
-                    Login to view your last visited venues and quickly rebook them.
-                  </Text>
-                </View>
-                <View style={styles.guestActionContainer}>
-                  <DiscoveryArrowIcon size={60} color="#FFFFFF" />
-                </View>
-              </View>
-            </LinearGradient>
+             <LinearGradient
+                  colors={['#1F2937', '#111827']} 
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.exploreGradient}
+              >
+                  <View style={[styles.exploreContent, { zIndex: 2 }]}>
+                      <Text style={styles.exploreTitle}>Discover All Venues</Text>
+                      <Text style={styles.exploreSubtitle}>Find the perfect Venue in {manualCity || location?.city || 'your city'}</Text>
+                  </View>
+                  <DiscoveryArrowIcon size={60} color="#10B981" style={{zIndex: 2}} />
+              </LinearGradient>
           </TouchableOpacity>
         </View>
-      ) : (
-        lastBooking && (
+
+        {/* Recent Booking / Guest Login Banner */}
+        {!user ? (
           <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>Jump Back In</Text>
             <TouchableOpacity 
-              style={[styles.recentBookingCard, { backgroundColor: theme.colors.card }]}
+              style={[styles.guestBanner, { backgroundColor: theme.colors.card }]}
+              onPress={() => navigation.navigate('Auth')}
               activeOpacity={0.9}
-              onPress={() => {
-                if (lastBooking?.serviceId) {
-                  navigation.navigate('ServiceDetail', { serviceId: lastBooking.serviceId });
-                }
-              }}
             >
               <LinearGradient
-                colors={['#0F766E', '#10B981']}
+                colors={['#1E1B4B', '#312E81']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.recentBookingGradient}
+                style={styles.guestBannerGradient}
               >
-                <View style={styles.recentBookingHeader}>
-                    <View style={[styles.recentIconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                        <Ionicons name="football" size={24} color="#FFFFFF" />
-                    </View>
-                    <View style={styles.recentInfo}>
-                        <Text style={[styles.recentTitle, { color: '#FFFFFF' }]} numberOfLines={1}>
-                            {lastBooking.serviceName}
-                        </Text>
-                        <Text style={[styles.recentDate, { color: 'rgba(255,255,255,0.8)' }]}>
-                            Last visited on {lastBooking.date || lastBooking.bookingDate}
-                        </Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                        <Text style={[styles.statusText, { color: '#FFFFFF' }]}>
-                            {lastBooking.status}
-                        </Text>
-                    </View>
-                </View>
-                
-                <View style={styles.rebookActionRow}>
-                    <Text style={styles.rebookActionText}>Book this venue again</Text>
-                    <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-                </View>
-
-                {/* Decorative Background Icon */}
-                <View style={styles.brandIconDecor}>
-                  <Ionicons name="trophy" size={110} color="rgba(255, 255, 255, 0.12)" />
+                <View style={styles.guestBannerContent}>
+                  <View style={styles.guestTextContainer}>
+                    <Text style={styles.guestBannerTitle}>See Your History</Text>
+                    <Text style={styles.guestBannerSubtitle}>
+                      Login to view your last visited venues and quickly rebook them.
+                    </Text>
+                  </View>
+                  <View style={styles.guestActionContainer}>
+                    <DiscoveryArrowIcon size={60} color="#FFFFFF" />
+                  </View>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        )
-      )}
+        ) : (
+          lastBooking && (
+            <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>Jump Back In</Text>
+              <TouchableOpacity 
+                style={[styles.recentBookingCard, { backgroundColor: theme.colors.card }]}
+                activeOpacity={0.9}
+                onPress={() => {
+                  if (lastBooking?.serviceId) {
+                    navigation.navigate('ServiceDetail', { serviceId: lastBooking.serviceId });
+                  }
+                }}
+              >
+                <LinearGradient
+                  colors={['#0F766E', '#10B981']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.recentBookingGradient}
+                >
+                  <View style={styles.recentBookingHeader}>
+                      <View style={[styles.recentIconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                          <Ionicons name="football" size={24} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.recentInfo}>
+                          <Text style={[styles.recentTitle, { color: '#FFFFFF' }]} numberOfLines={1}>
+                              {lastBooking.serviceName}
+                          </Text>
+                          <Text style={[styles.recentDate, { color: 'rgba(255,255,255,0.8)' }]}>
+                              Last visited on {lastBooking.date || lastBooking.bookingDate}
+                          </Text>
+                      </View>
+                      <View style={[styles.statusBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                          <Text style={[styles.statusText, { color: '#FFFFFF' }]}>
+                              {lastBooking.status}
+                          </Text>
+                      </View>
+                  </View>
+                  
+                  <View style={styles.rebookActionRow}>
+                      <Text style={styles.rebookActionText}>Book this venue again</Text>
+                      <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                  </View>
 
-      {/* Exclusive Offers Section */}
-      <View style={{ paddingBottom: 30 }}>
-        <View style={styles.sectionHeaderContainer}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Exclusive Offers</Text>
-            <TouchableOpacity>
-                <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>View All</Text>
-            </TouchableOpacity>
+                  {/* Decorative Background Icon */}
+                  <View style={styles.brandIconDecor}>
+                    <Ionicons name="trophy" size={110} color="rgba(255, 255, 255, 0.12)" />
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )
+        )}
+
+        {/* Exclusive Offers Section */}
+        <View style={{ paddingBottom: 30 }}>
+          <View style={styles.sectionHeaderContainer}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Exclusive Offers</Text>
+              <TouchableOpacity>
+                  <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>View All</Text>
+              </TouchableOpacity>
+          </View>
+          <FlatList
+            data={OFFERS}
+            renderItem={renderOfferItem}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.offerListContent}
+            snapToInterval={280 + 16}
+            decelerationRate="fast"
+          />
         </View>
-        <FlatList
-          data={OFFERS}
-          renderItem={renderOfferItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.offerListContent}
-          snapToInterval={280 + 16}
-          decelerationRate="fast"
-        />
-      </View>
-      </Animated.ScrollView>
+        </Animated.ScrollView>
+      </Animated.View>
 
       <CitySelectionModal
         visible={showCityModal}
@@ -464,6 +518,7 @@ const HomeScreen = ({ navigation }: any) => {
       />
     </ScreenWrapper>
   );
+
 };
 
 

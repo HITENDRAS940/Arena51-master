@@ -4,6 +4,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import CalendarIcon from './icons/CalendarIcon';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
@@ -12,6 +13,7 @@ import HomeIcon from './icons/HomeIcon';
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
   const { theme } = useTheme();
+  const { isAuthenticated, setRedirectData } = useAuth();
   const insets = useSafeAreaInsets();
 
   const focusedRoute = state.routes[state.index];
@@ -57,6 +59,16 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
           const isFocused = state.index === index;
 
           const onPress = () => {
+            // Check for authentication on protected tabs
+            if (!isAuthenticated && (route.name === 'Bookings' || route.name === 'Profile')) {
+              setRedirectData({
+                name: 'MainTabs',
+                params: { screen: route.name }
+              });
+              navigation.navigate('Auth' as any);
+              return;
+            }
+
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,

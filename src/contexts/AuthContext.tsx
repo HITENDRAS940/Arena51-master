@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../types';
 import { jwtDecode } from 'jwt-decode';
-import { setLogoutCallback, authAPI, userAPI } from '../services/api';
+import { setLogoutCallback } from '../services/api';
 
 interface DecodedToken {
   sub: string;
@@ -17,9 +17,6 @@ interface AuthContextType {
   login: (userData: User) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: User) => Promise<void>;
-  requestOTP: (phone: string) => Promise<void>;
-  verifyOTP: (phone: string, otp: string) => Promise<boolean>;
-  updateProfile: (name: string) => Promise<void>;
   isLoading: boolean;
   redirectData: any | null;
   setRedirectData: (data: any) => void;
@@ -47,6 +44,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const token = await AsyncStorage.getItem('token');
       if (userData && token) {
         const parsedUser = JSON.parse(userData);
+        
+        // Decode token to get latest user info
+        try {
+          const decoded: DecodedToken = jwtDecode(token);
+          if (decoded.name) {
+            parsedUser.name = decoded.name;
+          }
+        } catch (e) {
+          console.error('Error decoding token:', e);
+        }
+
         setUser({ ...parsedUser, token });
       }
     } catch (error) {
@@ -58,6 +66,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (userData: User) => {
     try {
+      // Decode token to get latest user info immediately on login
+      if (userData.token) {
+        try {
+          const decoded: DecodedToken = jwtDecode(userData.token);
+          if (decoded.name) {
+            userData.name = decoded.name;
+          }
+        } catch (e) {
+          console.error('Error decoding token during login:', e);
+        }
+      }
+
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       await AsyncStorage.setItem('token', userData.token);
       setUser(userData);
@@ -72,6 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await AsyncStorage.removeItem('user');
       await AsyncStorage.removeItem('token');
       setUser(null);
+      setRedirectData(null);
     } catch (error) {
       console.error('Failed to logout', error);
     }
@@ -90,83 +111,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const requestOTP = async (phone: string) => {
-    try {
-      await authAPI.sendOTP(phone);
-    } catch (error) {
-      console.error('Failed to request OTP', error);
-      throw error;
-    }
-  };
-
-  const verifyOTP = async (phone: string, otp: string) => {
-    try {
-      const response = await authAPI.verifyOTP(phone, otp);
-      const responseData = response.data;
-      
-      if (responseData.token) {
-        const token = responseData.token;
-        await AsyncStorage.setItem('token', token);
-
-        try {
-          const decoded: DecodedToken = jwtDecode(token);
-          
-          const userObj: User = {
-            id: (decoded as any).userId, // Type assertion as DecodedToken interface might need update
-            phone: decoded.sub,
-            role: (decoded as any).role || 'ROLE_USER',
-            token: token,
-            name: decoded.name,
-          };
-
-          if (decoded.name) {
-            // Registered user
-            await login(userObj);
-            return false; // Name is present
-          } else {
-            // New user - name missing
-            setUser(userObj);
-            await AsyncStorage.setItem('user', JSON.stringify(userObj));
-            return true; // Name is missing
-          }
-        } catch (decodeError) {
-          console.error('Failed to decode token', decodeError);
-          // Fallback if decoding fails but we have a token? 
-          // Better to throw or treat as failed auth if we rely on token payload
-          throw new Error('Invalid token received');
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error('Failed to verify OTP', error);
-      throw error;
-    }
-  };
-
-  const updateProfile = async (name: string) => {
-    try {
-      const response = await userAPI.setName(name);
-      const updatedUser = { ...user, ...response.data, name };
-      await login(updatedUser);
-    } catch (error) {
-      console.error('Failed to update profile', error);
-      throw error;
-    }
-  };
+  // User is authenticated if they have a token AND a name
+  const isAuthenticated = !!user && !!user.token && !!user.name;
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      isAuthenticated: !!user && !!user.token && !!user.name,
+      isAuthenticated,
       login, 
       logout, 
       updateUser, 
-      requestOTP,
-      verifyOTP,
-      updateProfile,
       isLoading,
       redirectData,
-      setRedirectData 
+      setRedirectData
     }}>
       {children}
     </AuthContext.Provider>

@@ -10,9 +10,9 @@ module.exports = {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/hy_logo.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#1E1B4B"
     },
     ios: {
       supportsTablet: true,
@@ -32,8 +32,8 @@ module.exports = {
     android: {
       package: "com.hitendras940.TurfBookingApp",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        foregroundImage: "./assets/hy_logo.png",
+        backgroundColor: "#1E1B4B"
       },
       config: {
         googleMaps: {
