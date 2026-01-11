@@ -111,13 +111,6 @@ export const serviceAPI = {
   getSlotStatus: (serviceId: number, date: string) => Promise.resolve({ data: {} } as any),
 };
 
-// Admin APIs
-export const adminAPI = {
-  getAdminBookings: (page: number = 0, size: number = 10) => api.get('/admin/bookings', { params: { page, size } }),
-  getAdminStats: () => api.get('/admin/stats'),
-  getServiceBookings: (serviceId: number, date: string) => api.get(`/admin/services/${serviceId}/bookings`, { params: { date } }),
-  getAllBookings: () => api.get('/admin/bookings/all'),
-};
 
 // Booking APIs
 export const bookingAPI = {
@@ -156,5 +149,4 @@ export default {
   service: serviceAPI,
   location: locationAPI,
   booking: bookingAPI,
-  admin: adminAPI,
 };

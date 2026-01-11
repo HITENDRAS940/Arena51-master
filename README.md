@@ -34,21 +34,6 @@ A comprehensive mobile application for booking sports turfs with advanced featur
 - ✅ **User Profile**: Profile management with theme preferences
 - ✅ **Theme System**: 4 professional themes (Blue, Green, Purple, Orange)
 
-### 🛠️ Admin Features
-- ✅ **Comprehensive Dashboard**: Statistics overview with total bookings, revenue, and active turfs
-- ✅ **Advanced Turf Management**:
-  - Complete CRUD operations for turfs
-  - Image upload and management
-  - Pricing and availability management
-  - Slot-specific pricing configuration
-  - Skip to slots feature for quick slot management
-- ✅ **Complete Booking Management**:
-  - View all bookings with enhanced filtering (All, Confirmed, Pending, Cancelled, Completed)
-  - Detailed booking cards with customer information
-  - Reference number tracking and slot breakdown
-  - Individual slot pricing display
-- ✅ **Slot Management**: 24-hour slot availability with individual pricing control
-- ✅ **Clean UI**: Tab headers removed for seamless navigation experience
 
 ## Tech Stack
 
@@ -114,8 +99,7 @@ TurfBookingApp/
     ├── navigation/         # Navigation configuration
     │   ├── AppNavigator.tsx      # Main app navigation logic
     │   ├── AuthNavigator.tsx     # Authentication flow
-    │   ├── UserNavigator.tsx     # User bottom tab navigation
-    │   └── AdminNavigator.tsx    # Admin navigation with tab headers removed
+    │   └── UserNavigator.tsx     # User bottom tab navigation
     ├── screens/            # Application screens
     │   ├── auth/
     │   │   ├── PhoneEntryScreen.tsx      # Phone number entry with validation
@@ -127,11 +111,6 @@ TurfBookingApp/
     │   │   ├── MyBookingsScreen.tsx      # Complete booking management
     │   │   ├── BookingSummaryScreen.tsx  # Booking confirmation with payment
     │   │   └── ProfileScreen.tsx         # User profile with theme selection
-    │   └── admin/
-    │       ├── DashboardScreen.tsx       # Admin dashboard with statistics
-    │       ├── TurfManagementScreen.tsx  # Complete turf CRUD operations
-    │       ├── AllBookingsScreen.tsx     # Enhanced booking management
-    │       └── AdminMoreScreen.tsx       # Additional admin features
     ├── components/         # Reusable UI components
     │   ├── shared/
     │   │   ├── Button.tsx               # Enhanced button with animations
@@ -144,9 +123,6 @@ TurfBookingApp/
     │   │   ├── TimeSlotCard.tsx         # Interactive time slot selection
     │   │   ├── CustomCalendar.tsx       # Advanced calendar with restrictions
     │   │   └── BookingCard.tsx          # Booking display cards
-    │   └── admin/
-    │       ├── AdminTurfCard.tsx        # Admin turf management cards
-    │       └── StatCard.tsx             # Dashboard statistics cards
     ├── services/           # API and external services
     │   └── api.ts                       # Comprehensive API client with all endpoints
     ├── contexts/           # React Context providers
@@ -176,7 +152,6 @@ http://turfbackend-env.eba-yrja2qmi.ap-south-1.elasticbeanstalk.com
 - **Turfs**: `/turfs`, `/turfs/{id}`, `/turfs/{id}/lowest-price`
 - **Slot Availability**: `/turf-slots/{turfId}/availability?date={date}`
 - **User Bookings**: `/user/bookings` (GET, POST, DELETE)
-- **Admin Operations**: `/admin/turfs`, `/admin/bookings`, `/admin/dashboard`
 
 ### Features:
 - **Real-time Data**: Live slot availability and pricing
@@ -277,12 +252,6 @@ You can change the API base URL in `src/constants/config.ts`.
 - [ ] Payment simulation flow
 - [ ] Booking confirmation and reference generation
 
-#### Admin Management
-- [ ] Dashboard statistics display
-- [ ] Turf creation with image upload
-- [ ] Slot pricing management
-- [ ] Booking overview with filtering
-- [ ] Theme switching across admin panels
 
 #### Cross-Platform Testing
 - [ ] Test on iOS devices (iPhone 12+)
