@@ -15,8 +15,10 @@ import {
   Text,
   ActivityIndicator,
   InteractionManager,
+  Dimensions,
+  Platform,
 } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,11 +33,10 @@ import ServiceImageGallery from '../../components/user/service-details/ServiceIm
 import ServiceInfo from '../../components/user/service-details/ServiceInfo';
 import ServiceBookingSection from '../../components/user/service-details/ServiceBookingSection';
 import ServiceDetailSkeleton from '../../components/user/service-details/ServiceDetailSkeleton';
-import BookingSummarySheet from '../../components/user/service-details/BookingSummarySheet';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateUUID } from '../../utils/helpers';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
-import RazorpayService from '../../services/RazorpayService';
+import { useAlert } from '../../components/shared/CustomAlert';
 
 const styles = StyleSheet.create({
   container: {
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
 const ServiceDetailScreen = ({ route, navigation }: any) => {
   const { serviceId } = route.params;
   const { user, setRedirectData } = useAuth();
+  const { showAlert } = useAlert();
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [minPrice, setMinPrice] = useState<number | null>(null);
@@ -354,7 +356,11 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       const response = await serviceAPI.getServiceById(serviceId);
       setService(response.data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch service details');
+      showAlert({
+        title: 'Error',
+        message: 'Failed to fetch service details',
+        type: 'error',
+      });
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -447,7 +453,11 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
   const toggleSlotSelection = (slot: EphemeralSlot) => {
     if (!slot.available) {
-      Alert.alert('Slot Unavailable', 'This time slot is no longer available');
+      showAlert({
+        title: 'Slot Unavailable',
+        message: 'This time slot is no longer available',
+        type: 'warning',
+      });
       return;
     }
 
@@ -470,7 +480,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     setIdempotencyKey(null);
   };
 
-  const [showConfirmation, setShowConfirmation] = useState(false);
+
 
   // Derived state for booking summary
   const selectedSlotsList = React.useMemo(() => {
@@ -497,10 +507,11 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         }
       };
 
-      Alert.alert(
-        'Login Required',
-        'Please login to continue with your booking.',
-        [
+      showAlert({
+        title: 'Login Required',
+        message: 'Please login to continue with your booking.',
+        type: 'info',
+        buttons: [
           { text: 'Cancel', style: 'cancel' },
           { 
             text: 'Login', 
@@ -509,13 +520,17 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               params: { redirectTo: redirectInfo }
             }) 
           }
-        ]
-      );
+        ],
+      });
       return;
     }
 
     if (selectedSlotKeys.length === 0 || !idempotencyKey) {
-      Alert.alert('No Slots Selected', 'Please select at least one time slot');
+      showAlert({
+        title: 'No Slots Selected',
+        message: 'Please select at least one time slot',
+        type: 'warning',
+      });
       return;
     }
 
@@ -538,66 +553,52 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
       if (bookingData.status === 'PARTIAL_AVAILABLE') {
         setBookingLoading(false);
-        Alert.alert(
-          'Split Booking Required',
-          'A single ground is not available for the entire duration. Do you want to book separate grounds for these slots?',
-          [
+        showAlert({
+          title: 'Split Booking Required',
+          message: 'A single ground is not available for the entire duration. Do you want to book separate grounds for these slots?',
+          type: 'info',
+          buttons: [
             { text: 'No', style: 'cancel' },
             { 
               text: 'Yes, Book Split', 
               onPress: () => handlePreBooking(true) 
             }
-          ]
-        );
+          ],
+        });
         return;
       }
 
       if (bookingData.status === 'FAILED') {
         setBookingLoading(false);
-        Alert.alert('Booking Failed', bookingData.message || 'The selected slots are no longer available.');
+        showAlert({
+          title: 'Booking Failed',
+          message: bookingData.message || 'The selected slots are no longer available.',
+          type: 'error',
+        });
         fetchAvailableSlots();
         return;
       }
 
-      // Success or Payment Pending - Show summary sheet
-      setPreBookingData(bookingData);
-      setShowConfirmation(true);
+      // Success or Payment Pending - Navigate to booking summary screen
+      setBookingLoading(false);
+      navigation.navigate('BookingSummary', { 
+        bookingData, 
+        service: service! 
+      });
     } catch (error: any) {
       const message = error.response?.data?.message || 'The selected slot might no longer be available.';
-      Alert.alert('Booking Failed', message, [{ text: 'Refresh Slots', onPress: fetchAvailableSlots }]);
+      showAlert({
+        title: 'Booking Failed',
+        message: message,
+        type: 'error',
+        buttons: [{ text: 'Refresh Slots', onPress: fetchAvailableSlots }],
+      });
     } finally {
       setBookingLoading(false);
     }
   };
 
-  const handleFinalBooking = useCallback(async () => {
-    if (!preBookingData) return;
-    
-    try {
-      setBookingLoading(true);
-      
-      // Step 2: Create the Razorpay Order
-      console.log('Summary confirmed, creating Razorpay order for booking:', preBookingData.id);
-      const orderResponse = await razorpayAPI.createOrder(preBookingData.id);
-      const orderData = orderResponse.data;
-      
-      setBookingLoading(false);
-      setShowConfirmation(false);
-      
-      // Step 2: Immediately navigate to Processing Screen
-      // We pass orderData so the Processing screen can trigger the checkout modal
-      console.log('Order created, navigating to PaymentLauncher screen to trigger checkout...');
-      navigation.replace('PaymentLauncher', { 
-        bookingId: preBookingData.id,
-        orderData: orderData,
-      });
 
-    } catch (error: any) {
-      console.error('Failed to create order:', error);
-      setBookingLoading(false);
-      Alert.alert('Error', error.response?.data?.message || error.message || 'Could not initiate payment. Please try again.');
-    }
-  }, [preBookingData, navigation]);
 
   const handleBookNow = useCallback(() => {
     // Stage 1: Clear selection
@@ -758,20 +759,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               />
             )}
           </Animated.View>
-
-
-          <BookingSummarySheet
-            visible={showConfirmation}
-            onClose={() => setShowConfirmation(false)}
-            onConfirm={handleFinalBooking}
-            serviceName={service.name}
-            date={selectedDate}
-            selectedSlots={selectedSlotsList}
-            totalPrice={selectedSlotPrice}
-            loading={bookingLoading}
-            bookingData={preBookingData}
-          />
-
         </Animated.View>
       </Animated.ScrollView>
 

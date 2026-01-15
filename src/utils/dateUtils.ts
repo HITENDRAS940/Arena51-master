@@ -175,7 +175,6 @@ export const formatToTwelveHour = (time24: string): string => {
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   } catch (error) {
-    console.warn('Error formatting time:', time24);
     return time24;
   }
 };

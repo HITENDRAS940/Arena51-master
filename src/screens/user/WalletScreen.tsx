@@ -46,7 +46,7 @@ const WalletScreen = () => {
       setBalance(balanceRes.data.balance);
       setTransactions(transactionsRes.data.content);
     } catch (error) {
-      console.error('Error fetching wallet data:', error);
+      // Silent error handling for UI
     } finally {
       setLoading(false);
       setRefreshing(false);

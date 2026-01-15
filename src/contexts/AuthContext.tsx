@@ -52,13 +52,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             parsedUser.name = decoded.name;
           }
         } catch (e) {
-          console.error('Error decoding token:', e);
+
         }
 
         setUser({ ...parsedUser, token });
       }
     } catch (error) {
-      console.error('Failed to load user from storage', error);
+
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             userData.name = decoded.name;
           }
         } catch (e) {
-          console.error('Error decoding token during login:', e);
+
         }
       }
 
@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await AsyncStorage.setItem('token', userData.token);
       setUser(userData);
     } catch (error) {
-      console.error('Failed to save user to storage', error);
+
       throw error;
     }
   };
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setRedirectData(null);
     } catch (error) {
-      console.error('Failed to logout', error);
+
     }
   };
 
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       setUser(userData);
     } catch (error) {
-      console.error('Failed to update user', error);
+
       throw error;
     }
   };

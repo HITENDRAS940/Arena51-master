@@ -46,7 +46,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log('🔄 Starting Google Sign-In...');
+
       onAuthStart?.();
       setGoogleLoading(true);
 
@@ -58,20 +58,20 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       
       if (response.type === 'success') {
         const { idToken, user } = response.data;
-        console.log('✅ Google Sign-In successful, ID Token obtained');
+
 
         if (!idToken) {
           throw new Error('Failed to get Google ID token');
         }
 
         // Send to backend
-        console.log('🔄 Authenticating with backend...');
+
         const apiResponse = await authAPI.oauthLogin({ 
           idToken, 
           provider: 'GOOGLE',
           fullName: user.name || undefined
         });
-        console.log('✅ Backend authentication successful');
+
         const { token, email, name, newUser } = apiResponse.data;
 
         // Decode JWT for user info
@@ -93,10 +93,10 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
         onAuthSuccess?.(userData);
       } else {
         // Handle cancellation (type === 'cancelled' or others)
-        console.log('ℹ️ Google Sign-In cancelled or other status:', response.type);
+
       }
     } catch (error: any) {
-      console.error('❌ Google Sign-In Error:', error);
+
       // Handle specific Google Sign-In errors (though most are now in response.type)
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         return;
@@ -114,7 +114,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
 
   const handleAppleSignIn = async () => {
     try {
-      console.log('🔄 Starting Apple Sign-In...');
+
       onAuthStart?.();
       setAppleLoading(true);
 
@@ -126,14 +126,14 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       });
 
       const idToken = credential.identityToken;
-      console.log('✅ Apple Sign-In successful, ID Token obtained');
+
 
       if (!idToken) {
         throw new Error('Failed to get Apple ID token');
       }
 
       // Send to backend
-      console.log('🔄 Authenticating with backend...');
+
       const fullName = credential.fullName?.givenName 
         ? `${credential.fullName.givenName} ${credential.fullName.familyName || ''}`.trim()
         : undefined;
@@ -143,7 +143,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
         provider: 'APPLE',
         fullName
       });
-      console.log('✅ Backend authentication successful');
+
       const { token, email, name, newUser } = response.data;
 
       // Decode JWT for user info
@@ -170,7 +170,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       await login(userData);
       onAuthSuccess?.(userData);
     } catch (error: any) {
-      console.error('❌ Apple Sign-In Error:', error);
+
       if (error.code === 'ERR_REQUEST_CANCELED') {
         // User cancelled - silently ignore
         return;

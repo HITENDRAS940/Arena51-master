@@ -51,20 +51,13 @@ api.interceptors.response.use(
           });
         }
       } else {
-        console.warn(`🔑 Session error (${status}), performing smart logout...`);
+
         await AsyncStorage.multiRemove(['token', 'user']);
         if (logoutCallback) logoutCallback();
       }
     }
 
-    // Log other real errors
-    console.error('🌐 API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: status,
-      data: error.response?.data,
-      message: error.message
-    });
+
 
     return Promise.reject(error);
   }

@@ -16,6 +16,7 @@ import {
 } from '@expo-google-fonts/inter';
 
 import AnimatedSplashScreen from './src/components/shared/AnimatedSplashScreen';
+import { AlertProvider } from './src/components/shared/CustomAlert';
 
 // Keep the splash screen visible while we fetch resources
 preventAutoHideAsync();
@@ -59,6 +60,7 @@ const AppContent = () => {
         <AnimatedSplashScreen onAnimationComplete={onSplashFinished} />
       ) : (
         <NavigationContainer>
+
           <AppNavigator />
         </NavigationContainer>
       )}
@@ -72,7 +74,9 @@ export default function App() {
       <ThemeProvider>
         <LocationProvider>
           <AuthProvider>
-            <AppContent />
+            <AlertProvider>
+              <AppContent />
+            </AlertProvider>
           </AuthProvider>
         </LocationProvider>
       </ThemeProvider>

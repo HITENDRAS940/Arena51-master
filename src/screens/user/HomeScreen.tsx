@@ -127,7 +127,7 @@ const HomeScreen = ({ navigation }: any) => {
         const response = await serviceAPI.getActivities();
         setActivities(response.data);
     } catch (error) {
-        console.error("Failed to fetch activities", error);
+        // Silent error handling for UI
     } finally {
         setLoading(false);
         setRefreshing(false);

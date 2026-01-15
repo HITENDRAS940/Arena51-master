@@ -63,7 +63,7 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       setCities(cityList);
       setFilteredCities(cityList);
     } catch (error) {
-      console.error('Error fetching cities:', error);
+      // Silent error handling for UI
     } finally {
       setLoading(false);
     }

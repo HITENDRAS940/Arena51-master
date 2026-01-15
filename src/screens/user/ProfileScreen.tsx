@@ -28,7 +28,9 @@ import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { formatCurrency } from '../../utils/helpers';
 import { useIsFocused } from '@react-navigation/native';
 import ProfileIcon from '../../components/shared/icons/ProfileIcon';
+import LogoutIcon from '../../components/shared/icons/LogoutIcon';
 import DraggableModal from '../../components/shared/DraggableModal';
+import { useAlert } from '../../components/shared/CustomAlert';
 
 const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateUser, setRedirectData } = useAuth();
@@ -55,11 +57,14 @@ const ProfileScreen = ({ navigation }: any) => {
     extrapolate: 'clamp',
   });
 
+  const { showAlert } = useAlert();
+
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
+    showAlert({
+      title: 'Logout',
+      message: 'Are you sure you want to logout?',
+      type: 'warning',
+      buttons: [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Logout',
@@ -68,12 +73,16 @@ const ProfileScreen = ({ navigation }: any) => {
             try {
               await logout();
             } catch (error) {
-              Alert.alert('Error', 'Failed to logout');
+              showAlert({
+                title: 'Error',
+                message: 'Failed to logout',
+                type: 'error',
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const fetchWalletBalance = async () => {
@@ -85,7 +94,7 @@ const ProfileScreen = ({ navigation }: any) => {
       setWalletBalance(balance);
       await updateUser({ ...user, walletBalance: balance });
     } catch (error) {
-      console.error('Failed to fetch wallet balance:', error);
+
     } finally {
       setIsWalletLoading(false);
     }
@@ -113,7 +122,7 @@ const ProfileScreen = ({ navigation }: any) => {
       setIsEditingName(false);
       Alert.alert('Success', 'Name updated successfully');
     } catch (error) {
-      console.error('Failed to update name:', error);
+
       Alert.alert('Error', 'Failed to update name. Please try again.');
     } finally {
       setIsSavingName(false);
@@ -201,12 +210,12 @@ const ProfileScreen = ({ navigation }: any) => {
   const renderMenuItem = (item: any) => (
     <TouchableOpacity
       key={item.title}
-      style={[styles.menuItemCard, { shadowColor: theme.colors.primary }]}
+      style={[styles.menuItemCard, { shadowColor: '#10B981' }]}
       onPress={item.onPress}
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={[theme.colors.primary, theme.colors.secondary]}
+        colors={['#10B981', '#059669']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.menuItemGradient}
@@ -291,7 +300,7 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={[styles.stickyHeaderContent, { borderBottomWidth: 1, borderBottomColor: theme.colors.border + '20' }]}>
           <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>Profile</Text>
           <TouchableOpacity onPress={handleLogout} style={styles.stickyLogout}>
-            <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
+            <LogoutIcon size={20} color={theme.colors.error} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -319,7 +328,7 @@ const ProfileScreen = ({ navigation }: any) => {
             </View>
             
             <TouchableOpacity onPress={handleLogout} style={[styles.headerLogoutButton, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="log-out-outline" size={24} color={theme.colors.error} />
+              <LogoutIcon size={24} color={theme.colors.error} />
             </TouchableOpacity>
           </View>
 

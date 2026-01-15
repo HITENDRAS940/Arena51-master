@@ -103,7 +103,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       setHasMore(!isLast);
       setPage(pageNo);
     } catch (error) {
-      console.error('Error fetching services:', error);
+
       if (!isLoadMore) {
         setServices([]);
         Alert.alert('Error', 'Failed to fetch services. Please try again.');
@@ -200,7 +200,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
             setServices(response.data as any);
           }
         } catch (error) {
-          console.error('Error refreshing filtered services:', error);
+
         } finally {
           setRefreshing(false);
         }
@@ -278,7 +278,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       setIsFilterActive(true);
       setActiveFilterParams(params);
     } catch (error) {
-      console.error('Error searching services:', error);
+
       Alert.alert('Error', 'Failed to search services. Please try again.');
     } finally {
       setLoading(false);

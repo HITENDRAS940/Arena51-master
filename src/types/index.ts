@@ -22,8 +22,13 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   UserTabs: undefined;
+  MainTabs: undefined;
+  HomeTab: undefined;
+  AllServices: { city?: string };
   ServiceDetail: { serviceId: number };
-  BookingSummary: { bookingId: string };
+  BookingSummary: { bookingData: DynamicBookingResponse; service: Service };
+  PaymentCheckout: { bookingId: number; amount: number; serviceName: string };
+  PaymentProcessing: { bookingId: number };
   CategoryServices: { activityId: number; activityName: string; city: string; activityCode?: string };
   Wallet: undefined;
 };

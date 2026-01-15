@@ -55,7 +55,6 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
       );
       setSearchResults(response.data);
     } catch (error) {
-      console.error('Search failed:', error);
       setSearchResults([]);
     } finally {
       setSearching(false);

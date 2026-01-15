@@ -85,7 +85,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
         const response = await serviceAPI.getActivities();
         setActivities(response.data);
       } catch (error) {
-        console.error('Error fetching activities:', error);
+        // Silent error handling for UI
       } finally {
         setLoadingActivities(false);
       }

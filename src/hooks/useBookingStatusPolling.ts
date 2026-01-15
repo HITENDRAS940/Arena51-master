@@ -29,12 +29,12 @@ export const useBookingStatusPolling = (bookingId: number) => {
 
         try {
             isFetchingRef.current = true;
-            console.log(`[StatusPolling] Checking booking #${bookingId}...`);
+
 
             const { data } = await bookingAPI.getBookingStatus(bookingId);
 
             if (data.bookingStatus === 'CONFIRMED' || data.isCompleted) {
-                console.log(`[StatusPolling] ✓ Booking #${bookingId} CONFIRMED`);
+
                 setStatus('confirmed');
                 setBookingData(data);
                 isTerminalRef.current = true;
@@ -43,7 +43,7 @@ export const useBookingStatusPolling = (bookingId: number) => {
                     intervalRef.current = null;
                 }
             } else if (data.bookingStatus === 'FAILED' || data.bookingStatus === 'CANCELLED') {
-                console.log(`[StatusPolling] ✗ Booking #${bookingId} ${data.bookingStatus}`);
+
                 setStatus('failed');
                 setBookingData(data);
                 isTerminalRef.current = true;
@@ -55,14 +55,14 @@ export const useBookingStatusPolling = (bookingId: number) => {
             // Still pending? Keep polling (do nothing, interval continues)
         } catch (error: any) {
             // Network errors: log and continue polling (self-healing)
-            console.log(`[StatusPolling] Error for #${bookingId}: ${error.message || 'Unknown'}`);
+
         } finally {
             isFetchingRef.current = false;
         }
     }, [bookingId]);
 
     useEffect(() => {
-        console.log(`[StatusPolling] Starting poll for booking #${bookingId}`);
+
         isTerminalRef.current = false;
 
         // 1. Immediate first check on mount
@@ -72,7 +72,7 @@ export const useBookingStatusPolling = (bookingId: number) => {
         intervalRef.current = setInterval(checkStatus, 3000);
 
         return () => {
-            console.log(`[StatusPolling] Cleanup for booking #${bookingId}`);
+
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;

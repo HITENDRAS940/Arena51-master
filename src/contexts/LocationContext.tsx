@@ -82,7 +82,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 return { city: finalCity, state };
             }
         } catch (error) {
-            // console.error('LocationContext: reverseGeocodeAsync failed', error);
+
         }
         return null;
     };
@@ -146,7 +146,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 }));
             }
         } catch (error) {
-            // console.error('LocationContext: detectLocation failed', error);
+
             setErrorMsg('Failed to get current location');
         } finally {
             setLoading(false);

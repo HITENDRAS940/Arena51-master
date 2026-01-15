@@ -34,7 +34,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
       });
 
       if (url) {
-        Linking.openURL(url).catch(err => console.error('An error occurred', err));
+        Linking.openURL(url);
       }
     } else {
       const query = encodeURIComponent(`${service.name} ${service.location}`);
@@ -44,7 +44,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
       });
 
       if (url) {
-        Linking.openURL(url).catch(err => console.error('An error occurred', err));
+        Linking.openURL(url);
       }
     }
   }, [service.name, service.location, hasValidCoords, lat, lng]);
