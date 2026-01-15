@@ -39,6 +39,20 @@ export interface User {
   walletBalance?: number;
 }
 
+export interface OAuthLoginRequest {
+  idToken: string;
+  provider: 'GOOGLE' | 'APPLE' | string;
+  fullName?: string;
+}
+
+export interface OAuthLoginResponse {
+  token: string;
+  email: string;
+  name: string;
+  provider: string;
+  newUser: boolean;
+}
+
 
 export interface Service {
   id: number;
@@ -219,13 +233,6 @@ export interface DynamicBookingRequest {
   paymentMethod?: string;
 }
 
-export interface UPIDetails {
-  upiId: string;
-  merchantName: string;
-  amount: number;
-  currency: string;
-  transactionRef: string;
-}
 
 export interface DynamicBookingResponse {
   id: number;
@@ -239,7 +246,6 @@ export interface DynamicBookingResponse {
   bookingDate: string;
   createdAt: string;
   amountBreakdown: AmountBreakdown;
-  upiDetails?: UPIDetails;
   bookingType: string;
   message: string;
   childBookings: string[];
@@ -294,8 +300,20 @@ export interface UserBooking {
   serviceId: number;
   reference?: string;
   lockExpiresAt?: string;
-  upiId?: string;
   merchantName?: string;
+}
+
+export interface BookingStatusResponse {
+  bookingId: number;
+  reference: string;
+  bookingStatus: string;
+  paymentStatus: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string | null;
+  paymentInitiatedAt: string;
+  paymentCompletedAt: string | null;
+  message: string;
+  isCompleted: boolean;
 }
 
 // Keep the general/admin Booking interface for now to avoid breaking other screens

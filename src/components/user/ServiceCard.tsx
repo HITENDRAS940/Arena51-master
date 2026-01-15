@@ -178,7 +178,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </View>
           <Text style={[styles.statusText, { color: theme.colors.text }]}>
             {distanceLoading 
-              ? 'Calculating distance...' 
+              ? 'Calculating' 
               : distanceInfo?.formattedDistance || 'Instant Booking'}
           </Text>
         </View>

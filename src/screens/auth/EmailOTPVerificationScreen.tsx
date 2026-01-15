@@ -21,13 +21,13 @@ import { authAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Ionicons } from '@expo/vector-icons';
 import { jwtDecode } from 'jwt-decode';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-const OTPVerificationScreen = ({ route, navigation }: any) => {
-  const { phone, email, redirectTo } = route.params || {};
+const EmailOTPVerificationScreen = ({ route, navigation }: any) => {
+  const { email, redirectTo } = route.params || {};
   const { login } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -85,24 +85,18 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
 
     setLoading(true);
     try {
-      let response;
-      if (email) {
-        response = await authAPI.verifyEmailOTP(email, otp);
-      } else {
-        response = await authAPI.verifyOTP(phone, otp);
-      }
-      const { token, newUser } = response.data;
+      const response = await authAPI.verifyEmailOTP(email, otp);
+      const { token, newUser, name, wallet } = response.data;
 
-      // Decode JWT payload to get user info
+      // Decode JWT for user info
       const payload: any = jwtDecode(token);
       const userId = payload.userId;
-      const name = payload.name;
+      const userName = name || payload.name;
 
       // If 'name' is missing from payload, navigate to SetName screen
-      if (!('name' in payload) || !name) {
+      if (!userName) {
         navigation.replace('SetName', {
           token,
-          phone,
           email,
           userId,
           isNewUser: newUser,
@@ -115,10 +109,12 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
       const userData: User = { 
         id: userId,
         token, 
-        phone: phone || '', 
-        email: email || payload.email || '',
+        phone: payload.phone || '',
         role: 'ROLE_USER',
-        name: name
+        name: userName,
+        email,
+        isNewUser: newUser,
+        walletBalance: wallet?.balance,
       };
 
       await login(userData);
@@ -140,17 +136,21 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
   const handleResendOTP = async () => {
     setResending(true);
     try {
-      if (email) {
-        await authAPI.sendEmailOTP(email);
-      } else {
-        await authAPI.sendOTP(phone);
-      }
-      Alert.alert('OTP Resent', `Check your ${email ? 'email' : 'phone'} for the new code`);
+      await authAPI.sendEmailOTP(email);
+      Alert.alert('OTP Resent', 'Check your email for the new code');
     } catch (error) {
       Alert.alert('Error', 'Failed to resend OTP');
     } finally {
       setResending(false);
     }
+  };
+
+  // Mask email for display (e.g., h***@gmail.com)
+  const maskEmail = (emailStr: string) => {
+    if (!emailStr) return '';
+    const [localPart, domain] = emailStr.split('@');
+    if (localPart.length <= 2) return emailStr;
+    return `${localPart[0]}***@${domain}`;
   };
 
   return (
@@ -182,11 +182,11 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
                 { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
               ]}
             >
-              <Text style={styles.brandName}>Hyper Verification</Text>
-              <Text style={styles.title}>Secure Identity Shield</Text>
+              <Text style={styles.brandName}>Email Verification</Text>
+              <Text style={styles.title}>Check Your Inbox</Text>
               <Text style={styles.subtitle}>
                 We've sent a 6-digit code to{' '}
-                <Text style={styles.phoneText}>{email || phone}</Text>
+                <Text style={styles.emailText}>{maskEmail(email)}</Text>
               </Text>
             </Animated.View>
 
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     lineHeight: 20,
   },
-  phoneText: {
+  emailText: {
     fontWeight: '700',
     color: '#10B981',
   },
@@ -431,4 +431,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OTPVerificationScreen;
+export default EmailOTPVerificationScreen;

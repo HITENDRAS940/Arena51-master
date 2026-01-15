@@ -10,6 +10,7 @@ interface BookingCardProps {
   booking: UserBooking;
   onPress?: () => void;
   onCancel?: () => void;
+  onPay?: () => void;
   showActions?: boolean;
 }
 
@@ -96,6 +97,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
   booking, 
   onPress,
   onCancel,
+  onPay,
   showActions = true 
 }) => {
   const { theme } = useTheme();
@@ -193,18 +195,17 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
               </View>
             ) : <View />}
 
-            {showActions && isBookingCancellable(booking) && (
+            {showActions && booking.status === 'PAYMENT_PENDING' && onPay && (
               <TouchableOpacity
                 style={[
-                  styles.cancelButton, 
+                  styles.payButton, 
                   { 
-                    borderColor: statusTheme.text + '40',
-                    backgroundColor: statusTheme.iconBg
+                    backgroundColor: statusTheme.text,
                   }
                 ]}
-                onPress={onCancel}
+                onPress={onPay}
               >
-                <Text style={[styles.cancelButtonText, { color: statusTheme.text }]}>Cancel</Text>
+                <Text style={[styles.payButtonText, { color: statusTheme.gradient[0] }]}>Pay Now</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -362,6 +363,21 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  payButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  payButtonText: {
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
 });
 

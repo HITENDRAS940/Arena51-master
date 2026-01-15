@@ -107,7 +107,7 @@ const HomeScreen = ({ navigation }: any) => {
   }, [redirectData]);
 
   useEffect(() => {
-     fetchActivities();
+    fetchActivities();
   }, []);
 
   useFocusEffect(
@@ -119,6 +119,7 @@ const HomeScreen = ({ navigation }: any) => {
       }
     }, [user])
   );
+
 
   const fetchActivities = async () => {
     setLoading(true);

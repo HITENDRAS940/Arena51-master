@@ -9,7 +9,8 @@ import ServiceDetailScreen from '../screens/user/ServiceDetailScreen';
 import MyBookingsScreen from '../screens/user/MyBookingsScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import WalletScreen from '../screens/user/WalletScreen';
-import BookingSuccessScreen from '../screens/user/BookingSuccessScreen';
+import PaymentLauncherScreen from '../screens/user/PaymentLauncherScreen';
+import BookingConfirmationLoaderScreen from '../screens/user/BookingConfirmationLoaderScreen';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -88,7 +89,8 @@ const UserNavigator = () => {
       <RootStack.Screen name="AllServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="CategoryServices" component={ServiceExploreScreen} />
       <RootStack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
-      <RootStack.Screen name="BookingSuccess" component={BookingSuccessScreen} />
+      <RootStack.Screen name="PaymentLauncher" component={PaymentLauncherScreen} />
+      <RootStack.Screen name="BookingConfirmationLoader" component={BookingConfirmationLoaderScreen} />
       <RootStack.Screen name="Wallet" component={WalletScreen} />
       </RootStack.Navigator>
     </>

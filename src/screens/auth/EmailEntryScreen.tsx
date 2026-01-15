@@ -23,11 +23,16 @@ import { Ionicons } from '@expo/vector-icons';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
 import BackIcon from '../../components/shared/icons/BackIcon';
 import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
-import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
 
 Dimensions.get('window');
 
-const PhoneEntryScreen = ({ route, navigation }: any) => {
+// Email validation regex
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
+
+const EmailEntryScreen = ({ route, navigation }: any) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -40,11 +45,8 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
-  const inputBorderAnim = useRef(new Animated.Value(0)).current;
-
 
   useEffect(() => {
-
     // Entry animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -82,42 +84,29 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
 
   const handleInputFocus = () => {
     setIsFocused(true);
-    Animated.timing(inputBorderAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
   };
 
   const handleInputBlur = () => {
     setIsFocused(false);
-    Animated.timing(inputBorderAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const validateEmail = (text: string) => {
-    const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w\w+)+$/;
-    return reg.test(text);
   };
 
   const handleSendOTP = async () => {
-    if (!validateEmail(email)) {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!validateEmail(trimmedEmail)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address');
       return;
     }
 
     setLoading(true);
     try {
-      await authAPI.sendEmailOTP(email);
-      navigation.navigate('OTPVerification', { 
-        email,
+      await authAPI.sendEmailOTP(trimmedEmail);
+      navigation.navigate('EmailOTPVerification', { 
+        email: trimmedEmail,
         redirectTo 
       });
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to send OTP');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to send verification code');
     } finally {
       setLoading(false);
     }
@@ -126,7 +115,6 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -140,14 +128,12 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {navigation.canGoBack() && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <BackIcon width={24} height={24} fill={theme.colors.text} />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <BackIcon width={24} height={24} fill={theme.colors.text} />
+          </TouchableOpacity>
 
           <Animated.View
             style={[
@@ -156,10 +142,10 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
             ]}
           >
             <View style={styles.logoContainer}>
-              <HyperIcon size={100} color={theme.colors.primary} />
+              <HyperIcon size={150} color={theme.colors.primary} />
             </View>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Hyper</Text>
-            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Your game. Your venue.</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>Continue with Email</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>We'll send you a verification code</Text>
           </Animated.View>
 
           <Animated.View
@@ -187,8 +173,8 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                 ]}>
                   <Ionicons 
                     name="mail-outline" 
-                    size={20} 
-                    color={isFocused ? theme.colors.primary : theme.colors.textSecondary} 
+                    size={22} 
+                    color={isFocused ? theme.colors.primary : '#9CA3AF'} 
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -226,20 +212,19 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                   )}
                 </TouchableOpacity>
 
-                {/* Social Auth Buttons Integration */}
-                <SocialAuthButtons
-                  onAuthStart={() => setLoading(true)}
-                  onAuthSuccess={() => {
-                    setLoading(false);
-                  }}
-                  onAuthError={(error) => {
-                    setLoading(false);
-                    Alert.alert('Authentication Error', error);
-                  }}
-                />
+                {/* Back to Phone */}
+                <TouchableOpacity
+                  style={styles.switchMethodButton}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Ionicons name="phone-portrait-outline" size={18} color={theme.colors.primary} />
+                  <Text style={[styles.switchMethodText, { color: theme.colors.primary }]}>
+                    Use phone number instead
+                  </Text>
+                </TouchableOpacity>
 
                 <Text style={[styles.termsText, { color: theme.colors.textSecondary }]}>
-                  By continuing, you agree to our{' '}
+                  By tapping "Get Verification Code", you agree to our{' '}
                   <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Terms of Service</Text> and{' '}
                   <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Privacy Policy</Text>
                 </Text>
@@ -288,13 +273,13 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 35,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    marginBottom: 12,
-    borderRadius: 20,
+    width: 100,
+    height: 100,
+    marginBottom: 16,
+    borderRadius: 24,
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
@@ -336,7 +321,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   cardInner: {
-    padding: 20,
+    padding: 24,
   },
   label: {
     fontSize: 12,
@@ -350,11 +335,11 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
+    height: 60,
     borderRadius: 16,
     borderWidth: 1.5,
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
     backgroundColor: '#FFFFFF',
   },
   inputIcon: {
@@ -363,16 +348,16 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#111827',
   },
   mainButton: {
     width: '100%',
-    height: 54,
-    borderRadius: 14,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#1E1B4B',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -389,18 +374,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginRight: 8,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  emailButton: {
+  switchMethodButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    paddingVertical: 12,
-    gap: 8,
+    marginBottom: 20,
+    gap: 6,
   },
-  emailButtonText: {
+  switchMethodText: {
     fontSize: 14,
     fontWeight: '600',
   },
@@ -428,4 +409,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PhoneEntryScreen;
+export default EmailEntryScreen;

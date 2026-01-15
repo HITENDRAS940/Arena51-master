@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../constants/config';
-import { EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, PagedWalletTransactions } from '../types';
+import { EphemeralSlotResponse, DynamicBookingRequest, DynamicBookingResponse, UserBooking, ServiceSearchDto, PagedWalletTransactions, OAuthLoginRequest, OAuthLoginResponse, BookingStatusResponse } from '../types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -72,8 +72,19 @@ api.interceptors.response.use(
 
 // Auth APIs
 export const authAPI = {
+  // Phone OTP (existing)
   sendOTP: (phone: string) => api.post('/auth/request-otp', { phone }),
   verifyOTP: (phone: string, otp: string) => api.post('/auth/verify-otp', { phone, otp }),
+
+  // Email OTP (new)
+  sendEmailOTP: (email: string) => api.post('/auth/request-email-otp', { email }),
+  verifyEmailOTP: (email: string, otp: string) => api.post('/auth/verify-email-otp', { email, otp }),
+
+  // OAuth (new)
+  oauthLogin: (data: OAuthLoginRequest) =>
+    api.post<OAuthLoginResponse>('/auth/oauth/login', data),
+
+  // Phone Linking (new) - for post-OAuth phone verification
 };
 
 // User APIs
@@ -119,12 +130,27 @@ export const bookingAPI = {
   getLastBooking: () => api.get<UserBooking>('/user/bookings/last'),
   cancelBooking: (id: number) => Promise.resolve({ data: {} }),
   cancelBookingByReference: (reference: string) => api.post(`/api/slots/cancel/${reference}`),
+  getBookingStatus: (id: number) => api.get<BookingStatusResponse>(`/api/razorpay/booking-status/${id}`),
+  getPendingBookings: () => api.get<UserBooking[]>('/user/bookings', { params: { status: 'AWAITING_CONFIRMATION' } }),
 };
 
 // Wallet APIs
 export const walletAPI = {
   getBalance: () => api.get('api/wallet/balance'),
   getTransactions: () => api.get<PagedWalletTransactions>('api/wallet/transactions'),
+};
+
+// Razorpay APIs
+export const razorpayAPI = {
+  createOrder: (bookingId: number) => api.post(`/api/razorpay/create-order/${bookingId}`),
+  verifyPayment: (data: {
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    bookingId: number;
+  }) => api.post('/api/razorpay/verify-payment', data),
+  getPaymentDetails: (paymentId: string) => api.get(`/api/razorpay/payment/${paymentId}`),
+  getOrderDetails: (orderId: string) => api.get(`/api/razorpay/order/${orderId}`),
 };
 
 // Location APIs
@@ -149,4 +175,5 @@ export default {
   service: serviceAPI,
   location: locationAPI,
   booking: bookingAPI,
+  razorpay: razorpayAPI,
 };

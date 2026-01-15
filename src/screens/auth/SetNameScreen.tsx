@@ -27,7 +27,7 @@ import { User } from '../../types';
 Dimensions.get('window');
 
 const SetNameScreen = ({ route, navigation }: any) => {
-  const { token, userId, phone, isNewUser, redirectTo } = route.params || {};
+  const { token, userId, phone, email, isNewUser, redirectTo } = route.params || {};
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -123,7 +123,8 @@ const SetNameScreen = ({ route, navigation }: any) => {
       const userData: User = {
         id: userId,
         token: token,
-        phone: phone,
+        phone: phone || '',
+        email: email || '',
         role: 'ROLE_USER',
         name: trimmedName,
       };

@@ -21,6 +21,7 @@ import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { BookingSkeletonCard } from '../../components/shared/Skeletons';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
+import RazorpayService from '../../services/RazorpayService';
 
 const MyBookingsScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
@@ -180,6 +181,19 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         booking={item}
         onPress={() => handleBookingPress(item)}
         onCancel={() => handleCancelBooking(item)}
+        onPay={async () => {
+          try {
+            const result = await RazorpayService.initiatePayment(item.id, item);
+            if (result.status === 'SUCCESS') {
+              fetchBookings();
+              Alert.alert('Payment Successful!', 'Your booking is now confirmed.');
+            }
+          } catch (error: any) {
+            if (!error.message.includes('cancelled')) {
+              Alert.alert('Payment Failed', error.message);
+            }
+          }
+        }}
         showActions={true}
       />
     );

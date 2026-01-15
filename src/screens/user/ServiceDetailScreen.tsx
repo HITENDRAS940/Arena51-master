@@ -2,7 +2,7 @@
  * ServiceDetailScreen - Enhanced with sliding image animation
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import {
   View,
@@ -14,13 +14,13 @@ import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
-  AppState,
+  InteractionManager,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { bookingAPI, serviceAPI } from '../../services/api';
+import { bookingAPI, serviceAPI, razorpayAPI } from '../../services/api';
 import { Service, EphemeralSlot, Activity, DynamicBookingRequest, DynamicBookingResponse, Resource } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { format } from 'date-fns';
@@ -32,10 +32,10 @@ import ServiceInfo from '../../components/user/service-details/ServiceInfo';
 import ServiceBookingSection from '../../components/user/service-details/ServiceBookingSection';
 import ServiceDetailSkeleton from '../../components/user/service-details/ServiceDetailSkeleton';
 import BookingSummarySheet from '../../components/user/service-details/BookingSummarySheet';
-import UPIPaymentModal from '../../components/user/service-details/UPIPaymentModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateUUID } from '../../utils/helpers';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
+import RazorpayService from '../../services/RazorpayService';
 
 const styles = StyleSheet.create({
   container: {
@@ -188,43 +188,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  resumeBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: scale(16),
-    borderRadius: moderateScale(16),
-    marginTop: verticalScale(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  resumeTitle: {
-    color: '#FFF',
-    fontSize: moderateScale(15),
-    fontWeight: '800',
-  },
-  resumeSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: moderateScale(12),
-    marginTop: 2,
-  },
-  resumeAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(10),
-  },
-  resumeActionText: {
-    color: '#FFF',
-    fontSize: moderateScale(12),
-    fontWeight: '700',
-    marginRight: 4,
-  },
 });
 
 const ServiceDetailScreen = ({ route, navigation }: any) => {
@@ -250,10 +213,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [preBookingData, setPreBookingData] = useState<DynamicBookingResponse | null>(null);
   
-  // UPI Payment State
-  const [pendingBooking, setPendingBooking] = useState<any>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // Refs
   const scrollViewRef = React.useRef<any>(null);
@@ -266,6 +227,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const entranceAnim = React.useRef(new Animated.Value(0)).current;
   const bookingEntranceAnim = React.useRef(new Animated.Value(0)).current;
   const footerCrossfadeAnim = React.useRef(new Animated.Value(0)).current; // 0 for detail, 1 for booking
+  
 
   // Sticky Header Animations
   const headerOpacity = scrollY.interpolate({
@@ -294,7 +256,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
   useEffect(() => {
     fetchServiceDetails();
-    checkPendingBooking();
     
     // Entrance Animation
     Animated.timing(entranceAnim, {
@@ -302,42 +263,12 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       duration: 800,
       useNativeDriver: true,
     }).start();
+
+    return () => {
+    };
   }, []);
 
-  // Refresh status on App Foreground
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        checkPendingBooking();
-      }
-    });
 
-    return () => subscription.remove();
-  }, []);
-
-  const checkPendingBooking = async () => {
-    try {
-      const response = await bookingAPI.getLastBooking();
-      const booking = response.data;
-      
-      if (booking && booking.status === 'PAYMENT_PENDING') {
-        // Check if lock is still valid
-        const expires = new Date(booking.lockExpiresAt!).getTime();
-        const now = new Date().getTime();
-        
-        if (expires > now) {
-          setPendingBooking(booking);
-        } else {
-          setPendingBooking(null);
-        }
-      } else {
-        setPendingBooking(null);
-      }
-    } catch (error) {
-      // Error checking pending booking silently
-
-    }
-  };
 
   React.useLayoutEffect(() => {
     navigation.getParent()?.setOptions({
@@ -553,7 +484,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   //   }
   // }, [route.params?.restoredBooking]);
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
      // Check if user is logged in
     if (!user) {
       const redirectInfo = { 
@@ -562,7 +493,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           screen: 'ServiceDetail',
           params: { 
             serviceId,
-            // restoredBooking removed: User must re-select slots
           }
         }
       };
@@ -589,81 +519,85 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       return;
     }
 
-    // Show confirmation sheet instead of immediate booking
-    setShowConfirmation(true);
+    // Trigger pre-booking before showing summary
+    await handlePreBooking();
   };
 
-  const handleFinalBooking = async () => {
-    const performBooking = async (allowSplit: boolean = false) => {
-      const bookingRequest: DynamicBookingRequest = {
-        slotKeys: selectedSlotKeys,
-        idempotencyKey: idempotencyKey!, // Safe assertion as checked before opening sheet
-        allowSplit,
-        paymentMethod: 'MANUAL_UPI',
-      };
-
-      try {
-        setBookingLoading(true);
-        const response = await bookingAPI.createBooking(bookingRequest);
-        const bookingData = response.data;
-
-        // Close confirmation sheet on success (or partial)
-        setShowConfirmation(false);
-
-        if (bookingData.status === 'PARTIAL_AVAILABLE') {
-          setBookingLoading(false);
-          Alert.alert(
-            'Split Booking Required',
-            'A single ground is not available for the entire duration. Do you want to book separate grounds for these slots?',
-            [
-              { text: 'No', style: 'cancel' },
-              { 
-                text: 'Yes, Book Split', 
-                onPress: () => performBooking(true) 
-              }
-            ]
-          );
-          return;
-        }
-
-        // Handle failure status from backend
-        if (bookingData.status === 'FAILED') {
-          Alert.alert('Booking Failed', bookingData.message || 'The selected slots are no longer available. Please pick another ones.');
-          fetchAvailableSlots();
-          return;
-        }
-
-        // Confirm booking directly and redirect
-        if (bookingData.status === 'PAYMENT_PENDING') {
-          setBookingLoading(false);
-          setShowConfirmation(false);
-          setPendingBooking(bookingData);
-          setShowPaymentModal(true);
-          return;
-        }
-        
-        navigation.navigate('BookingSuccess');
-
-      } catch (error: any) {
-        setShowConfirmation(false);
-        // Handle booking failure by refreshing slot list
-        let message = 'The selected slot might no longer be available. Please pick another one.';
-        if (error.response?.data?.message) {
-          message = error.response.data.message;
-        }
-
-        Alert.alert(
-          'Booking Failed', 
-          message,
-          [{ text: 'Refresh Slots', onPress: fetchAvailableSlots }]
-        );
-      } finally {
-        setBookingLoading(false);
-      }
+  const handlePreBooking = async (allowSplit: boolean = false) => {
+    const bookingRequest: DynamicBookingRequest = {
+      slotKeys: selectedSlotKeys,
+      idempotencyKey: idempotencyKey!,
+      allowSplit,
+      paymentMethod: 'RAZORPAY',
     };
 
-    performBooking();
+    try {
+      setBookingLoading(true);
+      const response = await bookingAPI.createBooking(bookingRequest);
+      const bookingData = response.data;
+
+      if (bookingData.status === 'PARTIAL_AVAILABLE') {
+        setBookingLoading(false);
+        Alert.alert(
+          'Split Booking Required',
+          'A single ground is not available for the entire duration. Do you want to book separate grounds for these slots?',
+          [
+            { text: 'No', style: 'cancel' },
+            { 
+              text: 'Yes, Book Split', 
+              onPress: () => handlePreBooking(true) 
+            }
+          ]
+        );
+        return;
+      }
+
+      if (bookingData.status === 'FAILED') {
+        setBookingLoading(false);
+        Alert.alert('Booking Failed', bookingData.message || 'The selected slots are no longer available.');
+        fetchAvailableSlots();
+        return;
+      }
+
+      // Success or Payment Pending - Show summary sheet
+      setPreBookingData(bookingData);
+      setShowConfirmation(true);
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'The selected slot might no longer be available.';
+      Alert.alert('Booking Failed', message, [{ text: 'Refresh Slots', onPress: fetchAvailableSlots }]);
+    } finally {
+      setBookingLoading(false);
+    }
   };
+
+  const handleFinalBooking = useCallback(async () => {
+    if (!preBookingData) return;
+    
+    try {
+      setBookingLoading(true);
+      
+      // Step 2: Create the Razorpay Order
+      console.log('Summary confirmed, creating Razorpay order for booking:', preBookingData.id);
+      const orderResponse = await razorpayAPI.createOrder(preBookingData.id);
+      const orderData = orderResponse.data;
+      
+      setBookingLoading(false);
+      setShowConfirmation(false);
+      
+      // Step 2: Immediately navigate to Processing Screen
+      // We pass orderData so the Processing screen can trigger the checkout modal
+      console.log('Order created, navigating to PaymentLauncher screen to trigger checkout...');
+      navigation.replace('PaymentLauncher', { 
+        bookingId: preBookingData.id,
+        orderData: orderData,
+      });
+
+    } catch (error: any) {
+      console.error('Failed to create order:', error);
+      setBookingLoading(false);
+      Alert.alert('Error', error.response?.data?.message || error.message || 'Could not initiate payment. Please try again.');
+    }
+  }, [preBookingData, navigation]);
 
   const handleBookNow = useCallback(() => {
     // Stage 1: Clear selection
@@ -825,21 +759,6 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
             )}
           </Animated.View>
 
-          {pendingBooking && (
-            <TouchableOpacity 
-              style={[styles.resumeBanner, { backgroundColor: theme.colors.primary }]}
-              onPress={() => setShowPaymentModal(true)}
-            >
-              <View>
-                <Text style={styles.resumeTitle}>Payment Initiated.</Text>
-                <Text style={styles.resumeSubtitle}>Complete your booking to secure the slot.</Text>
-              </View>
-              <View style={styles.resumeAction}>
-                <Text style={styles.resumeActionText}>Complete</Text>
-                <Ionicons name="chevron-forward" size={16} color="#FFF" />
-              </View>
-            </TouchableOpacity>
-          )}
 
           <BookingSummarySheet
             visible={showConfirmation}
@@ -850,24 +769,9 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
             selectedSlots={selectedSlotsList}
             totalPrice={selectedSlotPrice}
             loading={bookingLoading}
+            bookingData={preBookingData}
           />
 
-          {pendingBooking && (
-            <UPIPaymentModal
-              visible={showPaymentModal}
-              onClose={() => setShowPaymentModal(false)}
-              onConfimPayment={() => {
-                setShowPaymentModal(false);
-                Alert.alert('Payment Recorded', 'Your payment is being verified. You can check the status in My Bookings.');
-                checkPendingBooking();
-              }}
-              amount={pendingBooking.upiDetails?.amount || pendingBooking.amountBreakdown?.totalAmount}
-              upiId={pendingBooking.upiDetails?.upiId || 'merchant@upi'}
-              merchantName={pendingBooking.upiDetails?.merchantName || 'Arena 51'}
-              reference={pendingBooking.upiDetails?.transactionRef || pendingBooking.reference || 'BOOKING'}
-              lockExpiresAt={pendingBooking.lockExpiresAt}
-            />
-          )}
         </Animated.View>
       </Animated.ScrollView>
 

@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions, ActivityIndicator, Pressable } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { EphemeralSlot } from '../../../types';
+import { EphemeralSlot, DynamicBookingResponse } from '../../../types';
 import { format } from 'date-fns';
 import DraggableModal from '../../shared/DraggableModal';
 
@@ -17,6 +17,7 @@ interface BookingSummarySheetProps {
   selectedSlots: EphemeralSlot[];
   totalPrice: number;
   loading: boolean;
+  bookingData: DynamicBookingResponse | null;
 }
 
 const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
@@ -28,6 +29,7 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
   selectedSlots,
   totalPrice,
   loading,
+  bookingData,
 }) => {
   const { theme } = useTheme();
 
@@ -35,7 +37,7 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
     <DraggableModal
       visible={visible}
       onClose={onClose}
-      height="65%"
+      height="85%"
       containerStyle={{ backgroundColor: theme.colors.background }}
     >
       <View style={styles.sheet}>
@@ -81,20 +83,85 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
                 </View>
               </View>
             </View>
+
+            <View style={styles.divider} />
+            <View style={styles.summaryItem}>
+              <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+              <View style={styles.summaryText}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>REFERENCE</Text>
+                <Text style={[styles.value, { color: theme.colors.text }]}>
+                  {bookingData?.reference || 'Pending...'}
+                </Text>
+              </View>
+            </View>
+
+            {bookingData?.resourceName && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.summaryItem}>
+                  <Ionicons name="layers-outline" size={20} color={theme.colors.primary} />
+                  <View style={styles.summaryText}>
+                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>COURT/RESOURCE</Text>
+                    <Text style={[styles.value, { color: theme.colors.text }]}>
+                      {bookingData.resourceName}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {bookingData?.message && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.summaryItem}>
+                  <Ionicons name="chatbubble-outline" size={20} color={theme.colors.primary} />
+                  <View style={styles.summaryText}>
+                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>INFO</Text>
+                    <Text style={[styles.value, { color: theme.colors.text, fontSize: 13 }]}>
+                      {bookingData.message}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
 
           {/* Price section */}
           <View style={styles.priceContainer}>
-            <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Total Price</Text>
-            <Text style={[styles.priceValue, { color: theme.colors.text }]}>₹{totalPrice}</Text>
+            {bookingData?.amountBreakdown ? (
+              <View style={styles.breakdownContainer}>
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownLabel, { color: theme.colors.textSecondary }]}>Subtotal</Text>
+                  <Text style={[styles.breakdownValue, { color: theme.colors.text }]}>₹{bookingData.amountBreakdown.slotSubtotal}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownLabel, { color: theme.colors.textSecondary }]}>Platform Fee</Text>
+                  <Text style={[styles.breakdownValue, { color: theme.colors.text }]}>₹{bookingData.amountBreakdown.platformFee}</Text>
+                </View>
+                <View style={styles.breakdownDivider} />
+                <View style={styles.totalRow}>
+                  <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total Amount</Text>
+                  <Text style={[styles.totalValue, { color: theme.colors.primary }]}>₹{bookingData.amountBreakdown.totalAmount}</Text>
+                </View>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Total Price</Text>
+                <Text style={[styles.totalValue, { color: theme.colors.text }]}>₹{totalPrice}</Text>
+              </>
+            )}
           </View>
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: Math.max(24, Platform.OS === 'ios' ? 40 : 24) }]}>
-          <TouchableOpacity
+          <Pressable
             onPress={onConfirm}
             disabled={loading}
-            style={styles.confirmButtonWrapper}
+            style={({ pressed }) => [
+              styles.confirmButtonWrapper,
+              { opacity: (loading || pressed) ? 0.7 : 1 }
+            ]}
+            hitSlop={15}
             >
               <LinearGradient
                 colors={[theme.colors.primary, theme.colors.secondary || theme.colors.primary]}
@@ -105,10 +172,10 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
                 {loading ? (
                   <ActivityIndicator size={24} color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.confirmButtonText}>Confirm Booking</Text>
+                  <Text style={styles.confirmButtonText}>Confirm & Pay</Text>
                 )}
               </LinearGradient>
-            </TouchableOpacity>
+            </Pressable>
         </View>
       </View>
     </DraggableModal>
@@ -174,10 +241,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
   },
-  priceValue: {
+  totalValue: {
     fontSize: 40,
     fontWeight: '800',
     letterSpacing: -1,
+  },
+  breakdownContainer: {
+    width: '100%',
+    paddingVertical: 10,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  breakdownLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  breakdownValue: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  breakdownDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: 12,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: '800',
   },
   footer: {
     padding: 24,
