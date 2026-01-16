@@ -105,11 +105,15 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
   const statusTheme = getStatusTheme(booking.status, theme);
   const cancellable = isBookingCancellable(booking);
 
+  const handlePress = () => {
+    if (onPress) onPress();
+  };
+
   return (
+    <View>
     <TouchableOpacity 
       style={styles.cardContainer} 
-      onPress={onPress}
-      disabled={!onPress}
+      onPress={handlePress}
       activeOpacity={0.9}
     >
       <LinearGradient
@@ -212,6 +216,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
         )}
       </LinearGradient>
     </TouchableOpacity>
+    </View>
   );
 });
 

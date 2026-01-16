@@ -11,9 +11,10 @@ import { Service } from '../../../types';
 
 interface ServiceInfoProps {
   service: Service;
+  showShadow?: boolean;
 }
 
-const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
+const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }) => {
   const { theme } = useTheme();
 
   // ✅ Safely parse coordinates
@@ -98,11 +99,15 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
         entering={FadeInDown.duration(600).delay(200)}
       >
         {renderSectionHeader('About')}
-        <View style={[styles.infoCard, { 
-          backgroundColor: theme.colors.card, 
-          borderColor: theme.colors.border,
-          shadowColor: theme.colors.shadow,
-        }]}>
+        <View style={[
+          styles.infoCard,
+          showShadow && styles.cardShadow,
+          { 
+            backgroundColor: theme.colors.card, 
+            borderColor: theme.colors.border,
+            shadowColor: theme.colors.shadow,
+          }
+        ]}>
           <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
             {service.description || 'Welcome to this premium venue offering top-notch facilities for your favorite sports activities. Book now for an amazing experience.'}
           </Text>
@@ -122,6 +127,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
               entering={FadeInRight.delay(300 + (index * 50)).duration(400)}
                 style={[
                   styles.amenityItem,
+                  showShadow && styles.amenityShadow,
                   {
                     backgroundColor: theme.colors.card,
                     borderColor: theme.colors.border,
@@ -147,10 +153,14 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service }) => {
       >
         {renderSectionHeader('Location')}
         <TouchableOpacity
-          style={[styles.mapCard, { 
-            backgroundColor: theme.colors.card,
-            shadowColor: theme.colors.shadow,
-          }]}
+          style={[
+            styles.mapCard,
+            showShadow && styles.cardShadow,
+            { 
+              backgroundColor: theme.colors.card,
+              shadowColor: theme.colors.shadow,
+            }
+          ]}
           onPress={openInMaps}
           activeOpacity={0.9}
         >
@@ -250,6 +260,8 @@ const styles = StyleSheet.create({
     padding: moderateScale(20),
     borderRadius: moderateScale(24),
     borderWidth: 1,
+  },
+  cardShadow: {
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -274,6 +286,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: scale(10),
     width: '48%',
+  },
+  amenityShadow: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.04,
@@ -298,10 +312,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
   mapGradient: {
     padding: moderateScale(20),

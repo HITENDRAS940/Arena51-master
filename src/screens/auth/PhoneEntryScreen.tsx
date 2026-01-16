@@ -31,7 +31,8 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const { redirectTo } = route.params || {};
@@ -109,7 +110,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
       return;
     }
 
-    setLoading(true);
+    setOtpLoading(true);
     try {
       await authAPI.sendEmailOTP(email);
       navigation.navigate('OTPVerification', { 
@@ -119,7 +120,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.message || 'Failed to send OTP');
     } finally {
-      setLoading(false);
+      setOtpLoading(false);
     }
   };
 
@@ -200,7 +201,7 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                     autoCorrect={false}
                     value={email}
                     onChangeText={setEmail}
-                    editable={!loading}
+                    editable={!otpLoading && !socialLoading}
                     onFocus={handleInputFocus}
                     onBlur={handleInputBlur}
                     selectionColor={theme.colors.primary}
@@ -213,10 +214,10 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
                     styles.mainButton,
                     { backgroundColor: theme.colors.primary }
                   ]}
-                  disabled={loading}
+                  disabled={otpLoading || socialLoading}
                   activeOpacity={0.8}
                 >
-                  {loading ? (
+                  {otpLoading ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     <View style={styles.buttonContent}>
@@ -228,12 +229,12 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
 
                 {/* Social Auth Buttons Integration */}
                 <SocialAuthButtons
-                  onAuthStart={() => setLoading(true)}
+                  onAuthStart={() => setSocialLoading(true)}
                   onAuthSuccess={() => {
-                    setLoading(false);
+                    setSocialLoading(false);
                   }}
                   onAuthError={(error) => {
-                    setLoading(false);
+                    setSocialLoading(false);
                     Alert.alert('Authentication Error', error);
                   }}
                 />

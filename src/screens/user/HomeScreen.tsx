@@ -411,21 +411,24 @@ const HomeScreen = ({ navigation }: any) => {
         </View>
 
         {/* Recent Booking / Guest Login Banner */}
-        {!user ? (
-          <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>Jump Back In</Text>
+        <View style={styles.bannerSection}>
+          <View style={styles.sectionHeaderContainer}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Jump Back In</Text>
+          </View>
+          
+          {!user ? (
             <TouchableOpacity 
               style={[styles.guestBanner, { backgroundColor: theme.colors.card }]}
               onPress={() => navigation.navigate('Auth')}
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={['#1E1B4B', '#312E81']}
+                colors={['#1E1B4B', '#4338CA']} // Deep Indigo to vibrant Indigo
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.guestBannerGradient}
               >
-                <View style={styles.guestBannerContent}>
+                <View style={[styles.guestBannerContent, { zIndex: 2 }]}>
                   <View style={styles.guestTextContainer}>
                     <Text style={styles.guestBannerTitle}>See Your History</Text>
                     <Text style={styles.guestBannerSubtitle}>
@@ -433,64 +436,74 @@ const HomeScreen = ({ navigation }: any) => {
                     </Text>
                   </View>
                   <View style={styles.guestActionContainer}>
-                    <DiscoveryArrowIcon size={60} color="#FFFFFF" />
+                    <View style={styles.actionIconCircle}>
+                      <Ionicons name="arrow-forward" size={24} color="#4338CA" />
+                    </View>
                   </View>
+                </View>
+                {/* Decorative Icon */}
+                <View style={styles.brandIconDecor}>
+                   <Ionicons name="time" size={120} color="rgba(255, 255, 255, 0.1)" />
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-          </View>
-        ) : (
-          lastBooking && (
-            <View style={{ paddingHorizontal: 20, paddingBottom: 30 }}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 16 }]}>Jump Back In</Text>
-              <TouchableOpacity 
-                style={[styles.recentBookingCard, { backgroundColor: theme.colors.card }]}
-                activeOpacity={0.9}
-                onPress={() => {
-                  if (lastBooking?.serviceId) {
-                    navigation.navigate('ServiceDetail', { serviceId: lastBooking.serviceId });
-                  }
-                }}
+          ) : lastBooking ? (
+            <TouchableOpacity 
+              style={[styles.recentBookingCard, { backgroundColor: theme.colors.card }]}
+              activeOpacity={0.9}
+              onPress={() => {
+                if (lastBooking?.serviceId) {
+                  navigation.navigate('ServiceDetail', { serviceId: lastBooking.serviceId });
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#065F46', '#10B981']} // Deep Teal to Emerald
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.recentBookingGradient}
               >
-                <LinearGradient
-                  colors={['#0F766E', '#10B981']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.recentBookingGradient}
-                >
+                <View style={[styles.recentBookingContent, { zIndex: 2 }]}>
                   <View style={styles.recentBookingHeader}>
                       <View style={[styles.recentIconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                           <Ionicons name="football" size={24} color="#FFFFFF" />
                       </View>
                       <View style={styles.recentInfo}>
-                          <Text style={[styles.recentTitle, { color: '#FFFFFF' }]} numberOfLines={1}>
-                              {lastBooking.serviceName}
-                          </Text>
-                          <Text style={[styles.recentDate, { color: 'rgba(255,255,255,0.8)' }]}>
-                              Last visited on {lastBooking.date || lastBooking.bookingDate}
+                          <View style={styles.recentTitleRow}>
+                            <Text style={styles.recentTitle} numberOfLines={1}>
+                                {lastBooking.serviceName}
+                            </Text>
+                            {lastBooking.status === 'CONFIRMED' && (
+                              <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                            )}
+                          </View>
+                          <Text style={styles.recentDate} numberOfLines={1}>
+                               {lastBooking.date || lastBooking.bookingDate}
                           </Text>
                       </View>
                       <View style={[styles.statusBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                          <Text style={[styles.statusText, { color: '#FFFFFF' }]}>
+                          <Text style={styles.statusText}>
                               {lastBooking.status}
                           </Text>
                       </View>
                   </View>
                   
+                  <View style={styles.rebookDivider} />
+                  
                   <View style={styles.rebookActionRow}>
                       <Text style={styles.rebookActionText}>Book this venue again</Text>
-                      <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+                      <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
                   </View>
+                </View>
 
-                  {/* Decorative Background Icon */}
-                  <View style={styles.brandIconDecor}>
-                    <Ionicons name="trophy" size={110} color="rgba(255, 255, 255, 0.12)" />
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          )
-        )}
+                {/* Decorative Background Icon */}
+                <View style={styles.recentCardDecor}>
+                  <Ionicons name="trophy" size={140} color="rgba(255, 255, 255, 0.1)" />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         {/* Exclusive Offers Section */}
         <View style={{ paddingBottom: 30 }}>
@@ -673,6 +686,15 @@ const styles = StyleSheet.create({
       minHeight: verticalScale(140),
       justifyContent: 'space-between',
   },
+  recentBookingContent: {
+      flex: 1,
+      zIndex: 2,
+  },
+  rebookDivider: {
+      height: 1,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      marginBottom: verticalScale(12),
+  },
   recentBookingHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -689,15 +711,24 @@ const styles = StyleSheet.create({
   },
   recentInfo: {
       flex: 1,
+      justifyContent: 'center',
+      paddingRight: scale(8),
+  },
+  recentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(2),
   },
   recentTitle: {
-      fontSize: moderateScale(18),
-      fontWeight: '800',
-      marginBottom: verticalScale(4),
+      fontSize: moderateScale(16),
+      fontWeight: '700',
+      color: '#FFFFFF',
+      flexShrink: 1,
   },
   recentDate: {
-      fontSize: moderateScale(13),
-      fontWeight: '600',
+      fontSize: moderateScale(12),
+      color: 'rgba(255,255,255,0.85)',
+      fontWeight: '500',
   },
   statusBadge: {
       paddingHorizontal: scale(12),
@@ -725,6 +756,18 @@ const styles = StyleSheet.create({
       fontWeight: '700',
   },
   // Guest Banner Styles
+  bannerSection: {
+    paddingHorizontal: scale(20),
+    paddingBottom: verticalScale(30),
+  },
+  actionIconCircle: {
+      width: moderateScale(48),
+      height: moderateScale(48),
+      borderRadius: moderateScale(24),
+      backgroundColor: '#FFFFFF',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
   guestBanner: {
     borderRadius: moderateScale(24),
     overflow: 'hidden',

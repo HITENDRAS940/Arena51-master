@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import HyperIcon from './icons/HyperIcon';
 
 const { width, height } = Dimensions.get('window');
-const LOGO_SIZE = 120;
+const LOGO_SIZE = 250;
 
 type Props = {
   onAnimationComplete: () => void;
@@ -36,7 +36,7 @@ export default SplashScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1B4B', // Navy
+    backgroundColor: '#000000ff', // Navy
     justifyContent: 'center',
     alignItems: 'center',
   },

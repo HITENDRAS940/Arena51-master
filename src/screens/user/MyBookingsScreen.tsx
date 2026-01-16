@@ -22,6 +22,7 @@ import { BookingSkeletonCard } from '../../components/shared/Skeletons';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
 import RazorpayService from '../../services/RazorpayService';
+import BookingDetailsModal from '../../components/user/BookingDetailsModal';
 
 const MyBookingsScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
@@ -31,6 +32,8 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isStickyHeaderActive, setIsStickyHeaderActive] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const { onScroll: onTabBarScroll } = useTabBarScroll(navigation, { isRootTab: true });
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -114,7 +117,8 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
   }, [user]);
 
   const handleBookingPress = useCallback((booking: UserBooking) => {
-    // Navigate to booking details screen (implement if needed)
+    setSelectedBookingId(booking.id);
+    setIsModalVisible(true);
   }, []);
 
   const confirmCancelBooking = useCallback(async (booking: UserBooking) => {
@@ -183,7 +187,7 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         onCancel={() => handleCancelBooking(item)}
         onPay={async () => {
           try {
-            const result = await RazorpayService.initiatePayment(item.id, item);
+            const result = await RazorpayService.initiatePayment(item.id, theme.colors.primary);
             if (result.status === 'SUCCESS') {
               fetchBookings();
               Alert.alert('Payment Successful!', 'Your booking is now confirmed.');
@@ -313,6 +317,12 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         maxToRenderPerBatch={10}
         windowSize={10}
         removeClippedSubviews={true}
+      />
+
+      <BookingDetailsModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        bookingId={selectedBookingId}
       />
     </ScreenWrapper>
   );

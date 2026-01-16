@@ -2,11 +2,9 @@ import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
-  Image,
   Animated,
   StyleSheet,
   Dimensions,
-  Platform,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -65,7 +63,7 @@ const ServiceImageGallery: React.FC<ServiceImageGalleryProps> = ({
   });
 
   const backButtonOpacity = scrollY.interpolate({
-    inputRange: [HEADER_SCROLL_DISTANCE - 40, HEADER_SCROLL_DISTANCE],
+    inputRange: [0, 90],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
@@ -137,12 +135,6 @@ const ServiceImageGallery: React.FC<ServiceImageGalleryProps> = ({
         </View>
       </View>
 
-      <Animated.View style={[styles.backButton, { top: insets.top + 10, opacity: backButtonOpacity }]}>
-        <TouchableOpacity onPress={onBackPress} style={styles.iconButton}>
-          <BackIcon width={24} height={24} fill="#FFFFFF" />
-        </TouchableOpacity>
-      </Animated.View>
-
       {images.length > 1 && (
         <View style={[styles.imageCounter, { top: insets.top + 10 }]}>
           <Text style={styles.imageCounterText}>
@@ -150,6 +142,12 @@ const ServiceImageGallery: React.FC<ServiceImageGalleryProps> = ({
           </Text>
         </View>
       )}
+
+      <Animated.View style={[styles.backButton, { top: insets.top + 10, opacity: backButtonOpacity }]}>
+        <TouchableOpacity onPress={onBackPress} style={styles.iconButton} activeOpacity={0.7}>
+          <BackIcon width={24} height={24} fill="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };

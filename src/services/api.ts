@@ -125,6 +125,7 @@ export const bookingAPI = {
   cancelBookingByReference: (reference: string) => api.post(`/api/slots/cancel/${reference}`),
   getBookingStatus: (id: number) => api.get<BookingStatusResponse>(`/api/razorpay/booking-status/${id}`),
   getPendingBookings: () => api.get<UserBooking[]>('/user/bookings', { params: { status: 'AWAITING_CONFIRMATION' } }),
+  getBookingDetails: (id: number) => api.get<DynamicBookingResponse>(`/user/booking/${id}`),
 };
 
 // Wallet APIs

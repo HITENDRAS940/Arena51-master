@@ -36,26 +36,45 @@ const DraggableModal: React.FC<DraggableModalProps> = ({
 }) => {
   const screenHeight = Dimensions.get('window').height;
   const panY = useRef(new Animated.Value(screenHeight)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const [realVisible, setRealVisible] = React.useState(visible);
 
   useEffect(() => {
     if (visible) {
-      Animated.spring(panY, {
-        toValue: 0,
-        useNativeDriver: true,
-        damping: 20,
-        stiffness: 90,
-      }).start();
+      setRealVisible(true);
+      Animated.parallel([
+        Animated.spring(panY, {
+          toValue: 0,
+          useNativeDriver: true,
+          damping: 20,
+          stiffness: 90,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(panY, {
+          toValue: screenHeight,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setRealVisible(false);
+      });
     }
-  }, [visible, panY]);
+  }, [visible, panY, opacity, screenHeight]);
 
   const handleDismiss = () => {
-    Animated.timing(panY, {
-      toValue: screenHeight,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      onClose();
-    });
+    onClose(); // This will trigger the useEffect for slide down
   };
 
   const panResponder = useRef(
@@ -65,18 +84,28 @@ const DraggableModal: React.FC<DraggableModalProps> = ({
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
           panY.setValue(gestureState.dy);
+          // Optional: decrease opacity as user drags down
+          const newOpacity = 1 - (gestureState.dy / screenHeight);
+          opacity.setValue(Math.max(0, newOpacity));
         }
       },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy > 120 || gestureState.vy > 0.5) {
           handleDismiss();
         } else {
-          Animated.spring(panY, {
-            toValue: 0,
-            useNativeDriver: true,
-            damping: 20,
-            stiffness: 120,
-          }).start();
+          Animated.parallel([
+            Animated.spring(panY, {
+              toValue: 0,
+              useNativeDriver: true,
+              damping: 20,
+              stiffness: 120,
+            }),
+            Animated.timing(opacity, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start();
         }
       },
     })
@@ -84,17 +113,24 @@ const DraggableModal: React.FC<DraggableModalProps> = ({
 
   return (
     <Modal
-      visible={visible}
+      visible={realVisible}
       animationType="none"
       transparent={true}
       onRequestClose={handleDismiss}
     >
       <View style={[styles.overlay, overlayStyle, backdropColor ? { backgroundColor: backdropColor } : null]}>
-        <TouchableOpacity 
-          style={styles.backdrop} 
-          activeOpacity={1} 
-          onPress={handleDismiss} 
-        />
+        <Animated.View 
+          style={[
+            styles.backdrop,
+            { opacity }
+          ]}
+        >
+          <TouchableOpacity 
+            style={{ flex: 1 }} 
+            activeOpacity={1} 
+            onPress={handleDismiss} 
+          />
+        </Animated.View>
         <Animated.View 
           style={[
             styles.modalContent, 

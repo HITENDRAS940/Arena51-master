@@ -89,14 +89,16 @@ const styles = StyleSheet.create({
     paddingBottom: verticalScale(140),
     zIndex: 10,
     minHeight: verticalScale(600),
+    borderTopLeftRadius: moderateScale(50),
+    borderTopRightRadius: moderateScale(50),
+    overflow: 'hidden',
+  },
+  contentContainerShadow: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: verticalScale(-15) },
     shadowOpacity: 0.12,
     shadowRadius: moderateScale(25),
     elevation: 30,
-    borderTopLeftRadius: moderateScale(50),
-    borderTopRightRadius: moderateScale(50),
-    overflow: 'hidden',
   },
   pullBarContainer: {
     width: '100%',
@@ -128,6 +130,8 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(14),
     borderRadius: moderateScale(24),
     borderWidth: 1,
+  },
+  footerShadow: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.15,
@@ -216,6 +220,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [preBookingData, setPreBookingData] = useState<DynamicBookingResponse | null>(null);
+  const [showShadow, setShowShadow] = useState(false);
   
   
   // Refs
@@ -251,8 +256,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   });
 
   const galleryOpacity = scrollY.interpolate({
-    inputRange: [0, 200, 280],
-    outputRange: [1, 1, 0],
+    inputRange: [0, 50],
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
@@ -264,7 +269,10 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
-    }).start();
+    }).start(() => {
+      // Enable shadows after animation completes
+      setShowShadow(true);
+    });
 
     return () => {
     };
@@ -667,6 +675,19 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           </Text>
         </View>
       </Animated.View>
+
+      {/* White Background behind gallery */}
+      <View 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 350,
+          backgroundColor: '#FFFFFF',
+          zIndex: 0,
+        }}
+      />
       
       {/* Refactored Gallery - Absolute positioned for native translateY */}
       <Animated.View 
@@ -707,7 +728,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         
         <Animated.View 
           style={[
-            styles.contentContainer, 
+            styles.contentContainer,
+            showShadow && styles.contentContainerShadow,
             { 
               backgroundColor: theme.colors.background,
               opacity: entranceAnim,
@@ -729,6 +751,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
 
           <ServiceInfo 
             service={service}
+            showShadow={showShadow}
           />
 
 
@@ -777,10 +800,14 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           }
         ]}
       >
-        <View style={[styles.footer, { 
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.border,
-        }]}>
+        <View style={[
+          styles.footer,
+          showShadow && styles.footerShadow,
+          { 
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          }
+        ]}>
           {/* Detail View Footer Content */}
           <Animated.View 
             style={[

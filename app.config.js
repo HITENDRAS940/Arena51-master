@@ -34,9 +34,10 @@ module.exports = {
     },
     android: {
       package: "com.hitendras940.hyper",
+      versionCode: 1,
       adaptiveIcon: {
         foregroundImage: "./assets/hy_logo.png",
-        backgroundColor: "#1E1B4B"
+        backgroundColor: "#10B981"
       },
       intentFilters: [
         {

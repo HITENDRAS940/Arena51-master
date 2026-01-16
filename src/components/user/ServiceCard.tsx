@@ -193,7 +193,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             style={[styles.bookButtonContainer, { shadowColor: theme.colors.primary }]}
           >
             <LinearGradient
-              colors={["#10B981", "#059669"]}
+              colors={[theme.colors.primary, theme.colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.bookButton}

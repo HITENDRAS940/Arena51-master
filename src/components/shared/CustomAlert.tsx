@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../contexts/ThemeContext';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -51,9 +52,11 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [visible, setVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertOptions | null>(null);
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
   
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   const showAlert = useCallback((options: AlertOptions) => {
     setAlertConfig(options);
@@ -62,13 +65,19 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 6,
-        tension: 80,
+        friction: 8,
+        tension: 100,
         useNativeDriver: true,
       }),
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 8,
+        tension: 100,
         useNativeDriver: true,
       }),
     ]).start();
@@ -78,18 +87,24 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     Animated.parallel([
       Animated.timing(scaleAnim, {
         toValue: 0.9,
-        duration: 150,
+        duration: 200,
         useNativeDriver: true,
       }),
       Animated.timing(opacityAnim, {
         toValue: 0,
-        duration: 150,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 10,
+        duration: 250,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setVisible(false);
       setAlertConfig(null);
       scaleAnim.setValue(0);
+      slideAnim.setValue(20);
     });
   }, []);
 
@@ -106,25 +121,25 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getIconConfig = (type?: string) => {
     switch (type) {
       case 'success':
-        return { name: 'checkmark-circle', color: '#10B981', bgColor: '#10B98115' };
+        return { name: 'checkmark-circle', color: theme.colors.success, bgColor: theme.colors.success + '15', watermark: 'checkmark-circle' };
       case 'error':
-        return { name: 'close-circle', color: '#EF4444', bgColor: '#EF444415' };
+        return { name: 'close-circle', color: theme.colors.error, bgColor: theme.colors.error + '15', watermark: 'close-circle' };
       case 'warning':
-        return { name: 'warning', color: '#F59E0B', bgColor: '#F59E0B15' };
+        return { name: 'warning', color: theme.colors.warning, bgColor: theme.colors.warning + '15', watermark: 'alert-circle' };
       case 'info':
       default:
-        return { name: 'information-circle', color: '#3B82F6', bgColor: '#3B82F615' };
+        return { name: 'information-circle', color: theme.colors.secondary, bgColor: theme.colors.secondary + '15', watermark: 'information-circle' };
     }
   };
 
   const getButtonGradient = (style?: string): readonly [string, string] => {
     switch (style) {
       case 'destructive':
-        return ['#EF4444', '#DC2626'] as const;
+        return [theme.colors.error, theme.colors.red || '#DC2626'] as const;
       case 'cancel':
         return ['#6B7280', '#4B5563'] as const;
       default:
-        return ['#10B981', '#059669'] as const;
+        return [theme.colors.secondary, theme.colors.primary] as const;
     }
   };
 
@@ -150,11 +165,27 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             style={[
               styles.alertContainer,
               {
-                transform: [{ scale: scaleAnim }],
+                transform: [
+                  { scale: scaleAnim },
+                  { translateY: slideAnim }
+                ],
                 opacity: opacityAnim,
+                backgroundColor: theme.colors.surface,
               }
             ]}
           >
+            {/* Background Watermark Icon */}
+            {alertConfig?.type && (
+              <View style={styles.watermarkContainer}>
+                <Ionicons 
+                  name={getIconConfig(alertConfig.type).watermark as any} 
+                  size={moderateScale(180)} 
+                  color={getIconConfig(alertConfig.type).color} 
+                  style={{ opacity: 0.05, transform: [{ rotate: '-15deg' }] }}
+                />
+              </View>
+            )}
+
             {/* Icon */}
             {alertConfig?.type && (
               <View style={[styles.iconContainer, { backgroundColor: getIconConfig(alertConfig.type).bgColor }]}>
@@ -167,11 +198,11 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             )}
 
             {/* Title */}
-            <Text style={styles.title}>{alertConfig?.title}</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>{alertConfig?.title}</Text>
             
             {/* Message */}
             {alertConfig?.message && (
-              <Text style={styles.message}>{alertConfig.message}</Text>
+              <Text style={[styles.message, { color: theme.colors.textSecondary }]}>{alertConfig.message}</Text>
             )}
 
             {/* Buttons */}
@@ -249,10 +280,15 @@ const styles = StyleSheet.create({
   message: {
     fontSize: moderateScale(15),
     fontWeight: '500',
-    color: '#6B7280',
     textAlign: 'center',
     lineHeight: moderateScale(22),
     marginBottom: verticalScale(24),
+  },
+  watermarkContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: -1,
   },
   buttonContainer: {
     width: '100%',
