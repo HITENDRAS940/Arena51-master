@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { ScreenWrapper } from './ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import{ DiscoveryArrowIcon }from '../../components/shared/icons/activities';
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     overflow: 'hidden',
     elevation: 12,
-    shadowColor: '#4F46E5',
+    shadowColor: themeObj.colors.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.3,
     shadowRadius: 20,

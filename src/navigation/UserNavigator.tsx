@@ -12,6 +12,7 @@ import WalletScreen from '../screens/user/WalletScreen';
 import PaymentProcessingScreen from '../screens/user/PaymentProcessingScreen';
 import BookingSummaryScreen from '../screens/user/BookingSummaryScreen';
 import PaymentCheckoutScreen from '../screens/user/PaymentCheckoutScreen';
+import HelpSupportScreen from '../screens/user/HelpSupportScreen';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -94,6 +95,7 @@ const UserNavigator = () => {
       <RootStack.Screen name="BookingSummary" component={BookingSummaryScreen} />
       <RootStack.Screen name="PaymentCheckout" component={PaymentCheckoutScreen} />
       <RootStack.Screen name="Wallet" component={WalletScreen} />
+      <RootStack.Screen name="HelpSupport" component={HelpSupportScreen} />
       </RootStack.Navigator>
     </>
   );

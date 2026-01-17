@@ -18,7 +18,7 @@ export const ACTIVITY_THEMES: Record<string, { colors: readonly [string, string]
   'Party Hall': { colors: ['#DA4453', '#89216B'], icon: 'wine' },
 };
 
-export const DEFAULT_THEME = { colors: ['#1E1B4B', '#312E81'] as const, icon: 'trophy' as keyof typeof Ionicons.glyphMap };
+export const DEFAULT_THEME = { colors: ['#000000', '#333333'] as const, icon: 'trophy' as keyof typeof Ionicons.glyphMap };
 
 
 export interface Theme {
@@ -52,12 +52,12 @@ export interface Theme {
 }
 
 export const theme: Theme = {
-  id: 'premium-navy',
-  name: 'Premium Navy',
+  id: 'premium-black',
+  name: 'Premium Black',
   colors: {
-    primary: '#1E1B4B',    // Navy 950
-    secondary: '#312E81',  // Indigo 900 (Deep Navy)
-    accent: '#3730A3',     // Indigo 800
+    primary: '#000000',    
+    secondary: '#333333',  
+    accent: '#1F2937',     
     background: '#f3f4f6', 
     surface: '#FFFFFF',
     card: '#FFFFFF',
@@ -67,7 +67,7 @@ export const theme: Theme = {
     success: '#10B981',
     warning: '#F59E0B',
     error: '#EF4444',
-    navy: '#1E1B4B',       
+    navy: '#000000',       
     gray: '#9CA3AF',
     lightGray: '#F3F4F6',
     red: '#DC2626',

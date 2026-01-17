@@ -63,8 +63,8 @@ const ServiceImageGallery: React.FC<ServiceImageGalleryProps> = ({
   });
 
   const backButtonOpacity = scrollY.interpolate({
-    inputRange: [0, 90],
-    outputRange: [1, 0],
+    inputRange: [0, 150, 180],
+    outputRange: [1, 1, 0],
     extrapolate: 'clamp',
   });
 

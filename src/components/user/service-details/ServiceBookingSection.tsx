@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../../contexts/ThemeContext';
 import { EphemeralSlot } from '../../../types';
 import { format, addDays, isSameDay, isToday, isTomorrow } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -97,7 +97,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
                       ]}>
                         <IconComponent 
                           size={moderateScale(40)} 
-                          color={isSelected ? '#FFFFFF' : theme.colors.navy} 
+                          color={isSelected ? '#FFFFFF' : theme.colors.primary} 
                         />
                       </View>
                       <Text 
@@ -149,14 +149,14 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
                 style={[
                   styles.dateChip,
                   { 
-                    borderColor: isSelected ? theme.colors.navy : theme.colors.border,
+                    borderColor: isSelected ? theme.colors.primary : theme.colors.border,
                   }
                 ]}
                 onPress={() => onDateSelect(date)}
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                   colors={isSelected ? [theme.colors.navy, theme.colors.secondary || theme.colors.navy] : [theme.colors.card, theme.colors.card]}
+                   colors={isSelected ? [theme.colors.primary, theme.colors.secondary || theme.colors.primary] : [theme.colors.card, theme.colors.card]}
                    start={{ x: 0, y: 0 }}
                    end={{ x: 1, y: 1 }}
                    style={styles.dateChipGradient}
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   selectedShadow: {
-    shadowColor: '#1E1B4B',
+    shadowColor: themeObj.colors.primary,
     shadowOpacity: 0.2,
     shadowRadius: 15,
     elevation: 4,

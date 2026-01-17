@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
 import { Alert } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
 import BackIcon from '../../components/shared/icons/BackIcon';
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#1E1B4B',
+    shadowColor: themeObj.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,

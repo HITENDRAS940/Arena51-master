@@ -25,7 +25,7 @@ import { ActivitySkeletonCard, SkeletonList } from '../../components/shared/Skel
 import { useLocation } from '../../hooks/useLocation';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import CitySelectionModal from '../../components/user/CitySelectionModal';
-import { ACTIVITY_THEMES, DEFAULT_THEME, theme } from '../../contexts/ThemeContext';
+import { ACTIVITY_THEMES, DEFAULT_THEME, theme as themeObj } from '../../contexts/ThemeContext';
 import { Activity } from '../../types';
 import { ActivityIcons, DiscoveryArrowIcon } from '../../components/shared/icons/activities';
 import ProfileIcon from '../../components/shared/icons/ProfileIcon';
@@ -396,7 +396,7 @@ const HomeScreen = ({ navigation }: any) => {
             activeOpacity={0.9}
           >
              <LinearGradient
-                  colors={['#1F2937', '#111827']} 
+                  colors={[theme.colors.primary, theme.colors.secondary]} 
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.exploreGradient}
@@ -423,7 +423,7 @@ const HomeScreen = ({ navigation }: any) => {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={['#1E1B4B', '#4338CA']} // Deep Indigo to vibrant Indigo
+                colors={[theme.colors.primary, '#4338CA']} // Keep some accent color for guest banner unless specified otherwise, but using primary
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.guestBannerGradient}
@@ -561,14 +561,14 @@ const styles = StyleSheet.create({
   headerTitleMain: {
       fontSize: moderateScale(34),
       fontWeight: 'condensedBold',
-      fontFamily: theme.fonts.bold,
+      fontFamily: themeObj.fonts.bold,
       lineHeight: moderateScale(40),
       letterSpacing: -1,
   },
   headerTitleSub: {
     fontSize: moderateScale(34),
     fontWeight: 'condensedBold', 
-    fontFamily: theme.fonts.bold,
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,
@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
   guestBanner: {
     borderRadius: moderateScale(24),
     overflow: 'hidden',
-    shadowColor: '#1E1B4B',
+    shadowColor: themeObj.colors.primary,
     shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.25,
     shadowRadius: moderateScale(16),

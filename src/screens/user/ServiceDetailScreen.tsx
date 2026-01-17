@@ -256,23 +256,25 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   });
 
   const galleryOpacity = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [1, 0],
+    inputRange: [0, 150, 180],
+    outputRange: [1, 1, 0],
     extrapolate: 'clamp',
   });
 
   useEffect(() => {
     fetchServiceDetails();
     
-    // Entrance Animation
+    // Entrance Animation - make it faster and smoother
     Animated.timing(entranceAnim, {
       toValue: 1,
-      duration: 800,
+      duration: 500,
       useNativeDriver: true,
-    }).start(() => {
-      // Enable shadows after animation completes
+    }).start();
+
+    // Enable shadows slightly after start to avoid initial flicker on some devices
+    setTimeout(() => {
       setShowShadow(true);
-    });
+    }, 150);
 
     return () => {
     };
@@ -696,10 +698,11 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           top: 0, 
           left: 0, 
           right: 0, 
-          zIndex: 1,
+          zIndex: 10,
           opacity: galleryOpacity,
           transform: [{ translateY: galleryTranslate }]
         }}
+        pointerEvents="box-none"
       >
         <ServiceImageGallery
           serviceId={service.id}

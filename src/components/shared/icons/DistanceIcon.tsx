@@ -7,7 +7,7 @@ interface DistanceIconProps {
   style?: any;
 }
 
-const DistanceIcon = ({ size = 30, color = "#4F46E5", style }: DistanceIconProps) => (
+const DistanceIcon = ({ size = 30, color = "#000000", style }: DistanceIconProps) => (
   <Svg
     width={size}
     height={size}

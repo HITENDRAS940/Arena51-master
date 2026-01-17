@@ -2,9 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import LocationIcon from '../../shared/icons/LocationIcon';
 import MapPinIcon from '../../shared/icons/MapPinIcon';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Service } from '../../../types';
@@ -66,7 +64,6 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }
     if (lowercaseName.includes('seat') || lowercaseName.includes('bench')) return 'people';
     if (lowercaseName.includes('equipment') || lowercaseName.includes('rental')) return 'construct';
     if (lowercaseName.includes('first aid') || lowercaseName.includes('medical')) return 'medical';
-    if (lowercaseName.includes('parking') || lowercaseName.includes('park')) return 'car-sport';
     return 'checkmark-circle';
   };
 
@@ -94,10 +91,7 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }
   return (
     <View style={styles.container}>
       {/* About Section */}
-      <Animated.View 
-        style={styles.section}
-        entering={FadeInDown.duration(600).delay(200)}
-      >
+      <View style={styles.section}>
         {renderSectionHeader('About')}
         <View style={[
           styles.infoCard,
@@ -112,19 +106,15 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }
             {service.description || 'Welcome to this premium venue offering top-notch facilities for your favorite sports activities. Book now for an amazing experience.'}
           </Text>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Amenities Section */}
-      <Animated.View 
-        style={styles.section}
-        entering={FadeInDown.duration(600).delay(300)}
-      >
+      <View style={styles.section}>
         {renderSectionHeader('Amenities')}
         <View style={styles.amenitiesGrid}>
           {amenities.map((amenity, index) => (
-            <Animated.View
+            <View
               key={index}
-              entering={FadeInRight.delay(300 + (index * 50)).duration(400)}
                 style={[
                   styles.amenityItem,
                   showShadow && styles.amenityShadow,
@@ -141,16 +131,13 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }
               <Text style={[styles.amenityText, { color: theme.colors.text }]} numberOfLines={1}>
                 {amenity.name}
               </Text>
-            </Animated.View>
+            </View>
           ))}
         </View>
-      </Animated.View>
+      </View>
 
       {/* Location Map Card */}
-      <Animated.View 
-        style={styles.section}
-        entering={FadeInDown.duration(600).delay(400)}
-      >
+      <View style={styles.section}>
         {renderSectionHeader('Location')}
         <TouchableOpacity
           style={[
@@ -182,58 +169,15 @@ const ServiceInfo: React.FC<ServiceInfoProps> = ({ service, showShadow = false }
              </View>
           </LinearGradient>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(20),
-  },
-  headerSection: {
-    marginBottom: verticalScale(24),
     paddingTop: verticalScale(10),
-  },
-  serviceName: {
-    fontSize: moderateScale(28),
-    fontWeight: '900',
-    marginBottom: verticalScale(6),
-    letterSpacing: -1,
-    lineHeight: moderateScale(36),
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: scale(10),
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scale(10),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(10),
-    gap: scale(4),
-  },
-  ratingText: {
-    fontSize: moderateScale(13),
-    fontWeight: '700',
-  },
-  locationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scale(10),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(10),
-    gap: scale(4),
-    flex: 1, // Take remaining space
-  },
-  locationText: {
-    fontSize: moderateScale(13),
-    fontWeight: '500',
-    flex: 1,
+    paddingBottom: verticalScale(20),
   },
   section: {
     marginBottom: verticalScale(32),
@@ -259,13 +203,13 @@ const styles = StyleSheet.create({
   infoCard: {
     padding: moderateScale(20),
     borderRadius: moderateScale(24),
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   cardShadow: {
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   description: {
     fontSize: moderateScale(15),
@@ -276,7 +220,8 @@ const styles = StyleSheet.create({
   amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: scale(10),
+    justifyContent: 'space-between',
+    width: '100%',
   },
   amenityItem: {
     flexDirection: 'row',
@@ -286,13 +231,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: scale(10),
     width: '48%',
+    marginBottom: verticalScale(10),
   },
   amenityShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: moderateScale(8),
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 1.5,
   },
   amenityIconBox: {
     width: moderateScale(32),
@@ -310,7 +255,7 @@ const styles = StyleSheet.create({
   mapCard: {
     borderRadius: moderateScale(24),
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: 'rgba(0,0,0,0.05)',
   },
   mapGradient: {

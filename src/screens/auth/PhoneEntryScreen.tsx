@@ -18,12 +18,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
 import { Alert } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
 import BackIcon from '../../components/shared/icons/BackIcon';
 import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
 import SocialAuthButtons from '../../components/auth/SocialAuthButtons';
+import DraggableModal from '../../components/shared/DraggableModal';
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../../constants/legal';
 
 Dimensions.get('window');
 
@@ -35,6 +37,9 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
   const [socialLoading, setSocialLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isLegalVisible, setIsLegalVisible] = useState(false);
+  const [legalTitle, setLegalTitle] = useState('');
+  const [legalContent, setLegalContent] = useState('');
   const { redirectTo } = route.params || {};
 
   // Animation values
@@ -241,23 +246,65 @@ const PhoneEntryScreen = ({ route, navigation }: any) => {
 
                 <Text style={[styles.termsText, { color: theme.colors.textSecondary }]}>
                   By continuing, you agree to our{' '}
-                  <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Terms of Service</Text> and{' '}
-                  <Text style={[styles.termsLink, { color: theme.colors.primary }]}>Privacy Policy</Text>
+                  <Text 
+                    style={[styles.termsLink, { color: theme.colors.primary }]}
+                    onPress={() => {
+                      setLegalTitle('Terms of Service');
+                      setLegalContent(TERMS_OF_SERVICE);
+                      setIsLegalVisible(true);
+                    }}
+                  >
+                    Terms of Service
+                  </Text> and{' '}
+                  <Text 
+                    style={[styles.termsLink, { color: theme.colors.primary }]}
+                    onPress={() => {
+                      setLegalTitle('Privacy Policy');
+                      setLegalContent(PRIVACY_POLICY);
+                      setIsLegalVisible(true);
+                    }}
+                  >
+                    Privacy Policy
+                  </Text>
                 </Text>
               </View>
             </View>
           </Animated.View>
 
-          {!isKeyboardVisible && (
-            <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-              <Text style={styles.footerText}>Secure Login Powered by OTP</Text>
-            </Animated.View>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <DraggableModal
+        visible={isLegalVisible}
+        onClose={() => setIsLegalVisible(false)}
+        height="80%"
+        containerStyle={{ backgroundColor: theme.colors.surface }}
+      >
+        <View style={[styles.modalInner, { flex: 1 }]}>
+          <View style={styles.legalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text, textAlign: 'left', marginBottom: 0, fontSize: 20 }]}>
+              {legalTitle}
+            </Text>
+            <TouchableOpacity onPress={() => setIsLegalVisible(false)}>
+              <Ionicons name="close-circle" size={28} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            style={styles.legalScroll}
+            contentContainerStyle={styles.legalScrollContent}
+          >
+            <Text style={[styles.legalText, { color: theme.colors.textSecondary }]}>
+              {legalContent}
+            </Text>
+          </ScrollView>
+        </View>
+      </DraggableModal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -374,7 +421,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#1E1B4B',
+    shadowColor: themeObj.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -426,6 +473,33 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalInner: {
+    padding: 24,
+    paddingTop: 8,
+  },
+  legalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  legalScroll: {
+    flex: 1,
+  },
+  legalScrollContent: {
+    paddingBottom: 40,
+  },
+  legalText: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '500',
   },
 });
 

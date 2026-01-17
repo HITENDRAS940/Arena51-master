@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  StatusBar,
-  Modal,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -22,11 +20,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import { formatPhoneForDisplay } from '../../utils/phoneUtils';
+import { verticalScale, moderateScale } from 'react-native-size-matters';
 import { userAPI, walletAPI } from '../../services/api';
+import { PRIVACY_POLICY, ABOUT_APP } from '../../constants/legal';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
-import { formatCurrency } from '../../utils/helpers';
 import { useIsFocused } from '@react-navigation/native';
 import ProfileIcon from '../../components/shared/icons/ProfileIcon';
 import LogoutIcon from '../../components/shared/icons/LogoutIcon';
@@ -133,22 +130,10 @@ const ProfileScreen = ({ navigation }: any) => {
     }
   };
 
-  const openEditNameModal = () => {
-    setNewName(user?.name || '');
-    setIsEditingName(true);
-  };
-
   const menuSections = [
     {
       title: 'Account',
       items: [
-        {
-          icon: 'person-outline',
-          isProfileIcon: true,
-          title: 'Edit Name',
-          subtitle: 'Update your name',
-          onPress: openEditNameModal,
-        },
         {
           icon: 'wallet-outline',
           title: 'Wallet History',
@@ -164,30 +149,13 @@ const ProfileScreen = ({ navigation }: any) => {
       ],
     },
     {
-      title: 'Preferences',
-      items: [
-        {
-          icon: 'notifications-outline',
-          title: 'Notifications',
-          subtitle: 'Manage notification settings',
-          onPress: () => {},
-        },
-        {
-          icon: 'language-outline',
-          title: 'Language',
-          subtitle: 'Choose your preferred language',
-          onPress: () => {},
-        },
-      ],
-    },
-    {
       title: 'Support',
       items: [
         {
           icon: 'help-circle-outline',
           title: 'Help & Support',
           subtitle: 'Get help and contact support',
-          onPress: () => {},
+          onPress: () => navigation.navigate('HelpSupport'),
         },
         {
           icon: 'star-outline',
@@ -201,58 +169,7 @@ const ProfileScreen = ({ navigation }: any) => {
           subtitle: 'Read our terms and privacy policy',
           onPress: () => {
             setLegalTitle('Privacy Policy');
-            setLegalContent(`This privacy policy applies to the HYPER app and relevant infrastructure (hereby referred to as "Application") for mobile devices that was created by Hitendra Singh Shaktawat and Manan Arora (hereby referred to as "Service Provider") as a Commercial service. This service is intended for use "AS IS".
-
-Information Collection and Use
-The Application collects information when you download and use it. This information may include information such as:
-• Your device's Internet Protocol address (e.g. IP address)
-• The pages of the Application that you visit, the time and date of your visit, the time spent on those pages
-• The time spent on the Application
-• The operating system you use on your mobile device
-
-The Application collects your device's location, which helps the Service Provider determine your approximate geographical location and make use of in below ways:
-• Geolocation Services: The Service Provider utilizes location data to provide features such as personalized content, relevant recommendations, and location-based services.
-• Analytics and Improvements: Aggregated and anonymized location data helps the Service Provider to analyze user behavior, identify trends, and improve the overall performance and functionality of the Application.
-• Third-Party Services: Periodically, the Service Provider may transmit anonymized location data to external services. These services assist them in enhancing the Application and optimizing their offerings.
-
-The Service Provider may use the information you provided to contact you from time to time to provide you with important information, required notices and marketing promotions.
-
-For a better experience, while using the Application, the Service Provider may require you to provide us with certain personally identifiable information, including but not limited to Name, Email, Contact number, age, gender. The information that the Service Provider request will be retained by them and used as described in this privacy policy.
-
-Third Party Access
-Only aggregated, anonymized data is periodically transmitted to external relevant services to aid the Service Provider in improving the Application and their service. The Service Provider may share your information with third parties in the ways that are described in this privacy statement.
-
-The Service Provider may disclose User Provided and Automatically Collected Information:
-• as required by law, such as to comply with a subpoena, or similar legal process;
-• when they believe in good faith that disclosure is necessary to protect their rights, protect your safety or the safety of others, investigate fraud, or respond to a government request;
-• with their trusted services providers who work on their behalf, do not have an independent use of the information we disclose to them, and have agreed to adhere to the rules set forth in this privacy statement.
-
-Use of Artificial Intelligence
-The Application uses Artificial Intelligence (AI) technologies to enhance user experience and provide certain features. The AI components may process user data to deliver personalized content, recommendations, or automated functionalities. All AI processing is performed in accordance with this privacy policy and applicable laws. If you have questions about the AI features or data processing, please contact the Service Provider.
-
-Opt-Out Rights
-You can stop all collection of information by the Application easily by uninstalling it. You may use the standard uninstall processes as may be available as part of your mobile device or via the mobile application marketplace or network.
-
-Data Retention Policy
-The Service Provider will retain User Provided data for as long as you use the Application and for a reasonable time thereafter. If you'd like them to delete User Provided Data that you have provided via the Application, please contact them at manan.arora0412@gmail.com and they will respond in a reasonable time.
-
-Children
-The Service Provider does not use the Application to knowingly solicit data from or market to children under the age of 13.
-The Service Provider does not knowingly collect personally identifiable information from children. The Service Provider encourages all children to never submit any personally identifiable information through the Application and/or Services. The Service Provider encourage parents and legal guardians to monitor their children's Internet usage and to help enforce this Policy by instructing their children never to provide personally identifiable information through the Application and/or Services without their permission. If you have reason to believe that a child has provided personally identifiable information to the Service Provider through the Application and/or Services, please contact the Service Provider (manan.arora0412@gmail.com) so that they will be able to take the necessary actions. You must also be at least 16 years of age to consent to the processing of your personally identifiable information in your country (in some countries we may allow your parent or guardian to do so on your behalf).
-
-Security
-The Service Provider is concerned about safeguarding the confidentiality of your information. The Service Provider provides physical, electronic, and procedural safeguards to protect information the Service Provider processes and maintains.
-
-Changes
-This Privacy Policy may be updated from time to time for any reason. The Service Provider will notify you of any changes to the Privacy Policy by updating this page with the new Privacy Policy. You are advised to consult this Privacy Policy regularly for any changes, as continued use is deemed approval of all changes.
-
-This privacy policy is effective as of 2026-01-03
-
-Your Consent
-By using the Application, you are consenting to the processing of your information as set forth in this Privacy Policy now and as amended by us.
-
-Contact Us
-If you have any questions regarding privacy while using the Application, or have questions about the practices, please contact the Service Provider via email at manan.arora0412@gmail.com or via contact number +91 7678457527.`);
+            setLegalContent(PRIVACY_POLICY);
             setIsLegalVisible(true);
           },
         },
@@ -260,7 +177,11 @@ If you have any questions regarding privacy while using the Application, or have
           icon: 'information-circle-outline',
           title: 'About',
           subtitle: 'App version and information',
-          onPress: () => {},
+          onPress: () => {
+            setLegalTitle('About Hyper');
+            setLegalContent(ABOUT_APP);
+            setIsLegalVisible(true);
+          },
         },
       ],
     },
@@ -274,7 +195,7 @@ If you have any questions regarding privacy while using the Application, or have
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={['#10B981', '#059669']}
+        colors={['#333333', '#000000']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.menuItemGradient}
@@ -397,7 +318,7 @@ If you have any questions regarding privacy while using the Application, or have
               style={[styles.walletBadge, { backgroundColor: theme.colors.card, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: {width:0, height:4} }]}
               onPress={fetchWalletBalance}
             >
-              <Ionicons name="wallet" size={20} color={theme.colors.navy} />
+              <Ionicons name="wallet" size={20} color={theme.colors.primary} />
               <Text style={[styles.walletText, { color: theme.colors.text }]}>
                  {isWalletLoading ? '...' : `₹${walletBalance ?? 0}`}
               </Text>
@@ -457,7 +378,7 @@ If you have any questions regarding privacy while using the Application, or have
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.modalButton, styles.saveButton, { backgroundColor: theme.colors.navy }]}
+              style={[styles.modalButton, styles.saveButton, { backgroundColor: theme.colors.primary }]}
               onPress={handleUpdateName}
               disabled={isSavingName}
             >
@@ -477,7 +398,7 @@ If you have any questions regarding privacy while using the Application, or have
         height="80%"
         containerStyle={{ backgroundColor: theme.colors.surface }}
       >
-        <View style={styles.modalInner}>
+        <View style={[styles.modalInner, { flex: 1 }]}>
           <View style={styles.legalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.text, textAlign: 'left', marginBottom: 0 }]}>
               {legalTitle}

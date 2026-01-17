@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "622776222056",
+    "project_id": "hyper-7fc39",
+    "storage_bucket": "hyper-7fc39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622776222056:android:f9bc8be37f8e5ce78756dd",
+        "android_client_info": {
+          "package_name": "com.hitendras940.hyper"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622776222056-1apk6pb241h0rb2kbv2eao85kg3q1m0d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hitendras940.hyper",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "622776222056-dm8e04bdvk4j3nch24c4n618pm7enj1b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hitendras940.hyper",
+            "certificate_hash": "7cd4d8d6f90e28e31342bed374faec69c818ed98"
+          }
+        },
+        {
+          "client_id": "622776222056-525403iu1ku11l2hetgt1t4bkj54ok0m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtklUUkCaPhZtX9DEZCYywOhA6wzMkzHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622776222056-525403iu1ku11l2hetgt1t4bkj54ok0m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

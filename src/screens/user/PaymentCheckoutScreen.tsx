@@ -75,7 +75,10 @@ const PaymentCheckoutScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.textButton]}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+              })}
             >
               <Text style={[styles.textButtonText, { color: theme.colors.textSecondary }]}>Go Back</Text>
             </TouchableOpacity>
@@ -99,7 +102,10 @@ const PaymentCheckoutScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.textButton]}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+              })}
             >
               <Text style={[styles.textButtonText, { color: theme.colors.textSecondary }]}>Go Back</Text>
             </TouchableOpacity>
