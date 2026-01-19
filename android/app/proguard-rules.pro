@@ -12,11 +12,3 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
-
-# react-native-razorpay
--keepattributes *Annotation*
--keepclassmembers class * {
-  @android.webkit.JavascriptInterface <methods>;
-}
--keep class com.razorpay.** {*;}
--dontwarn com.razorpay.**

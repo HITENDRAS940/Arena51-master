@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
@@ -148,7 +149,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
   const renderServiceItem = useCallback(({ item, index }: { item: any; index: number }) => {
     if (loading) {
       return (
-        <View style={[styles.cardWrapper, { marginBottom: 16 }]}>
+        <View style={[styles.cardWrapper, { marginBottom: verticalScale(16) }]}>
           <ServiceSkeletonCard />
         </View>
       );
@@ -236,7 +237,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       );
     }
     
-    return <View style={{ height: 20 }} />;
+    return <View style={{ height: verticalScale(20) }} />;
   };
 
   const handleFilterApply = async (params: { 
@@ -304,7 +305,7 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       styles.headerContainer,
       { 
         position: 'absolute',
-        top: insets.top + 20,
+        top: insets.top + verticalScale(20),
         left: 0,
         right: 0,
         zIndex: 5,
@@ -419,12 +420,12 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
         }
         ListHeaderComponent={
           <View style={{ 
-            height: isFilterActive ? 150 : 110,
+            height: isFilterActive ? verticalScale(150) : verticalScale(110),
           }} />
         }
         contentContainerStyle={[
           styles.list, 
-          { paddingTop: insets.top + 20 },
+          { paddingTop: insets.top + verticalScale(20) },
           !loading && services.length === 0 && { flexGrow: 1 }
         ]}
         onEndReached={handleLoadMore}
@@ -492,14 +493,14 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  list: { paddingBottom: 40 },
+  list: { paddingBottom: verticalScale(40) },
   cardWrapper: {
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   headerContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-    paddingTop: 8,
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(8),
+    paddingTop: verticalScale(8),
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -510,11 +511,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     flex: 1,
-    marginLeft: -16,
+    marginLeft: -scale(16),
   },
   headerBackIconGroup: { 
-    padding: 8,
-    marginTop: 2, // Align with large text
+    padding: scale(8),
+    marginTop: verticalScale(2), // Align with large text
   },
   headerTitleGroup: {
     flex: 1,
@@ -522,57 +523,57 @@ const styles = StyleSheet.create({
   headerRightActionsGroup: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: verticalScale(8),
   },
   headerActionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginRight: -16,
+    gap: scale(4),
+    marginRight: -scale(16),
   },
-  headerActionIconGroup: { padding: 8 },
+  headerActionIconGroup: { padding: scale(8) },
   headerTitleMain: {
-    fontSize: 34,
+    fontSize: moderateScale(34),
     fontWeight: '800',
-    lineHeight: 40,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
-    fontSize: 34,
+    fontSize: moderateScale(34),
     fontWeight: '800',
-    lineHeight: 40,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,
   },
   clearFilterButton: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
+    marginTop: verticalScale(16),
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(12),
   },
   clearFilterText: {
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: moderateScale(14),
   },
   activeFilterBadgeContainer: {
-    marginTop: 12,
+    marginTop: verticalScale(12),
   },
   filterBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: scale(10),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(16),
     borderWidth: 1,
-    gap: 5,
+    gap: scale(5),
   },
   filterBadgeText: {
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: '600',
   },
   clearFilterIconButton: {
-    marginLeft: 2,
+    marginLeft: scale(2),
   },
   stickyHeader: {
     position: 'absolute',
@@ -583,47 +584,47 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   stickyHeaderContent: {
-    height: 56,
+    height: verticalScale(56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   backButton: {
     position: 'absolute',
-    left: 10,
-    width: 40,
-    height: 40,
+    left: scale(10),
+    width: scale(40),
+    height: scale(40),
     justifyContent: 'center',
     alignItems: 'center',
   },
   stickyTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
   },
   stickyActions: {
     position: 'absolute',
-    right: 20,
+    right: scale(20),
     flexDirection: 'row',
-    gap: 16,
+    gap: scale(16),
     alignItems: 'center',
   },
   footerLoader: {
-    paddingVertical: 20,
+    paddingVertical: verticalScale(20),
     alignItems: 'center',
   },
   endListFooter: {
-    paddingVertical: 32,
+    paddingVertical: verticalScale(32),
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   footerDivider: {
-    width: 60,
-    height: 4,
+    width: scale(60),
+    height: verticalScale(4),
     backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 2,
-    marginBottom: 20,
+    borderRadius: moderateScale(2),
+    marginBottom: verticalScale(20),
   },
   footerText: {
      textAlign: 'center',

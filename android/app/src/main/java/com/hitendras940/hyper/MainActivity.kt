@@ -10,8 +10,6 @@ import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnable
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
-import com.facebook.react.modules.core.DeviceEventManagerModule
-import com.facebook.react.bridge.ReactContext
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,16 +21,6 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     // @generated end expo-splashscreen
     super.onCreate(null)
-  }
-  
-  override fun onResume() {
-    super.onResume()
-    val reactContext = reactInstanceManager.currentReactContext
-    if (reactContext != null) {
-      reactContext
-        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-        .emit("onNativeResume", null)
-    }
   }
 
   /**

@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(16),
     overflow: 'hidden',
     shadowColor: themeObj.colors.primary,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowRadius: moderateScale(12),
     elevation: 8,
   },
   actionButton: {

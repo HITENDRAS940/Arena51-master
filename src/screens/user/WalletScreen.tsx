@@ -16,6 +16,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -81,7 +82,7 @@ const WalletScreen = () => {
       <StatusBar barStyle="dark-content" />
       
       {/* Minimal Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + verticalScale(10) }]}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -102,7 +103,7 @@ const WalletScreen = () => {
           <View style={styles.logoContainer}>
             <Animated.View style={[styles.glow, animatedGlowStyle, { backgroundColor: theme.colors.primary + '20' }]} />
             <Animated.View style={animatedLogoStyle}>
-              <HyperIcon size={120} color={theme.colors.primary} />
+              <HyperIcon size={moderateScale(120)} color={theme.colors.primary} />
             </Animated.View>
           </View>
 
@@ -125,7 +126,7 @@ const WalletScreen = () => {
             <View style={styles.featureList}>
                 <View style={styles.featureItem}>
                     <View style={[styles.featureIcon, { backgroundColor: theme.colors.primary + '15' }]}>
-                        <HyperIcon size={16} color={theme.colors.primary} />
+                        <HyperIcon size={moderateScale(16)} color={theme.colors.primary} />
                     </View>
                     <Text style={[styles.featureText, { color: theme.colors.text }]}>Smart Subscriptions</Text>
                 </View>
@@ -157,12 +158,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(22),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -181,83 +182,83 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: scale(32),
   },
   logoContainer: {
-    width: 200,
-    height: 200,
+    width: scale(200),
+    height: scale(200),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: verticalScale(40),
   },
   glow: {
     position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: scale(140),
+    height: scale(140),
+    borderRadius: moderateScale(70),
   },
   textContainer: {
     alignItems: 'center',
   },
   comingSoonBadge: {
     backgroundColor: '#000000',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-    marginBottom: 20,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(100),
+    marginBottom: verticalScale(20),
   },
   comingSoonText: {
     color: '#FFD700', // Gold for premium feel
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '900',
     letterSpacing: 2,
   },
   title: {
-    fontSize: 32,
+    fontSize: moderateScale(32),
     fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
     letterSpacing: -1,
   },
   description: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: moderateScale(24),
     fontWeight: '500',
     opacity: 0.8,
-    marginBottom: 32,
+    marginBottom: verticalScale(32),
   },
   divider: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 32,
+    width: scale(40),
+    height: verticalScale(4),
+    borderRadius: moderateScale(2),
+    marginBottom: verticalScale(32),
   },
   featureList: {
-    gap: 10,
+    gap: scale(10),
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
   },
   featureItem: {
-    gap: 10,
+    gap: scale(10),
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: themeObj.colors.primary + '08',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 100,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(100),
   },
   featureIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: scale(24),
+    height: scale(24),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: scale(8),
   },
   featureText: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '700',
   },
   footer: {
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     opacity: 0.6,
   },

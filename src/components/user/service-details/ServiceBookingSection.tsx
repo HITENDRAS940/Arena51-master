@@ -112,7 +112,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
                       
                       {isSelected && (
                         <View style={styles.selectedIndicator}>
-                          <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+                          <Ionicons name="checkmark-circle" size={moderateScale(16)} color="#FFFFFF" />
                         </View>
                       )}
                     </View>
@@ -132,7 +132,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
             style={[styles.closeButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
             activeOpacity={0.7}
           >
-            <Ionicons name="close" size={20} color={theme.colors.text} />
+            <Ionicons name="close" size={moderateScale(20)} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
         
@@ -181,7 +181,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
                   <View style={styles.dateIconContainer}>
                     <Ionicons 
                       name="calendar" 
-                      size={48} 
+                      size={moderateScale(48)} 
                       color={isSelected ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.03)"} 
                     />
                   </View>
@@ -204,7 +204,7 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
         ) : availableSlots.length === 0 ? (
           <View style={[styles.emptySlots, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <View style={[styles.emptyIconContainer, { backgroundColor: theme.colors.border + '50' }]}>
-               <Ionicons name="calendar-outline" size={32} color={theme.colors.gray} />
+               <Ionicons name="calendar-outline" size={moderateScale(32)} color={theme.colors.gray} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>No Slots Available</Text>
             <Text style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}>
@@ -233,20 +233,20 @@ const ServiceBookingSection: React.FC<ServiceBookingSectionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 8,
+    paddingTop: verticalScale(8),
   },
   section: {
-    marginBottom: 30,
+    marginBottom: verticalScale(30),
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -266,30 +266,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
   },
   dateList: {
-    paddingVertical: 8,
-    gap: 12,
+    paddingVertical: verticalScale(8),
+    gap: scale(12),
   },
   dateChip: {
-    width: 65,
-    height: 85,
-    borderRadius: 20,
+    width: scale(65),
+    height: verticalScale(85),
+    borderRadius: moderateScale(20),
     overflow: 'hidden',
     borderWidth: 1.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 2,
   },
   dateChipGradient: {
@@ -300,68 +300,68 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   dateChipDay: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
     zIndex: 2,
   },
   dateChipNumber: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '900',
     zIndex: 2,
     letterSpacing: -0.5,
   },
   dateIconContainer: {
     position: 'absolute',
-    bottom: -15,
-    right: -15,
+    bottom: -verticalScale(15),
+    right: -scale(15),
     zIndex: 1,
     transform: [{ rotate: '-15deg' }],
   },
   loadingContainer: {
-    padding: 50,
+    padding: scale(50),
     alignItems: 'center',
-    gap: 16,
+    gap: scale(16),
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '500',
   },
   emptySlots: {
     alignItems: 'center',
-    padding: 30,
-    borderRadius: 24,
+    padding: scale(30),
+    borderRadius: moderateScale(24),
     borderWidth: 1.5,
     borderStyle: 'dashed',
   },
   emptyIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: scale(64),
+    height: scale(64),
+    borderRadius: moderateScale(32),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: moderateScale(20),
   },
   slotsGrid: {
-    paddingVertical: 12,
-    gap: 4,
+    paddingVertical: verticalScale(12),
+    gap: scale(4),
   },
   resourceList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    paddingTop: 8,
+    gap: scale(10),
+    paddingTop: verticalScale(8),
   },
   resourceChip: {
     flex: 1,
@@ -374,22 +374,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: moderateScale(8),
     elevation: 2,
-    padding: 2,
+    padding: scale(2),
     overflow: 'hidden',
   },
   chipContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 4,
+    padding: scale(4),
   },
   chipIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 18,
+    width: scale(50),
+    height: scale(50),
+    borderRadius: moderateScale(18),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   resourceChipText: {
     fontSize: moderateScale(11),
@@ -401,19 +401,19 @@ const styles = StyleSheet.create({
   selectedShadow: {
     shadowColor: themeObj.colors.primary,
     shadowOpacity: 0.2,
-    shadowRadius: 15,
+    shadowRadius: moderateScale(15),
     elevation: 4,
   },
   selectedIndicator: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: verticalScale(4),
+    right: scale(4),
   },
   resourceDescription: {
-    fontSize: 13,
-    marginTop: 8,
+    fontSize: moderateScale(13),
+    marginTop: verticalScale(8),
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: moderateScale(18),
   },
 });
 

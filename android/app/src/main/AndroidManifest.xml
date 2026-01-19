@@ -23,24 +23,13 @@
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
       </intent-filter>
-      <intent-filter>
+      <intent-filter data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <category android:name="android.intent.category.BROWSABLE"/>
+        <data android:scheme="io.razorpay"/>
         <data android:scheme="exp+hyper"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="io.razorpay" />
-      </intent-filter>
-
-      <!-- FORCE RAZORPAY TO BE TRANSLUCENT TO KEEP APP ACTIVE -->
-      <activity
-        android:name="com.razorpay.CheckoutActivity"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-        android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </activity>
   </application>
 </manifest>

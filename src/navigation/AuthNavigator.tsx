@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
-import PhoneEntryScreen from '../screens/auth/PhoneEntryScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
 import OTPVerificationScreen from '../screens/auth/OTPVerificationScreen';
 import SetNameScreen from '../screens/auth/SetNameScreen';
 
@@ -17,7 +17,7 @@ const AuthNavigator = () => {
       }}
       initialRouteName="PhoneEntry"
     >
-      <Stack.Screen name="PhoneEntry" component={PhoneEntryScreen} />
+      <Stack.Screen name="PhoneEntry" component={LoginScreen} />
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
       <Stack.Screen name="SetName" component={SetNameScreen} />
     </Stack.Navigator>

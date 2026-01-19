@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UserBooking } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { format } from 'date-fns';
 
 interface BookingCardProps {
@@ -122,7 +123,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
       >
         {/* Decorative Background Icon */}
         <View style={styles.backgroundDecor}>
-          <Ionicons name="football-outline" size={150} color={statusTheme.iconBg} />
+          <Ionicons name="football-outline" size={moderateScale(150)} color={statusTheme.iconBg} />
         </View>
 
         {/* Header Section */}
@@ -151,7 +152,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
         <View style={styles.detailsGrid}>
           <View style={styles.detailItem}>
             <View style={[styles.iconBox, { backgroundColor: statusTheme.iconBg }]}>
-              <Ionicons name="calendar-outline" size={18} color={statusTheme.text} />
+              <Ionicons name="calendar-outline" size={moderateScale(18)} color={statusTheme.text} />
             </View>
             <View>
               <Text style={[styles.detailLabel, { color: statusTheme.secondaryText }]}>Date</Text>
@@ -163,7 +164,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
 
           <View style={styles.detailItem}>
             <View style={[styles.iconBox, { backgroundColor: statusTheme.iconBg }]}>
-              <Ionicons name="time-outline" size={18} color={statusTheme.text} />
+              <Ionicons name="time-outline" size={moderateScale(18)} color={statusTheme.text} />
             </View>
             <View>
               <Text style={[styles.detailLabel, { color: statusTheme.secondaryText }]}>Time</Text>
@@ -177,7 +178,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
         {/* Price & Ref Row */}
         <View style={styles.infoRow}>
           <View style={styles.refGroup}>
-            <Ionicons name="receipt-outline" size={14} color={statusTheme.secondaryText} />
+            <Ionicons name="receipt-outline" size={moderateScale(14)} color={statusTheme.secondaryText} />
             <Text style={[styles.bookingId, { color: statusTheme.secondaryText }]}>
               #{booking.reference || booking.id}
             </Text>
@@ -192,7 +193,7 @@ const BookingCard: React.FC<BookingCardProps> = React.memo(({
           <View style={[styles.footer, { borderTopColor: statusTheme.border }]}>
             {booking.createdAt ? (
               <View style={styles.bookedOnContainer}>
-                <Ionicons name="checkmark-circle-outline" size={14} color={statusTheme.text} />
+                <Ionicons name="checkmark-circle-outline" size={moderateScale(14)} color={statusTheme.text} />
                 <Text style={[styles.bookedOn, { color: statusTheme.secondaryText }]}>
                   {format(new Date(booking.createdAt), 'dd MMM, hh:mm a')}
                 </Text>
@@ -224,120 +225,120 @@ BookingCard.displayName = 'BookingCard';
 
 const styles = StyleSheet.create({
   cardContainer: {
-    marginBottom: 16,
-    borderRadius: 24,
+    marginBottom: verticalScale(16),
+    borderRadius: moderateScale(24),
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowRadius: moderateScale(12),
     overflow: 'hidden',
   },
   cardGradient: {
-    padding: 20,
+    padding: scale(20),
     position: 'relative',
     overflow: 'hidden',
   },
   backgroundDecor: {
     position: 'absolute',
-    right: -30,
-    top: -30,
+    right: -scale(30),
+    top: -verticalScale(30),
     opacity: 0.5,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   headerContent: {
     flex: 1,
-    marginRight: 12,
+    marginRight: scale(12),
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
+    marginBottom: verticalScale(4),
+    gap: scale(8),
   },
   statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: scale(8),
+    height: scale(8),
+    borderRadius: moderateScale(4),
   },
   turfName: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
     letterSpacing: -0.3,
     flex: 1,
   },
   resourceName: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '600',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(12),
   },
   statusText: {
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   divider: {
     height: 1,
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
     opacity: 0.1,
   },
   detailsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 12,
+    marginBottom: verticalScale(20),
+    gap: scale(12),
   },
   detailItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: scale(10),
   },
   iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
   },
   detailLabel: {
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: verticalScale(2),
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '700',
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   refGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(6),
   },
   bookingId: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '600',
   },
   priceValue: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '900',
     letterSpacing: -0.5,
   },
@@ -345,42 +346,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: verticalScale(16),
+    paddingTop: verticalScale(16),
     borderTopWidth: 1,
   },
   bookedOnContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scale(6),
   },
   bookedOn: {
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: '600',
   },
   cancelButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(100),
     borderWidth: 1.5,
     backgroundColor: 'rgba(239, 68, 68, 0.05)',
   },
   cancelButtonText: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '700',
   },
   payButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(100),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: moderateScale(4),
     elevation: 3,
   },
   payButtonText: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '900',
     textTransform: 'uppercase',
   },

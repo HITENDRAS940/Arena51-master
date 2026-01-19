@@ -685,7 +685,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           top: 0,
           left: 0,
           right: 0,
-          height: 350,
+          height: verticalScale(350),
           backgroundColor: '#FFFFFF',
           zIndex: 0,
         }}
@@ -727,7 +727,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Gallery Spacer */}
-        <View style={{ height: 280 }} />
+        <View style={{ height: verticalScale(280) }} />
         
         <Animated.View 
           style={[
@@ -739,7 +739,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               transform: [{
                 translateY: entranceAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [40, 0]
+                  outputRange: [verticalScale(40), 0]
                 })
               }],
               marginTop: -verticalScale(20),
@@ -764,7 +764,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               transform: [{
                 translateY: bookingEntranceAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [20, 0]
+                  outputRange: [verticalScale(20), 0]
                 })
               }]
             }}
@@ -793,11 +793,11 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         style={[
           styles.footerContainer, 
           { 
-            paddingBottom: Math.max(20, insets.bottom + 10),
+            paddingBottom: Math.max(verticalScale(20), insets.bottom + verticalScale(10)),
             transform: [{
               translateY: entranceAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [100, 0]
+                outputRange: [verticalScale(100), 0]
               })
             }]
           }
@@ -823,7 +823,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
                 transform: [{
                   translateX: footerCrossfadeAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, -20]
+                    outputRange: [0, -scale(20)]
                   })
                 }],
                 position: showBookingSection ? 'absolute' : 'relative',
@@ -862,7 +862,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
                 transform: [{
                   translateX: footerCrossfadeAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [20, 0]
+                    outputRange: [scale(20), 0]
                   })
                 }],
                 position: !showBookingSection ? 'absolute' : 'relative',
@@ -889,7 +889,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
               activeOpacity={0.8}
             >
               {bookingLoading ? (
-                <ActivityIndicator color="#FFFFFF" size={24} />
+                <ActivityIndicator color="#FFFFFF" size={moderateScale(24)} />
               ) : (
                 <Text style={styles.primaryButtonText}>Confirm Booking</Text>
               )}

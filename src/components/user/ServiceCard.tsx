@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
 
   bookButtonContainer: {
-    borderRadius: 100, // Capsule container
+    borderRadius: moderateScale(100), // Capsule container
     overflow: 'hidden',
     shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.3,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     height: verticalScale(40),
     paddingLeft: scale(20),
     paddingRight: scale(12),
-    borderRadius: 100,
+    borderRadius: moderateScale(100),
     position: 'relative',
     overflow: 'hidden',
   },
@@ -366,8 +366,8 @@ const styles = StyleSheet.create({
   },
   buttonDecorIcon: {
     position: 'absolute',
-    right: -10,
-    bottom: -15,
+    right: -scale(10),
+    bottom: -verticalScale(15),
     zIndex: 1,
     opacity: 0.1,
     transform: [{ rotate: '-15deg' }],

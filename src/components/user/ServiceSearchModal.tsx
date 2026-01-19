@@ -9,6 +9,7 @@ import {
   Keyboard,
   ActivityIndicator,
 } from 'react-native';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -101,7 +102,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
               {item.name}
             </Text>
             <View style={styles.bannerLocationRow}>
-              <Ionicons name="location" size={12} color="rgba(255,255,255,0.6)" />
+              <Ionicons name="location" size={moderateScale(12)} color="rgba(255,255,255,0.6)" />
               <Text style={styles.bannerLocationText} numberOfLines={1}>
                 {item.location}
               </Text>
@@ -110,7 +111,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             <View style={styles.bannerTagsRow}>
               {item.rating && (
                 <View style={[styles.bannerTag, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                  <Ionicons name="star" size={10} color="#FBBF24" />
+                  <Ionicons name="star" size={moderateScale(10)} color="#FBBF24" />
                   <Text style={styles.bannerTagText}>{item.rating.toFixed(1)}</Text>
                 </View>
               )}
@@ -123,7 +124,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
           </View>
 
           <View style={styles.bannerActionContainer}>
-            <Ionicons name="arrow-forward-circle" size={44} color="#10B981" />
+            <Ionicons name="arrow-forward-circle" size={moderateScale(44)} color="#10B981" />
           </View>
         </View>
 
@@ -131,7 +132,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
         <View style={styles.bannerDecorativeIcon}>
           <Ionicons 
             name="search" 
-            size={100} 
+            size={moderateScale(100)} 
             color="rgba(255, 255, 255, 0.05)" 
           />
         </View>
@@ -155,7 +156,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             </Text>
           </View>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={theme.colors.text} />
+            <Ionicons name="close" size={moderateScale(24)} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -169,7 +170,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
               },
             ]}
           >
-            <Ionicons name="search" size={20} color={theme.colors.primary} />
+            <Ionicons name="search" size={moderateScale(20)} color={theme.colors.primary} />
             <TextInput
               style={[styles.searchInput, { color: theme.colors.text }]}
               placeholder={
@@ -186,7 +187,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={20} color={theme.colors.gray} />
+                <Ionicons name="close-circle" size={moderateScale(20)} color={theme.colors.gray} />
               </TouchableOpacity>
             )}
           </View>
@@ -194,14 +195,14 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
         {searching ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
+            <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: verticalScale(16) }]}>
               Finding best venues...
             </Text>
           </View>
         ) : searchQuery.trim().length >= 3 && searchResults.length === 0 ? (
           <View style={styles.centerContainer}>
             <View style={[styles.noResultsIcon, { backgroundColor: theme.colors.surface }]}>
-              <Ionicons name="search-outline" size={48} color={theme.colors.gray} />
+              <Ionicons name="search-outline" size={moderateScale(48)} color={theme.colors.gray} />
             </View>
             <Text style={[styles.noResultsText, { color: theme.colors.text }]}>
               No venues found
@@ -221,8 +222,8 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             ListEmptyComponent={
               !searchQuery.trim() ? (
                 <View style={styles.initialState}>
-                  <Ionicons name="rocket-outline" size={60} color={theme.colors.border} />
-                  <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: 16 }]}>
+                  <Ionicons name="rocket-outline" size={moderateScale(60)} color={theme.colors.border} />
+                  <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: verticalScale(16) }]}>
                     Type to explore venues
                   </Text>
                 </View>
@@ -243,105 +244,105 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 8,
+    padding: scale(24),
+    paddingTop: verticalScale(8),
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: moderateScale(14),
+    marginTop: verticalScale(4),
   },
   closeButton: {
-    padding: 8,
+    padding: scale(8),
     backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
   },
   searchSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(20),
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(20),
     borderWidth: 1.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 2,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    marginLeft: 12,
+    fontSize: moderateScale(16),
+    marginLeft: scale(12),
     fontWeight: '600',
   },
   clearButton: {
-    padding: 4,
+    padding: scale(4),
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingBottom: 40,
+    paddingHorizontal: scale(40),
+    paddingBottom: verticalScale(40),
   },
   initialState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: verticalScale(40),
   },
   infoText: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
     opacity: 0.6,
   },
   noResultsIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: scale(80),
+    height: scale(80),
+    borderRadius: moderateScale(40),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   noResultsText: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   noResultsSubtext: {
-    fontSize: 15,
+    fontSize: moderateScale(15),
     textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 22,
+    marginTop: verticalScale(8),
+    lineHeight: moderateScale(22),
     opacity: 0.6,
   },
   listContent: {
-    padding: 20,
-    paddingBottom: 60,
+    padding: scale(20),
+    paddingBottom: verticalScale(60),
   },
   searchResultBanner: {
-    marginBottom: 16,
-    borderRadius: 28,
+    marginBottom: verticalScale(16),
+    borderRadius: moderateScale(28),
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: verticalScale(8) },
     shadowOpacity: 0.2,
-    shadowRadius: 16,
+    shadowRadius: moderateScale(16),
     elevation: 10,
   },
   bannerGradient: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    minHeight: 110,
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(15),
+    minHeight: verticalScale(110),
     justifyContent: 'center',
     position: 'relative',
   },
@@ -353,42 +354,42 @@ const styles = StyleSheet.create({
   },
   bannerTextSection: {
     flex: 1,
-    marginRight: 12,
+    marginRight: scale(12),
   },
   bannerTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
     letterSpacing: -0.5,
   },
   bannerLocationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
+    gap: scale(4),
+    marginBottom: verticalScale(8),
   },
   bannerLocationText: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   bannerTagsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   bannerTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(8),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: scale(4),
   },
   bannerTagText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: moderateScale(10),
     fontWeight: '800',
   },
   bannerActionContainer: {
@@ -397,8 +398,8 @@ const styles = StyleSheet.create({
   },
   bannerDecorativeIcon: {
     position: 'absolute',
-    bottom: -15,
-    right: -10,
+    bottom: -verticalScale(15),
+    right: -scale(10),
     zIndex: 1,
     opacity: 0.8,
   },

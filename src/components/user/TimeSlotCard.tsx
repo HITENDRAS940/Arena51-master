@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { Ionicons } from '@expo/vector-icons';
 import { EphemeralSlot } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -59,7 +60,7 @@ const TimeSlotCard: React.FC<TimeSlotCardProps> = ({
         ]}>
            <Ionicons
              name={isSelected ? 'checkmark' : 'time'}
-             size={16}
+             size={moderateScale(16)}
              color={isSelected ? '#FFFFFF' : (!slot.available ? theme.colors.gray : theme.colors.navy)}
            />
         </View>
@@ -102,78 +103,78 @@ const TimeSlotCard: React.FC<TimeSlotCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: 14,
-    borderRadius: 20,
+    padding: scale(14),
+    borderRadius: moderateScale(20),
     borderWidth: 1.5,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   leftContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: scale(14),
     flex: 1,
   },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: moderateScale(18),
     justifyContent: 'center',
     alignItems: 'center',
   },
   timeLabel: {
-    fontSize: 10,
+    fontSize: moderateScale(10),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 1,
+    marginBottom: verticalScale(1),
   },
   timeValue: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '700',
   },
   availableLabel: {
-    fontSize: 10,
+    fontSize: moderateScale(10),
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: verticalScale(2),
   },
   rightContent: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: scale(4),
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   priceValue: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
   },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 2,
+    gap: scale(4),
+    marginTop: verticalScale(2),
     justifyContent: 'flex-end',
   },
   tag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: scale(6),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(4),
   },
   tagText: {
-    fontSize: 8,
+    fontSize: moderateScale(8),
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
   },
   statusText: {
-    fontSize: 9,
+    fontSize: moderateScale(9),
     fontWeight: '800',
     letterSpacing: 0.5,
   },

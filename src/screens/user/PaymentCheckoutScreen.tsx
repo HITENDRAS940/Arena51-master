@@ -11,6 +11,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import RazorpayService from '../../services/RazorpayService';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { useAlert } from '../../components/shared/CustomAlert';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const PaymentCheckoutScreen = ({ route, navigation }: any) => {
   const { bookingId, amount, serviceName } = route.params;
@@ -156,115 +157,115 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(15),
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
   },
   paymentInfo: {
-    padding: 24,
+    padding: scale(24),
     backgroundColor: 'rgba(0,0,0,0.02)',
   },
   invoiceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   label: {
-    fontSize: 11,
+    fontSize: moderateScale(11),
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   value: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '800',
   },
   amountBox: {
-    marginTop: 20,
+    marginTop: verticalScale(20),
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
+    padding: scale(16),
+    borderRadius: moderateScale(16),
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowRadius: moderateScale(5),
     elevation: 2,
   },
   amountLabel: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   amountValue: {
-    fontSize: 32,
+    fontSize: moderateScale(32),
     fontWeight: '900',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: scale(30),
   },
   center: {
     alignItems: 'center',
   },
   iconBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: scale(100),
+    height: scale(100),
+    borderRadius: moderateScale(50),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   statusTitle: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
     textAlign: 'center',
   },
   statusSubtitle: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: moderateScale(20),
     fontWeight: '500',
-    marginBottom: 30,
+    marginBottom: verticalScale(30),
   },
   actionButton: {
     width: '100%',
-    height: 56,
-    borderRadius: 16,
+    height: verticalScale(56),
+    borderRadius: moderateScale(16),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: verticalScale(15),
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '800',
   },
   textButton: {
-    padding: 10,
+    padding: scale(10),
   },
   textButtonText: {
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '600',
   },
   footer: {
-    padding: 24,
+    padding: scale(24),
     alignItems: 'center',
   },
   shieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: scale(8),
   },
   shieldText: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '500',
   },
 });

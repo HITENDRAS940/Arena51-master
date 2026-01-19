@@ -10,6 +10,7 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -188,7 +189,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
             </Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={theme.colors.text} />
+            <Ionicons name="close" size={moderateScale(24)} color={theme.colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -203,7 +204,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                   !isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
                 ]}
               >
-                <Ionicons name="time-outline" size={20} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                <Ionicons name="time-outline" size={moderateScale(20)} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
                 <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
               </TouchableOpacity>
               <TouchableOpacity 
@@ -224,7 +225,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                   isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
                 ]}
               >
-                <Ionicons name="location-outline" size={20} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
+                <Ionicons name="location-outline" size={moderateScale(20)} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
                 <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Distance</Text>
               </TouchableOpacity>
             </View>
@@ -343,7 +344,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Selected Range</Text>
               <View style={[styles.infoBanner, { backgroundColor: theme.colors.primary + '10' }]}>
-                <Ionicons name="navigate-circle" size={24} color={theme.colors.primary} />
+                <Ionicons name="navigate-circle" size={moderateScale(24)} color={theme.colors.primary} />
                 <Text style={[styles.infoBannerText, { color: theme.colors.text }]}>
                   We'll find the best venues within <Text style={{fontWeight: '800'}}>50km</Text> in {initialCity}.
                 </Text>
@@ -365,7 +366,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
               style={styles.applyGradient}
             >
               <Text style={styles.applyButtonText}>Show Venues</Text>
-              <Ionicons name="search" size={20} color="#FFF" />
+              <Ionicons name="search" size={moderateScale(20)} color="#FFF" />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -382,106 +383,106 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
+    padding: scale(24),
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: moderateScale(14),
+    marginTop: verticalScale(4),
   },
   closeButton: {
-    padding: 8,
+    padding: scale(8),
     backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 12,
+    borderRadius: moderateScale(12),
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: verticalScale(40),
   },
   section: {
-    marginBottom: 32,
-    paddingHorizontal: 24,
+    marginBottom: verticalScale(32),
+    paddingHorizontal: scale(24),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   dateList: {
-    paddingRight: 24,
+    paddingRight: scale(24),
   },
   dateItem: {
-    width: 64,
-    height: 80,
-    borderRadius: 20,
+    width: scale(64),
+    height: verticalScale(80),
+    borderRadius: moderateScale(20),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: scale(12),
   },
   dateDay: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   dateNum: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '700',
   },
   slotsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: scale(12),
   },
   slotItem: {
-    width: (width - 72) / 3,
-    height: 52,
-    borderRadius: 16,
+    width: (width - scale(72)) / 3,
+    height: verticalScale(52),
+    borderRadius: moderateScale(16),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
   },
   slotText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '700',
   },
   slotIndicator: {
     position: 'absolute',
-    bottom: 4,
+    bottom: verticalScale(4),
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 4,
-    borderRadius: 4,
+    paddingHorizontal: scale(4),
+    borderRadius: moderateScale(4),
   },
   slotIndicatorText: {
-    fontSize: 8,
+    fontSize: moderateScale(8),
     fontWeight: '900',
     color: '#FFF',
   },
   activityList: {
-    paddingRight: 24,
-    gap: 12,
+    paddingRight: scale(24),
+    gap: scale(12),
   },
   activityBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(14),
     borderWidth: 1.5,
   },
   activityText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '700',
   },
   footer: {
-    padding: 24,
-    paddingBottom: 32,
+    padding: scale(24),
+    paddingBottom: verticalScale(32),
     borderTopWidth: 1,
   },
   applyButton: {
-    height: 56,
-    borderRadius: 18,
+    height: verticalScale(56),
+    borderRadius: moderateScale(18),
     overflow: 'hidden',
   },
   applyGradient: {
@@ -489,18 +490,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   applyButtonText: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '700',
   },
   selectedShadow: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 4,
   },
   unselectedShadow: {
@@ -509,41 +510,41 @@ const styles = StyleSheet.create({
   },
   filterModeContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: scale(12),
   },
   modeButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 16,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(16),
     borderWidth: 1.5,
     borderColor: 'transparent',
     backgroundColor: '#00000005',
-    gap: 8,
+    gap: scale(8),
   },
   modeButtonText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '700',
   },
   distanceHint: {
-    fontSize: 12,
-    marginTop: 8,
+    fontSize: moderateScale(12),
+    marginTop: verticalScale(8),
     fontWeight: '500',
     opacity: 0.7,
   },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    gap: 12,
+    padding: scale(16),
+    borderRadius: moderateScale(16),
+    gap: scale(12),
   },
   infoBannerText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     flex: 1,
-    lineHeight: 20,
+    lineHeight: moderateScale(20),
   },
 });
 

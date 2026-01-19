@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import CalendarIcon from './icons/CalendarIcon';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -11,18 +11,18 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } fr
 import ProfileIcon from './icons/ProfileIcon';
 import HomeIcon from './icons/HomeIcon';
 
-const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
+const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, navigation }) => {
   const { theme } = useTheme();
   const { isAuthenticated, setRedirectData } = useAuth();
   const insets = useSafeAreaInsets();
 
   const focusedRoute = state.routes[state.index];
   const focusedDescriptor = descriptors[focusedRoute.key];
-  const focusedOptions = focusedDescriptor.options;
+  const focusedOptions = descriptors[focusedRoute.key].options;
   
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const isHidden = (focusedOptions.tabBarStyle as any)?.display === 'none';
+  const isHidden = (focusedOptions as any)?.tabBarStyle?.display === 'none';
   
   React.useEffect(() => {
     if (isHidden) {
@@ -59,16 +59,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
           const isFocused = state.index === index;
 
           const onPress = () => {
-            // Check for authentication on protected tabs
-            if (!isAuthenticated && (route.name === 'Bookings' || route.name === 'Profile')) {
-              setRedirectData({
-                name: 'MainTabs',
-                params: { screen: route.name }
-              });
-              navigation.navigate('Auth' as any);
-              return;
-            }
-
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,

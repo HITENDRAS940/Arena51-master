@@ -11,7 +11,7 @@ import { useTheme } from '../contexts/ThemeContext';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const { theme } = useTheme();
 
   if (isLoading) {
@@ -23,11 +23,15 @@ const AppNavigator = () => {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      initialRouteName="User"
+      screenOptions={{ 
+        headerShown: false,
+        animation: 'none'
+      }}
+    >
       <Stack.Screen name="User" component={UserNavigator} />
-      {!isAuthenticated && (
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-      )}
+      <Stack.Screen name="Auth" component={AuthNavigator} />
     </Stack.Navigator>
   );
 };

@@ -20,6 +20,9 @@ import { authAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types';
 import { jwtDecode } from 'jwt-decode';
+import GoogleIcon from '../shared/icons/GoogleIcon';
+import AppleIcon from '../shared/icons/AppleIcon';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 interface SocialAuthButtonsProps {
   onAuthStart?: () => void;
@@ -202,10 +205,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
           {googleLoading ? (
             <ActivityIndicator size="small" color="#DB4437" />
           ) : (
-            <>
-              <Ionicons name="logo-google" size={20} color="#DB4437" />
-              <Text style={styles.socialButtonText}>Continue with Google</Text>
-            </>
+            <GoogleIcon width={scale(24)} height={scale(24)} />
           )}
         </TouchableOpacity>
 
@@ -220,10 +220,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
             {appleLoading ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <>
-                <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                <Text style={[styles.socialButtonText, styles.appleButtonText]}>Continue with Apple</Text>
-              </>
+              <AppleIcon width={scale(24)} height={scale(24)} color="#FFFFFF" />
             )}
           </TouchableOpacity>
         )}
@@ -234,13 +231,13 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
-    paddingHorizontal: 4,
+    marginTop: verticalScale(24),
+    paddingHorizontal: scale(4),
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(24),
   },
   dividerLine: {
     flex: 1,
@@ -248,49 +245,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   dividerText: {
-    marginHorizontal: 16,
-    fontSize: 13,
-    fontWeight: '500',
+    marginHorizontal: scale(16),
+    fontSize: moderateScale(12),
+    fontWeight: '600',
     color: '#9CA3AF',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   buttonsContainer: {
-    flexDirection: 'column',
-    gap: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: scale(20),
+    marginBottom: verticalScale(16),
   },
   socialButton: {
-    flex: 1,
-    flexDirection: 'row',
+    width: scale(56),
+    height: scale(56),
+    borderRadius: moderateScale(28),
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
-    gap: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.08,
+    shadowRadius: moderateScale(10),
+    elevation: 3,
   },
   googleButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
+    borderColor: '#EFEFEF',
   },
   appleButton: {
     backgroundColor: '#000000',
     borderColor: '#000000',
-  },
-  socialButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  appleButtonText: {
-    color: '#FFFFFF',
   },
 });
 

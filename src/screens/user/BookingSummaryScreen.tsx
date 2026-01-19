@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,8 @@ import {
   ScrollView, 
   Image, 
   Platform,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,8 @@ import { format } from 'date-fns';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { DynamicBookingResponse, Service } from '../../types';
+import HyperIcon from '../../components/shared/icons/HyperIcon';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const BookingSummaryScreen = ({ route, navigation }: any) => {
   const { bookingData, service } = route.params as { bookingData: DynamicBookingResponse; service: Service };
@@ -30,40 +33,128 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
     });
   };
 
-  return (
-    <ScreenWrapper style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
-          style={[styles.backButton, { backgroundColor: theme.colors.surface }]}
-        >
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Summary.</Text>
-        <View style={{ width: 44 }} />
-      </View>
+  // Animation values for sticky header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [isHeaderActive, setIsHeaderActive] = useState(false);
 
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Service Mini Card */}
-        <View style={[styles.serviceCard, { backgroundColor: theme.colors.surface }]}>
-          <Image 
-            source={{ uri: service.image }} 
-            style={styles.serviceImage} 
-            resizeMode="cover"
-          />
-          <View style={styles.serviceInfo}>
-            <Text style={[styles.serviceName, { color: theme.colors.text }]} numberOfLines={1}>
-              {service.name}
+  useEffect(() => {
+    const id = scrollY.addListener(({ value }) => {
+      const active = value > 60;
+      if (active !== isHeaderActive) {
+        setIsHeaderActive(active);
+      }
+    });
+    return () => scrollY.removeListener(id);
+  }, [isHeaderActive]);
+
+  // Sticky header animations
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [60, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const headerTranslate = scrollY.interpolate({
+    inputRange: [0, 60, 100],
+    outputRange: [-100, -10, 0],
+    extrapolate: 'clamp',
+  });
+
+  const mainHeaderTranslateY = scrollY.interpolate({
+    inputRange: [0, 120],
+    outputRange: [0, -120],
+    extrapolate: 'clamp',
+  });
+
+
+  return (
+    <ScreenWrapper style={[styles.container, { backgroundColor: theme.colors.background }]} safeAreaEdges={['left', 'right']}>
+      {/* Sticky Header */}
+      <Animated.View 
+        pointerEvents={isHeaderActive ? 'auto' : 'none'}
+        style={[
+          styles.stickyHeader, 
+          { 
+            backgroundColor: theme.colors.background,
+            paddingTop: insets.top,
+            opacity: headerOpacity,
+            transform: [{ translateY: headerTranslate }],
+            borderBottomColor: theme.colors.border,
+          }
+        ]}
+      >
+        <View style={styles.stickyHeaderContent}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={[styles.stickyBackButton, { backgroundColor: theme.colors.surface }]}
+          >
+            <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+          </TouchableOpacity>
+          <View>
+            <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>SUMMARY</Text>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+      </Animated.View>
+
+      {/* Main Header */}
+      <Animated.View style={[
+        styles.headerContainer, 
+        { 
+          position: 'absolute',
+          top: Math.max(insets.top + 20, 20),
+          left: 0,
+          right: 0,
+          zIndex: 5,
+          transform: [{ translateY: mainHeaderTranslateY }]
+        }
+      ]}>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={[styles.backButton, { backgroundColor: theme.colors.surface }]}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
+              Booking
             </Text>
-            <View style={styles.locationRow}>
-              <Ionicons name="location" size={12} color={theme.colors.textSecondary} />
-              <Text style={[styles.locationText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
-                {service.location}
+            <Text style={[styles.headerTitleSub, { color: theme.colors.textSecondary }]}>
+              Summary.
+            </Text>
+          </View>
+          <View style={{ width: 44 }} />
+        </View>
+      </Animated.View>
+
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      >
+        <View style={{ height: (insets.top + 20) + 100 }} />
+        
+        <View style={styles.contentWrapper}>
+          {/* Service Mini Card */}
+          <View style={[styles.serviceCard, { backgroundColor: theme.colors.surface }]}>
+            <HyperIcon size={60}/>
+            <View style={styles.serviceInfo}>
+              <Text style={[styles.serviceName, { color: theme.colors.text }]} numberOfLines={1}>
+                {service.name}
               </Text>
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={12} color={theme.colors.textSecondary} />
+                <Text style={[styles.locationText, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                  {service.location}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
         {/* Booking Details Section */}
         <View style={styles.section}>
@@ -95,22 +186,19 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
               </View>
             </View>
 
-            {bookingData.resourceName && (
-              <>
-                <View style={styles.detailDivider} />
-                <View style={styles.detailRow}>
-                  <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '15' }]}>
-                    <Ionicons name="layers" size={20} color={theme.colors.primary} />
-                  </View>
-                  <View style={styles.detailText}>
-                    <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>COURT / RESOURCE</Text>
-                    <Text style={[styles.detailValue, { color: theme.colors.text }]}>
-                      {bookingData.resourceName}
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
+            <View style={styles.detailDivider} />
+            
+            <View style={styles.detailRow}>
+              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '15' }]}>
+                <Ionicons name="layers" size={20} color={theme.colors.primary} />
+              </View>
+              <View style={styles.detailText}>
+                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>COURT / RESOURCE</Text>
+                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                  {bookingData.resourceName || 'Not specified'}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -139,7 +227,10 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
             </View>
             <View style={styles.priceRow}>
               <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Platform Fee</Text>
-              <Text style={[styles.priceValue, { color: theme.colors.text }]}>₹{bookingData.amountBreakdown.platformFee}</Text>
+              <View style={styles.priceWithDiscount}>
+                <Text style={[styles.strikethroughPrice, { color: theme.colors.textSecondary }]}>₹40</Text>
+                <Text style={[styles.priceValue, { color: theme.colors.success || '#10B981' }]}>₹{bookingData.amountBreakdown.platformFee}</Text>
+              </View>
             </View>
             <View style={styles.priceRow}>
               <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Taxes & GST</Text>
@@ -178,10 +269,11 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
               </Text>
             </View>
           </View>
+          </View>
         </View>
 
         <View style={{ height: 120 }} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Sticky Footer */}
       <View style={[styles.footer, { paddingBottom: Math.max(24, insets.bottom + 8) }]}>
@@ -212,29 +304,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+  // Sticky Header Styles
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    borderBottomWidth: 1,
+    paddingHorizontal: scale(20),
+    paddingBottom: verticalScale(12),
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  stickyHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: verticalScale(60),
+  },
+  stickyBackButton: {
+    width: scale(40),
+    height: scale(40),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: moderateScale(4),
     elevation: 3,
   },
-  headerTitle: {
-    fontSize: 20,
+  stickyTitle: {
+    fontSize: moderateScale(20),
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+  // Main Header Styles
+  headerContainer: {
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(24),
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitleMain: {
+    fontSize: moderateScale(34),
+    fontWeight: '800',
+    lineHeight: moderateScale(40),
+    letterSpacing: -1,
+  },
+  headerTitleSub: {
+    fontSize: moderateScale(34),
+    fontWeight: '800',
+    lineHeight: moderateScale(40),
+    letterSpacing: -1,
+    opacity: 0.5,
+  },
+  backButton: {
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(14),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.1,
+    shadowRadius: moderateScale(4),
+    elevation: 3,
+  },
+  contentWrapper: {
+    paddingHorizontal: scale(20),
   },
   scrollContent: {
     flex: 1,
@@ -242,55 +382,56 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     flexDirection: 'row',
-    padding: 12,
-    borderRadius: 20,
+    padding: scale(12),
+    borderRadius: moderateScale(20),
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: moderateScale(10),
     elevation: 2,
   },
   serviceImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
+    width: scale(60),
+    height: scale(60),
+    borderRadius: moderateScale(12),
+    overflow: 'hidden',
   },
   serviceInfo: {
-    marginLeft: 15,
+    marginLeft: scale(15),
     flex: 1,
   },
   serviceName: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: scale(4),
   },
   locationText: {
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '500',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '800',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
     letterSpacing: -0.5,
   },
   detailsCard: {
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: moderateScale(20),
+    padding: scale(16),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: verticalScale(2) },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 2,
   },
   detailRow: {
@@ -298,91 +439,102 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
   },
   detailText: {
-    marginLeft: 15,
+    marginLeft: scale(15),
     flex: 1,
   },
   detailLabel: {
-    fontSize: 10,
+    fontSize: moderateScale(10),
     fontWeight: '800',
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   detailValue: {
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '700',
   },
   detailDivider: {
     height: 1,
     backgroundColor: 'rgba(0,0,0,0.05)',
-    marginVertical: 12,
+    marginVertical: verticalScale(12),
   },
   couponButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 16,
+    padding: scale(16),
+    borderRadius: moderateScale(16),
     borderWidth: 1,
     borderStyle: 'dashed',
   },
   couponLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: scale(12),
   },
   couponText: {
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '700',
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: verticalScale(4),
   },
   priceLabel: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '600',
   },
   priceValue: {
-    fontSize: 15,
+    fontSize: moderateScale(15),
     fontWeight: '700',
   },
+  priceWithDiscount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(8),
+  },
+  strikethroughPrice: {
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+    textDecorationLine: 'line-through',
+    opacity: 0.6,
+  },
   totalLabel: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '800',
   },
   totalPrice: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '800',
   },
   policyCard: {
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: moderateScale(20),
+    padding: scale(16),
   },
   policyItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-    marginRight: 10,
+    width: scale(6),
+    height: scale(6),
+    borderRadius: moderateScale(3),
+    marginTop: verticalScale(6),
+    marginRight: scale(10),
   },
   policyText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: moderateScale(13),
+    lineHeight: moderateScale(18),
     fontWeight: '500',
   },
   footer: {
@@ -391,8 +543,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    paddingTop: 15,
-    paddingHorizontal: 20,
+    paddingTop: verticalScale(15),
+    paddingHorizontal: scale(20),
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
@@ -402,33 +554,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerLabel: {
-    fontSize: 12,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   footerValue: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: '800',
   },
   payButtonWrapper: {
     flex: 1.5,
-    borderRadius: 18,
+    borderRadius: moderateScale(18),
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: verticalScale(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: moderateScale(8),
     elevation: 5,
   },
   payButton: {
-    height: 56,
+    height: verticalScale(56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: scale(10),
   },
   payButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: moderateScale(17),
     fontWeight: '800',
   },
 });
