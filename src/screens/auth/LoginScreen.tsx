@@ -14,11 +14,12 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
-import { Alert } from 'react-native';
 import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
+import { useAlert } from '../../components/shared/CustomAlert';
 import { Ionicons } from '@expo/vector-icons';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
 import BackIcon from '../../components/shared/icons/BackIcon';
@@ -32,6 +33,7 @@ Dimensions.get('window');
 
 const LoginScreen = ({ route, navigation }: any) => {
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -79,7 +81,7 @@ const LoginScreen = ({ route, navigation }: any) => {
         setKeyboardVisible(true);
         Animated.timing(keyboardShiftAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 350,
           useNativeDriver: false,
         }).start();
       }
@@ -90,7 +92,7 @@ const LoginScreen = ({ route, navigation }: any) => {
         setKeyboardVisible(false);
         Animated.timing(keyboardShiftAnim, {
           toValue: 0,
-          duration: 300,
+          duration: 350,
           useNativeDriver: false,
         }).start();
       }
@@ -106,7 +108,7 @@ const LoginScreen = ({ route, navigation }: any) => {
     setIsFocused(true);
     Animated.timing(inputBorderAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 350,
       useNativeDriver: false,
     }).start();
   };
@@ -115,7 +117,7 @@ const LoginScreen = ({ route, navigation }: any) => {
     setIsFocused(false);
     Animated.timing(inputBorderAnim, {
       toValue: 0,
-      duration: 300,
+      duration: 350,
       useNativeDriver: false,
     }).start();
   };
@@ -127,7 +129,11 @@ const LoginScreen = ({ route, navigation }: any) => {
 
   const handleSendOTP = async () => {
     if (!validateEmail(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address');
+      showAlert({
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address',
+        type: 'error'
+      });
       return;
     }
 
@@ -139,7 +145,11 @@ const LoginScreen = ({ route, navigation }: any) => {
         redirectTo 
       });
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to send OTP');
+      showAlert({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to send OTP',
+        type: 'error'
+      });
     } finally {
       setOtpLoading(false);
     }
@@ -154,22 +164,41 @@ const LoginScreen = ({ route, navigation }: any) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
+        <View
+          style={[
+            styles.mainContainer,
+            { 
+              paddingTop: insets.top + (isKeyboardVisible ? verticalScale(20) : verticalScale(30)),
+              paddingBottom: insets.bottom + (isKeyboardVisible ? verticalScale(20) : verticalScale(30))
+            }
           ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
-          {navigation.canGoBack() && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <BackIcon width={24} height={24} fill={theme.colors.text} />
-            </TouchableOpacity>
-          )}
+          <Animated.View
+            style={{
+              opacity: keyboardShiftAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 0]
+              }),
+              height: keyboardShiftAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [verticalScale(54), 0]
+              }),
+              marginBottom: keyboardShiftAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [verticalScale(12), 0]
+              }),
+              overflow: 'hidden'
+            }}
+          >
+            {navigation.canGoBack() && (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <BackIcon width={24} height={24} fill={theme.colors.text} />
+              </TouchableOpacity>
+            )}
+          </Animated.View>
 
           <Animated.View
             style={[
@@ -189,62 +218,61 @@ const LoginScreen = ({ route, navigation }: any) => {
                 ],
                 height: keyboardShiftAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [verticalScale(140), 0]
+                  outputRange: [verticalScale(110), 0]
                 }),
                 marginBottom: keyboardShiftAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [verticalScale(20), 0]
+                  outputRange: [verticalScale(10), 0]
                 }),
                 overflow: 'hidden'
               }
             ]}
           >
             <View style={styles.logoContainer}>
-              <HyperIcon size={moderateScale(100)} color={theme.colors.primary} />
+              <HyperIcon size={moderateScale(130)} color={theme.colors.primary} />
             </View>
             <Text style={[styles.title, { color: theme.colors.text }]}>Hyper</Text>
             <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Your game. Your venue.</Text>
           </Animated.View>
 
           <View style={styles.cardContainer}>
-            <View style={[styles.card, styles.cardShadow]}>
-              
-              {/* Background Watermark Icon */}
-              <View style={styles.watermarkContainer}>
-                <HyperIcon size={200} color={theme.colors.primary} style={{ opacity: 0.05, transform: [{ rotate: '-15deg' }] }} />
-              </View>
-
+            <LinearGradient
+              colors={['#000000', '#333333']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.card, styles.cardShadow]}
+            >
               <View style={styles.cardInner}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Email Address</Text>
-
-                <View style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: '#F9FAFB',
-                    borderColor: isFocused ? theme.colors.primary : '#E5E7EB'
-                  }
-                ]}>
-                  <Ionicons 
-                    name="mail-outline" 
-                    size={20} 
-                    color={isFocused ? theme.colors.primary : theme.colors.textSecondary} 
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: theme.colors.text }]}
-                    placeholder="your@email.com"
-                    placeholderTextColor={theme.colors.textSecondary + '80'}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value={email}
-                    onChangeText={setEmail}
-                    editable={!otpLoading && !socialLoading}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    selectionColor={theme.colors.primary}
-                  />
-                </View>
+                <Text style={[styles.label, { color: '#D1D5DB' }]}>Email Address</Text>
+ 
+                 <View style={[
+                   styles.inputWrapper,
+                   {
+                     backgroundColor: '#262626',
+                     borderColor: isFocused ? theme.colors.primary : '#4B5563'
+                   }
+                 ]}>
+                   <Ionicons 
+                     name="mail-outline" 
+                     size={20} 
+                     color={isFocused ? theme.colors.primary : '#D1D5DB'} 
+                     style={styles.inputIcon}
+                   />
+                   <TextInput
+                     style={[styles.input, { color: '#FFFFFF' }]}
+                     placeholder="your@email.com"
+                     placeholderTextColor={'#D1D5DB' + '80'}
+                     keyboardType="email-address"
+                     autoCapitalize="none"
+                     autoCorrect={false}
+                     value={email}
+                     onChangeText={setEmail}
+                     editable={!otpLoading && !socialLoading}
+                     onFocus={handleInputFocus}
+                     onBlur={handleInputBlur}
+                     selectionColor={theme.colors.primary}
+                   />
+                 </View>
 
                 <TouchableOpacity
                   onPress={handleSendOTP}
@@ -267,44 +295,72 @@ const LoginScreen = ({ route, navigation }: any) => {
 
                 {/* Social Auth Buttons Integration */}
                 <SocialAuthButtons
+                  darkMode={false}
                   onAuthStart={() => setSocialLoading(true)}
-                  onAuthSuccess={() => {
+                  onAuthSuccess={(userData) => {
                     setSocialLoading(false);
+                    
+                    // If name is missing from the social login, navigate to SetName screen
+                    if (!userData.name) {
+                      navigation.replace('SetName', {
+                        token: userData.token,
+                        phone: userData.phone,
+                        email: userData.email,
+                        userId: userData.id,
+                        isNewUser: userData.isNewUser,
+                        redirectTo
+                      });
+                      return;
+                    }
+
+                    // User has a name, handle redirection
+                    if (redirectTo) {
+                      navigation.navigate(redirectTo.name, redirectTo.params);
+                    } else if (navigation.canGoBack()) {
+                      navigation.goBack();
+                    } else {
+                      // Fallback to home if no redirection or back stack
+                      navigation.navigate('User', { screen: 'HomeTab' });
+                    }
                   }}
                   onAuthError={(error) => {
                     setSocialLoading(false);
-                    Alert.alert('Authentication Error', error);
+                    showAlert({
+                      title: 'Authentication Error',
+                      message: error,
+                      type: 'error'
+                    });
                   }}
                 />
 
-                <Text style={[styles.termsText, { color: theme.colors.textSecondary }]}>
-                  By continuing, you agree to our{' '}
-                  <Text 
-                    style={[styles.termsLink, { color: theme.colors.primary }]}
-                    onPress={() => {
-                      setLegalTitle('Terms of Service');
-                      setLegalContent(TERMS_OF_SERVICE);
-                      setIsLegalVisible(true);
-                    }}
-                  >
-                    Terms of Service
-                  </Text> and{' '}
-                  <Text 
-                    style={[styles.termsLink, { color: theme.colors.primary }]}
-                    onPress={() => {
-                      setLegalTitle('Privacy Policy');
-                      setLegalContent(PRIVACY_POLICY);
-                      setIsLegalVisible(true);
-                    }}
-                  >
-                    Privacy Policy
-                  </Text>
-                </Text>
+                <Text style={[styles.termsText, { color: '#D1D5DB' }]}>
+                   By continuing, you agree to our{' '}
+                   <Text 
+                     style={[styles.termsLink, { color: theme.colors.primary }]}
+                     onPress={() => {
+                       setLegalTitle('Terms of Service');
+                       setLegalContent(TERMS_OF_SERVICE);
+                       setIsLegalVisible(true);
+                     }}
+                   >
+                     Terms of Service
+                   </Text> and{' '}
+                   <Text 
+                     style={[styles.termsLink, { color: theme.colors.primary }]}
+                     onPress={() => {
+                       setLegalTitle('Privacy Policy');
+                       setLegalContent(PRIVACY_POLICY);
+                       setIsLegalVisible(true);
+                     }}
+                   >
+                     Privacy Policy
+                   </Text>
+                 </Text>
               </View>
-            </View>
+            </LinearGradient>
           </View>
 
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
 
       <DraggableModal
@@ -347,65 +403,62 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(40),
+  mainContainer: {
+    flex: 1,
+    paddingHorizontal: scale(26),
+    justifyContent: 'center',
   },
   backButton: {
-    width: scale(48),
-    height: scale(48),
-    borderRadius: moderateScale(16),
+    width: scale(44),
+    height: scale(44),
+    borderRadius: moderateScale(14),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(12),
     backgroundColor: '#F3F4F6',
     borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(4) },
-    shadowOpacity: 0.08,
-    shadowRadius: moderateScale(12),
-    elevation: 3,
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.06,
+    shadowRadius: moderateScale(10),
+    elevation: 2,
+    marginLeft: scale(3),
+    marginTop: verticalScale(3),
   },
   header: {
     alignItems: 'center',
-    marginBottom: verticalScale(20),
-    height: verticalScale(140), // Added fixed height for animation
+    marginBottom: verticalScale(10),
+    height: verticalScale(110),
   },
   logoContainer: {
-    width: scale(80),
-    height: scale(80),
-    marginBottom: verticalScale(12),
-    borderRadius: moderateScale(20),
+    width: scale(64),
+    height: scale(64),
+    marginBottom: verticalScale(4),
+    borderRadius: moderateScale(16),
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(4) },
-    shadowOpacity: 0.1,
-    shadowRadius: moderateScale(12),
-    elevation: 4,
   },
   title: {
-    fontSize: moderateScale(24),
+    fontSize: moderateScale(22),
     fontWeight: '800',
-    marginBottom: verticalScale(8),
+    marginBottom: verticalScale(4),
     color: '#111827',
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: moderateScale(15),
+    fontSize: moderateScale(14),
     color: '#6B7280',
     textAlign: 'center',
-    maxWidth: '80%',
+    maxWidth: '85%',
   },
   cardContainer: {
-    // Shadow moved to card element to prevent rendering before animation
+    marginVertical: verticalScale(16),
+    width: '100%',
   },
   card: {
     borderRadius: moderateScale(28),
     overflow: 'hidden',
-    backgroundColor: '#F9FAFB',
   },
   cardShadow: {
     shadowColor: '#000',
@@ -421,12 +474,12 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   cardInner: {
-    padding: scale(20),
+    padding: scale(16),
   },
   label: {
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(11),
     fontWeight: '700',
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(8),
     marginLeft: scale(4),
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -435,11 +488,11 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: verticalScale(56),
-    borderRadius: moderateScale(16),
+    height: verticalScale(52),
+    borderRadius: moderateScale(14),
     borderWidth: 1.5,
-    paddingHorizontal: scale(16),
-    marginBottom: verticalScale(20),
+    paddingHorizontal: scale(14),
+    marginBottom: verticalScale(16),
     backgroundColor: '#FFFFFF',
   },
   inputIcon: {
@@ -458,11 +511,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: verticalScale(12),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: themeObj.colors.primary,
-    shadowOffset: { width: 0, height: verticalScale(4) },
-    shadowOpacity: 0.3,
-    shadowRadius: moderateScale(12),
-    elevation: 6,
+    shadowOffset: { width: 0, height: verticalScale(6) },
+    shadowOpacity: 0.5,
+    shadowRadius: moderateScale(16),
+    elevation: 8,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -482,7 +537,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: verticalScale(8),
-    paddingVertical: verticalScale(12),
+    paddingVertical: verticalScale(10),
     gap: scale(8),
   },
   emailButtonText: {
@@ -490,7 +545,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   termsText: {
-    paddingVertical: verticalScale(10),
+    paddingVertical: verticalScale(5),
     fontSize: moderateScale(12),
     textAlign: 'center',
     lineHeight: moderateScale(16),
@@ -502,8 +557,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: 'auto',
-    paddingTop: verticalScale(32),
+    paddingVertical: verticalScale(20),
   },
   footerText: {
     fontSize: moderateScale(11),

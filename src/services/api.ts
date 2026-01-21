@@ -90,8 +90,6 @@ export const userAPI = {
 export const serviceAPI = {
   getAllServices: () => api.get('/services'),
   getServiceById: (id: number) => api.get(`/services/${id}`),
-  getAvailableSlots: (serviceId: number, date: string, resourceId?: number) => Promise.resolve({ data: [] }),
-  getSlotAvailability: (serviceId: number, date: string, resourceId?: number) => Promise.resolve({ data: [] }),
   getLowestPrice: (serviceId: number) => Promise.resolve({ data: 0 }),
   getResourcesByServiceId: (serviceId: number) => api.get(`/services/${serviceId}/resources`),
   getActivityAvailability: (serviceId: number, activityCode: string, date: string) =>
@@ -112,7 +110,6 @@ export const serviceAPI = {
   getServicesByCity: (city: string, page: number = 0, size: number = 6, date?: string) => api.get('/services/by-city', { params: { city, page, size, date } }),
   getServicesByActivity: (activityId: number, city: string, page: number = 0, size: number = 10, date?: string) =>
     api.get(`/services/${activityId}/activity`, { params: { city, page, size, date } }),
-  getSlotStatus: (serviceId: number, date: string) => Promise.resolve({ data: {} } as any),
 };
 
 
@@ -126,6 +123,7 @@ export const bookingAPI = {
   getBookingStatus: (id: number) => api.get<BookingStatusResponse>(`/api/razorpay/booking-status/${id}`),
   getPendingBookings: () => api.get<UserBooking[]>('/user/bookings', { params: { status: 'AWAITING_CONFIRMATION' } }),
   getBookingDetails: (id: number) => api.get<DynamicBookingResponse>(`/user/booking/${id}`),
+  getInvoiceUrl: (id: number) => `${API_BASE_URL}/user/booking/${id}/invoice`,
 };
 
 // Wallet APIs

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -32,12 +32,22 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
   // Polling starts automatically on mount (inside the hook's useEffect)
   const { status, bookingData } = useBookingStatusPolling(bookingId);
   const isFocused = useIsFocused();
+  const [isMinimumWaitDone, setIsMinimumWaitDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMinimumWaitDone(true);
+    }, 2500); // 2.5 seconds minimum wait to show progress steps
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Animations
   const entranceAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const iconScaleAnim = useRef(new Animated.Value(0)).current;
+  const progressBarAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Entrance animation
@@ -45,6 +55,14 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
+    }).start();
+
+    // Progress bar animation
+    Animated.timing(progressBarAnim, {
+      toValue: 1,
+      duration: 2500, // Matches the minimum wait time
+      easing: Easing.linear,
+      useNativeDriver: false, // width/flex doesn't support native driver easily
     }).start();
 
     // Pulse animation for loading
@@ -94,7 +112,7 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
   // ─────────────────────────────────────────────
   // SUCCESS STATE
   // ─────────────────────────────────────────────
-  if (status === 'confirmed') {
+  if (status === 'confirmed' && isMinimumWaitDone) {
     return (
       <ScreenWrapper style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
         <Animated.View style={[styles.content, { opacity: entranceAnim, transform: [{ translateY: entranceAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }] }]}>
@@ -106,6 +124,27 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
           {/* Title */}
           <Text style={[styles.successTitle, { color: '#111827' }]}>Booking Confirmed!</Text>
           <Text style={[styles.successSubtitle, { color: '#6B7280' }]}>Your space is ready for you.</Text>
+
+          {/* Promotion Card */}
+          <LinearGradient
+            colors={['#4F46E5', '#3730A3']}
+            style={styles.promotionCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.promoContent}>
+              <View style={styles.promoIconBadge}>
+                <Ionicons name="gift" size={20} color="#FFFFFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.promoTitle}>Share the Hyper Love!</Text>
+                <Text style={styles.promoDescription}>Refer a friend and both of you get 10% off your next booking.</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.promoButton}>
+              <Text style={styles.promoButtonText}>Refer a Friend</Text>
+            </TouchableOpacity>
+          </LinearGradient>
 
           {/* CTA Button */}
           <TouchableOpacity 
@@ -124,7 +163,7 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
   // ─────────────────────────────────────────────
   // FAILURE STATE
   // ─────────────────────────────────────────────
-  if (status === 'failed') {
+  if (status === 'failed' && isMinimumWaitDone) {
     return (
       <ScreenWrapper style={styles.container}>
         <LinearGradient
@@ -205,23 +244,27 @@ const PaymentProcessingScreen = ({ route, navigation }: any) => {
           Please wait while we sync with the bank...
         </Text>
 
-        {/* Progress Steps */}
-        <View style={[styles.stepsContainer, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.stepRow}>
-            <View style={[styles.stepDot, { backgroundColor: theme.colors.primary }]}>
-              <Ionicons name="checkmark" size={12} color="#FFF" />
-            </View>
-            <Text style={[styles.stepText, { color: theme.colors.text }]}>Payment Initiated</Text>
+        {/* Progress Bar Container */}
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressTrack, { backgroundColor: theme.colors.border + '30' }]}>
+            <Animated.View 
+              style={[
+                styles.progressFill, 
+                { 
+                  backgroundColor: theme.colors.primary,
+                  width: progressBarAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  })
+                }
+              ]} 
+            />
           </View>
-          <View style={styles.stepConnector} />
-          <View style={styles.stepRow}>
-            <Animated.View style={[styles.stepDot, styles.stepDotActive, { borderColor: theme.colors.primary, transform: [{ scale: pulseAnim }] }]} />
-            <Text style={[styles.stepText, { color: theme.colors.textSecondary }]}>Confirming with Bank</Text>
-          </View>
-          <View style={styles.stepConnector} />
-          <View style={styles.stepRow}>
-            <View style={[styles.stepDot, styles.stepDotPending, { borderColor: theme.colors.border }]} />
-            <Text style={[styles.stepText, { color: theme.colors.textSecondary, opacity: 0.5 }]}>Booking Confirmed</Text>
+          <View style={styles.progressLabels}>
+            <Text style={[styles.progressLabel, { color: theme.colors.textSecondary }]}>Securing your slot...</Text>
+            <Animated.Text style={[styles.progressPercentage, { color: theme.colors.primary }]}>
+              {/* Note: In React Native, we can't easily animate text content based on Animated value without a listener or re-render, so we'll just show the bar visually */}
+            </Animated.Text>
           </View>
         </View>
 
@@ -396,43 +439,34 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(10),
     fontWeight: '500',
   },
-  stepsContainer: {
-    marginTop: verticalScale(40),
-    paddingHorizontal: scale(24),
-    paddingVertical: verticalScale(24),
-    borderRadius: moderateScale(24),
+  progressContainer: {
     width: '100%',
+    marginTop: verticalScale(50),
+    paddingHorizontal: scale(10),
   },
-  stepRow: {
+  progressTrack: {
+    height: verticalScale(12),
+    borderRadius: moderateScale(6),
+    width: '100%',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: moderateScale(6),
+  },
+  progressLabels: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(14),
-  },
-  stepDot: {
-    width: moderateScale(24),
-    height: moderateScale(24),
-    borderRadius: moderateScale(12),
     justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: verticalScale(16),
   },
-  stepDotActive: {
-    backgroundColor: 'transparent',
-    borderWidth: 3,
-  },
-  stepDotPending: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-  },
-  stepText: {
+  progressLabel: {
     fontSize: moderateScale(14),
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
-  stepConnector: {
-    width: 2,
-    height: verticalScale(20),
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    marginLeft: moderateScale(11),
-    marginVertical: verticalScale(4),
+  progressPercentage: {
+    fontSize: moderateScale(14),
+    fontWeight: '800',
   },
   securityBadge: {
     flexDirection: 'row',
@@ -473,6 +507,54 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(17),
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  promotionCard: {
+    width: '100%',
+    borderRadius: moderateScale(20),
+    padding: scale(16),
+    marginTop: verticalScale(30),
+    flexDirection: 'column',
+    gap: verticalScale(16),
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: verticalScale(4) },
+    shadowOpacity: 0.2,
+    shadowRadius: moderateScale(10),
+    elevation: 4,
+  },
+  promoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(12),
+  },
+  promoIconBadge: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(12),
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  promoTitle: {
+    fontSize: moderateScale(16),
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  promoDescription: {
+    fontSize: moderateScale(13),
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+    marginTop: verticalScale(2),
+  },
+  promoButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(12),
+    alignItems: 'center',
+  },
+  promoButtonText: {
+    fontSize: moderateScale(14),
+    fontWeight: '700',
+    color: '#4F46E5',
   },
 });
 

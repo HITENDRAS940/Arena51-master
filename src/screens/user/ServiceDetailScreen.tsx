@@ -221,6 +221,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   const [resourcesLoading, setResourcesLoading] = useState(false);
   const [preBookingData, setPreBookingData] = useState<DynamicBookingResponse | null>(null);
   const [showShadow, setShowShadow] = useState(false);
+  const [isStickyHeaderActive, setIsStickyHeaderActive] = useState(false);
   
   
   // Refs
@@ -256,8 +257,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
   });
 
   const galleryOpacity = scrollY.interpolate({
-    inputRange: [0, 150, 180],
-    outputRange: [1, 1, 0],
+    inputRange: [0, 150],
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
@@ -279,6 +280,21 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
     return () => {
     };
   }, []);
+
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      // Matches the threshold where headerOpacity starts appearing (90)
+      if (value > 90 && !isStickyHeaderActive) {
+        setIsStickyHeaderActive(true);
+      } else if (value <= 90 && isStickyHeaderActive) {
+        setIsStickyHeaderActive(false);
+      }
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [isStickyHeaderActive]);
 
 
 
@@ -655,8 +671,8 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
       safeAreaEdges={[]}
     >
       
-      {/* Dynamic Sticky Top Bar */}
       <Animated.View 
+        pointerEvents={isStickyHeaderActive ? 'auto' : 'none'}
         style={[
           styles.stickyHeader, 
           { 
@@ -685,7 +701,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
           top: 0,
           left: 0,
           right: 0,
-          height: verticalScale(350),
+          height: verticalScale(300),
           backgroundColor: '#FFFFFF',
           zIndex: 0,
         }}
@@ -727,7 +743,7 @@ const ServiceDetailScreen = ({ route, navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Gallery Spacer */}
-        <View style={{ height: verticalScale(280) }} />
+        <View style={{ height: verticalScale(230) }} />
         
         <Animated.View 
           style={[

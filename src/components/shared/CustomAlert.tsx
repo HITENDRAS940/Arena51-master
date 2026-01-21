@@ -187,53 +187,64 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               }
             ]}
           >
-            {/* Header / Bulge Section */}
-            <View style={styles.headerContainer}>
-              <View style={styles.headerBulge} />
-              <View style={styles.iconWrapper}>
-                <Ionicons 
-                  name={getIconConfig(alertConfig?.type).name as any} 
-                  size={moderateScale(60)} 
-                  color={getIconConfig(alertConfig?.type).color} 
-                />
-              </View>
-            </View>
+            {/* Top Gloss Effect */}
+            <View style={styles.glossOverlay} />
             
-            <View style={styles.content}>
-              <Text style={styles.titleText}>
-                {alertConfig?.title || 'Notification'}
-              </Text>
+            {/* Content Container */}
+            <View style={styles.alertContent}>
+              {/* Type Accent Icon */}
+              <View style={styles.headerContainer}>
+                <View style={[
+                  styles.iconWrapper, 
+                  { backgroundColor: getIconConfig(alertConfig?.type).color + '20' }
+                ]}>
+                  <Ionicons 
+                    name={getIconConfig(alertConfig?.type).name as any} 
+                    size={moderateScale(32)} 
+                    color={getIconConfig(alertConfig?.type).color} 
+                  />
+                </View>
+              </View>
               
-              {alertConfig?.message && (
-                <Text style={styles.messageText}>
-                  {alertConfig.message}
+              <View style={styles.textContainer}>
+                <Text style={styles.titleText}>
+                  {alertConfig?.title || 'Notification'}
                 </Text>
-              )}
-            </View>
+                
+                {alertConfig?.message && (
+                  <Text style={styles.messageText}>
+                    {alertConfig.message}
+                  </Text>
+                )}
+              </View>
 
-            <View style={styles.buttonContainer}>
-              {(alertConfig?.buttons || [{ text: 'OK' }]).map((button, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.actionButtonWrapper}
-                  onPress={() => handleButtonPress(button)}
-                  activeOpacity={0.9}
-                >
-                  <LinearGradient
-                    colors={[theme.colors.primary, theme.colors.secondary]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.actionButton}
-                  >
-                    <Text style={styles.actionButtonText}>
-                      {button.text}
-                    </Text>
-                    {(!alertConfig?.buttons || alertConfig.buttons.length <= 1) && (
-                      <Ionicons name="arrow-forward" size={moderateScale(20)} color="#FFFFFF" style={styles.buttonIcon} />
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
+              <View style={styles.buttonContainer}>
+                {(alertConfig?.buttons || [{ text: 'OK' }]).map((button, index) => {
+                  const isCancel = button.style === 'cancel';
+                  
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.actionButton,
+                        isCancel ? styles.cancelButton : styles.primaryButton
+                      ]}
+                      onPress={() => handleButtonPress(button)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        styles.buttonText,
+                        isCancel ? styles.cancelButtonText : styles.primaryButtonText
+                      ]}>
+                        {button.text}
+                      </Text>
+                      {!isCancel && index === 0 && (
+                        <Ionicons name="chevron-forward" size={16} color="#000000" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           </Animated.View>
         </Animated.View>
@@ -251,104 +262,93 @@ const styles = StyleSheet.create({
     padding: scale(24),
   },
   alertContainer: {
-    width: '90%',
-    maxWidth: scale(340),
-    borderRadius: moderateScale(40),
-    backgroundColor: '#FFFFFF',
+    width: '85%',
+    maxWidth: scale(320),
+    borderRadius: moderateScale(24),
+    backgroundColor: '#000000',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(12) },
-    shadowOpacity: 0.15,
-    shadowRadius: moderateScale(30),
-    elevation: 20,
+    shadowOffset: { width: 0, height: verticalScale(20) },
+    shadowOpacity: 0.5,
+    shadowRadius: moderateScale(40),
+    elevation: 24,
+    overflow: 'hidden',
+  },
+  glossOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    transform: [{ skewY: '-15deg' }, { translateY: -verticalScale(40) }],
+  },
+  alertContent: {
+    padding: moderateScale(24),
+    paddingBottom: moderateScale(28),
     alignItems: 'center',
-    paddingBottom: moderateScale(32),
   },
   headerContainer: {
-    width: '100%',
-    height: verticalScale(80),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: verticalScale(30),
-  },
-  headerBulge: {
-    position: 'absolute',
-    top: -verticalScale(50),
-    width: moderateScale(160),
-    height: moderateScale(160),
-    borderRadius: moderateScale(80),
-    backgroundColor: '#FFFFFF',
+    marginBottom: verticalScale(20),
   },
   iconWrapper: {
-    position: 'absolute',
-    top: -verticalScale(30),
-    width: moderateScale(120),
-    height: moderateScale(120),
+    width: moderateScale(64),
+    height: moderateScale(64),
+    borderRadius: moderateScale(32),
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButton: {
-    position: 'absolute',
-    top: moderateScale(20),
-    right: moderateScale(20),
-    width: moderateScale(36),
-    height: moderateScale(36),
-    borderRadius: moderateScale(18),
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
+  textContainer: {
     alignItems: 'center',
-  },
-  content: {
-    paddingHorizontal: moderateScale(32),
-    alignItems: 'center',
-    marginBottom: verticalScale(32),
+    marginBottom: verticalScale(28),
   },
   titleText: {
-    fontSize: moderateScale(28),
-    fontWeight: '900',
-    color: '#1F2937',
+    fontSize: moderateScale(24),
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(10),
     letterSpacing: -0.5,
   },
   messageText: {
-    fontSize: moderateScale(15),
+    fontSize: moderateScale(14),
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#9CA3AF',
     textAlign: 'center',
-    lineHeight: moderateScale(22),
+    lineHeight: moderateScale(20),
   },
   buttonContainer: {
     width: '100%',
-    flexDirection: 'row',
-    paddingHorizontal: moderateScale(32),
     gap: moderateScale(12),
   },
-  actionButtonWrapper: {
-    flex: 1,
-    borderRadius: moderateScale(16),
-    overflow: 'hidden',
-    shadowColor: themeObj.colors.primary,
-    shadowOffset: { width: 0, height: verticalScale(8) },
-    shadowOpacity: 0.3,
-    shadowRadius: moderateScale(12),
-    elevation: 8,
-  },
   actionButton: {
-    height: verticalScale(56),
+    width: '100%',
+    height: verticalScale(52),
+    borderRadius: moderateScale(14),
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: moderateScale(16),
-    paddingHorizontal: moderateScale(20),
+    gap: scale(8),
   },
-  actionButtonText: {
-    fontSize: moderateScale(18),
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginRight: moderateScale(8),
+  primaryButton: {
+    backgroundColor: '#FFFFFF',
   },
-  buttonIcon: {
-    marginLeft: moderateScale(4),
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  buttonText: {
+    fontSize: moderateScale(16),
+    fontWeight: '700',
+  },
+  primaryButtonText: {
+    color: '#000000',
+  },
+  cancelButtonText: {
+    color: '#D1D5DB',
   },
 });
 

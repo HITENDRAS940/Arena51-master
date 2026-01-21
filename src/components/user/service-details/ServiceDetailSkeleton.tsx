@@ -13,83 +13,96 @@ const ServiceDetailSkeleton = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Gallery Placeholder */}
+      {/* Absolute Gallery Placeholder */}
+      <View style={styles.galleryPlaceholder}>
         <Skeleton height={280} width={screenWidth} borderRadius={0} />
+        
+        {/* Gallery Content Overlay Placeholder */}
+        <View style={styles.galleryOverlay}>
+          <Skeleton width="60%" height={28} borderRadius={8} style={{ marginBottom: 10 }} />
+          <Skeleton width="40%" height={16} borderRadius={4} />
+        </View>
+      </View>
 
-        {/* Content Card Overlap */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Spacer for Absolute Gallery */}
+        <View style={styles.gallerySpacer} />
+
+        {/* Content Card */}
         <View style={[
           styles.contentContainer, 
           { 
             backgroundColor: theme.colors.background,
             borderTopLeftRadius: moderateScale(50),
             borderTopRightRadius: moderateScale(50),
-            marginTop: -verticalScale(40),
+            marginTop: -verticalScale(20),
           }
         ]}>
-          {/* Header Section */}
-          <View style={styles.headerSection}>
-            <Skeleton width="70%" height={32} borderRadius={8} style={{ marginBottom: 12 }} />
-            
-            <View style={styles.statsRow}>
-              <Skeleton width={60} height={24} borderRadius={12} />
-              <Skeleton width={100} height={20} borderRadius={4} />
-            </View>
-
-            <View style={styles.locationRow}>
-              <Skeleton width={28} height={28} borderRadius={8} />
-              <Skeleton width="80%" height={20} borderRadius={4} />
-            </View>
-          </View>
-
-          {/* Quick Stats Section */}
-          <View style={styles.quickStatsRow}>
-            <Skeleton width="48%" height={64} borderRadius={16} />
-            <Skeleton width="48%" height={64} borderRadius={16} />
+          {/* Pull Bar */}
+          <View style={styles.pullBarContainer}>
+            <View style={[styles.pullBar, { backgroundColor: theme.colors.text, opacity: 0.1 }]} />
           </View>
 
           {/* About Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Skeleton width={140} height={28} borderRadius={4} />
+              <View style={[styles.sectionTitleBar, { backgroundColor: theme.colors.primary }]} />
+              <Skeleton width={100} height={20} borderRadius={4} />
             </View>
-            <Skeleton width="100%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
-            <Skeleton width="100%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
-            <Skeleton width="60%" height={16} borderRadius={4} />
+            <View style={styles.infoCard}>
+              <Skeleton width="100%" height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width="100%" height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width="80%" height={14} borderRadius={4} />
+            </View>
           </View>
 
           {/* Amenities Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Skeleton width={120} height={28} borderRadius={4} />
+              <View style={[styles.sectionTitleBar, { backgroundColor: theme.colors.primary }]} />
+              <Skeleton width={120} height={20} borderRadius={4} />
             </View>
             <View style={styles.amenitiesGrid}>
-              <Skeleton width="48%" height={48} borderRadius={14} />
-              <Skeleton width="48%" height={48} borderRadius={14} />
-              <Skeleton width="48%" height={48} borderRadius={14} />
-              <Skeleton width="48%" height={48} borderRadius={14} />
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.amenityItem}>
+                  <Skeleton width={32} height={32} borderRadius={10} />
+                  <Skeleton width="50%" height={14} borderRadius={4} />
+                </View>
+              ))}
             </View>
           </View>
 
-          {/* Map/Location Section */}
+          {/* Location Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Skeleton width={110} height={28} borderRadius={4} />
+              <View style={[styles.sectionTitleBar, { backgroundColor: theme.colors.primary }]} />
+              <Skeleton width={110} height={20} borderRadius={4} />
             </View>
-            <Skeleton width="100%" height={80} borderRadius={20} />
+            <View style={styles.mapCard}>
+              <View style={styles.mapContent}>
+                <Skeleton width={48} height={48} borderRadius={24} />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <Skeleton width="40%" height={16} borderRadius={4} />
+                  <Skeleton width="80%" height={14} borderRadius={4} />
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Footer Placeholder */}
-      <View style={[styles.footerContainer, { paddingBottom: Math.max(20, insets.bottom + 10) }]}>
+      {/* Floating Footer Placeholder */}
+      <View style={[styles.footerContainer, { paddingBottom: Math.max(verticalScale(20), insets.bottom + verticalScale(10)) }]}>
         <View style={[styles.footer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <View style={styles.footerContent}>
             <View>
-              <Skeleton width={80} height={12} borderRadius={4} style={{ marginBottom: 4 }} />
+              <Skeleton width={80} height={12} borderRadius={4} style={{ marginBottom: 6 }} />
               <Skeleton width={100} height={24} borderRadius={4} />
             </View>
-            <Skeleton width={120} height={48} borderRadius={18} />
+            <Skeleton width={130} height={48} borderRadius={16} />
           </View>
         </View>
       </View>
@@ -101,58 +114,104 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  galleryPlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 280,
+  },
+  galleryOverlay: {
+    position: 'absolute',
+    bottom: verticalScale(30),
+    left: scale(20),
+    right: scale(20),
+  },
+  scrollContent: {
+    paddingBottom: verticalScale(140),
+  },
+  gallerySpacer: {
+    height: verticalScale(230),
+  },
   contentContainer: {
     flex: 1,
-    paddingTop: 40,
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
+    paddingTop: verticalScale(40),
     zIndex: 10,
   },
-  headerSection: {
-    marginBottom: 24,
-  },
-  statsRow: {
-    flexDirection: 'row',
+  pullBarContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: verticalScale(40),
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+    justifyContent: 'center',
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  quickStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+  pullBar: {
+    width: scale(36),
+    height: verticalScale(4),
+    borderRadius: moderateScale(2),
   },
   section: {
-    marginBottom: 26,
+    marginBottom: verticalScale(32),
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    gap: 12,
+    marginBottom: verticalScale(16),
+    gap: scale(6),
+  },
+  sectionTitleBar: {
+    width: moderateScale(4),
+    height: moderateScale(16),
+    borderRadius: moderateScale(2),
+  },
+  infoCard: {
+    padding: moderateScale(20),
+    borderRadius: moderateScale(24),
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
     justifyContent: 'space-between',
+  },
+  amenityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(10),
+    borderRadius: moderateScale(16),
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.05)',
+    gap: scale(10),
+    width: '48%',
+    marginBottom: verticalScale(10),
+  },
+  mapCard: {
+    borderRadius: moderateScale(24),
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.05)',
+    padding: moderateScale(20),
+  },
+  mapContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(16),
   },
   footerContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(10),
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 24,
+    paddingHorizontal: scale(20),
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(24),
     borderWidth: 1,
   },
   footerContent: {

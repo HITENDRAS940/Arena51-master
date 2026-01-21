@@ -6,10 +6,10 @@ import {
   StyleSheet,
   RefreshControl,
   Animated,
-  Alert,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { useAlert } from '../../components/shared/CustomAlert';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
@@ -31,6 +31,7 @@ import ServiceSearchModal from '../../components/user/ServiceSearchModal';
 
 const ServiceExploreScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -107,7 +108,11 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
 
       if (!isLoadMore) {
         setServices([]);
-        Alert.alert('Error', 'Failed to fetch services. Please try again.');
+        showAlert({
+          title: 'Error',
+          message: 'Failed to fetch services. Please try again.',
+          type: 'error'
+        });
       }
     } finally {
       setLoading(false);
@@ -280,7 +285,11 @@ const ServiceExploreScreen = ({ navigation, route }: any) => {
       setActiveFilterParams(params);
     } catch (error) {
 
-      Alert.alert('Error', 'Failed to search services. Please try again.');
+      showAlert({
+        title: 'Error',
+        message: 'Failed to search services. Please try again.',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

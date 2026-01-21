@@ -27,7 +27,8 @@ const AppNavigator = () => {
       initialRouteName="User"
       screenOptions={{ 
         headerShown: false,
-        animation: 'none'
+        animation: 'fade',
+        animationDuration: 250,
       }}
     >
       <Stack.Screen name="User" component={UserNavigator} />

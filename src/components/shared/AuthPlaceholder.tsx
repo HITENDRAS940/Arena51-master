@@ -11,7 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { ScreenWrapper } from './ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import{ DiscoveryArrowIcon }from '../../components/shared/icons/activities';
+import { DiscoveryArrowIcon } from '../../components/shared/icons/activities';
+import { moderateScale } from 'react-native-size-matters';
 
 interface AuthPlaceholderProps {
   titleMain: string;
@@ -91,15 +92,17 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   headerTitleMain: {
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 40,
+    fontSize: moderateScale(34),
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 40,
+    fontSize: moderateScale(34),
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
+    lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,
   },

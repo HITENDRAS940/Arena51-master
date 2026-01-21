@@ -59,6 +59,97 @@ const OFFERS = [
   },
 ];
 
+const getStatusGradient = (status: string): [string, string] => {
+  switch (status?.toUpperCase()) {
+    case 'CONFIRMED':
+    case 'SUCCESS':
+      return ['#065F46', '#10B981']; // Deep Teal to Emerald
+    case 'CANCELLED':
+    case 'FAILED':
+      return ['#EF4444', '#DC2626']; // Red
+    case 'PENDING':
+    case 'PAYMENT_PENDING':
+      return ['#F59E0B', '#D97706']; // Orange
+    default:
+      return ['#4B5563', '#1F2937']; // Gray for other/unknown
+  }
+};
+
+const ActivityCard = React.memo(({ item, onPress }: { item: Activity, onPress: (activity: Activity) => void }) => {
+  const themeConfig = ACTIVITY_THEMES[item.name] || DEFAULT_THEME;
+  
+  return (
+    <TouchableOpacity
+        style={styles.activityCard}
+        onPress={() => onPress(item)}
+        activeOpacity={0.9}
+    >
+        <LinearGradient
+          colors={themeConfig.colors as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.activityCardGradient}
+        >
+          <Text style={styles.activityCardTitle} numberOfLines={1} adjustsFontSizeToFit>
+              {item.name}
+          </Text>
+          
+          <View style={styles.activityIconContainer}>
+              {(() => {
+                const IconComponent = ActivityIcons[item.name];
+                const iconColor = themeConfig.iconColor || "rgba(255,255,255,0.25)";
+                const fallbackColor = themeConfig.iconColor || "rgba(255,255,255,0.2)";
+                
+                if (IconComponent) {
+                  return <IconComponent size={120} color={iconColor} />;
+                }
+                return (
+                  <Ionicons 
+                      name={themeConfig.icon as any} 
+                      size={120} 
+                      color={fallbackColor} 
+                  />
+                );
+              })()}
+          </View>
+        </LinearGradient>
+    </TouchableOpacity>
+  );
+});
+
+const OfferCard = React.memo(({ item }: { item: typeof OFFERS[0] }) => {
+  return (
+    <TouchableOpacity
+      style={styles.offerCard}
+      activeOpacity={0.9}
+      onPress={() => {}}
+    >
+      <LinearGradient
+        colors={item.colors as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.offerGradient}
+      >
+        <View style={styles.offerContent}>
+          <View style={styles.offerTextGroup}>
+            <Text style={styles.offerTitle}>{item.title}</Text>
+            <Text style={styles.offerDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+          </View>
+          <View style={styles.offerBadge}>
+            <Text style={styles.offerCode}>{item.code}</Text>
+          </View>
+        </View>
+        
+        <View style={styles.offerIconDecor}>
+          <Ionicons name={item.icon as any} size={80} color="rgba(255,255,255,0.15)" />
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+});
+
 const HomeScreen = ({ navigation }: any) => {
   const { theme } = useTheme();
   const { user, redirectData, setRedirectData } = useAuth();
@@ -176,80 +267,13 @@ const HomeScreen = ({ navigation }: any) => {
       });
   };
 
-  const renderActivityItem = useCallback(({ item }: { item: Activity }) => {
-      const themeConfig = ACTIVITY_THEMES[item.name] || DEFAULT_THEME;
-      
-      return (
-        <TouchableOpacity
-            style={styles.activityCard}
-            onPress={() => handleActivityPress(item)}
-            activeOpacity={0.9}
-        >
-            <LinearGradient
-              colors={themeConfig.colors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.activityCardGradient}
-            >
-              <Text style={styles.activityCardTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  {item.name}
-              </Text>
-              
-              <View style={styles.activityIconContainer}>
-                  {(() => {
-                    const IconComponent = ActivityIcons[item.name];
-                    const iconColor = themeConfig.iconColor || "rgba(255,255,255,0.25)";
-                    const fallbackColor = themeConfig.iconColor || "rgba(255,255,255,0.2)";
-                    
-                    if (IconComponent) {
-                      return <IconComponent size={120} color={iconColor} />;
-                    }
-                    return (
-                      <Ionicons 
-                          name={themeConfig.icon} 
-                          size={120} 
-                          color={fallbackColor} 
-                      />
-                    );
-                  })()}
-              </View>
-            </LinearGradient>
-        </TouchableOpacity>
-      );
-  }, [handleActivityPress, theme]);
+  const renderActivityItem = useCallback(({ item }: { item: Activity }) => (
+    <ActivityCard item={item} onPress={handleActivityPress} />
+  ), [handleActivityPress]);
 
-  const renderOfferItem = useCallback(({ item }: { item: typeof OFFERS[0] }) => {
-    return (
-      <TouchableOpacity
-        style={styles.offerCard}
-        activeOpacity={0.9}
-        onPress={() => {}}
-      >
-        <LinearGradient
-          colors={item.colors as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.offerGradient}
-        >
-          <View style={styles.offerContent}>
-            <View style={styles.offerTextGroup}>
-              <Text style={styles.offerTitle}>{item.title}</Text>
-              <Text style={styles.offerDescription} numberOfLines={2}>
-                {item.description}
-              </Text>
-            </View>
-            <View style={styles.offerBadge}>
-              <Text style={styles.offerCode}>{item.code}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.offerIconDecor}>
-            <Ionicons name={item.icon as any} size={80} color="rgba(255,255,255,0.15)" />
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }, []);
+  const renderOfferItem = useCallback(({ item }: { item: typeof OFFERS[0] }) => (
+    <OfferCard item={item} />
+  ), []);
   const renderMainHeader = () => (
     <Animated.View style={[
       styles.headerContainer, 
@@ -383,6 +407,9 @@ const HomeScreen = ({ navigation }: any) => {
                 maxToRenderPerBatch={10}
                 windowSize={5}
                 removeClippedSubviews={true}
+                nestedScrollEnabled={true}
+                decelerationRate="fast"
+                snapToAlignment="start"
               />
             )}
         </View>
@@ -458,7 +485,7 @@ const HomeScreen = ({ navigation }: any) => {
               }}
             >
               <LinearGradient
-                colors={['#065F46', '#10B981']} // Deep Teal to Emerald
+                colors={getStatusGradient(lastBooking.status)}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.recentBookingGradient}
@@ -526,6 +553,8 @@ const HomeScreen = ({ navigation }: any) => {
             maxToRenderPerBatch={3}
             windowSize={3}
             removeClippedSubviews={true}
+            nestedScrollEnabled={true}
+            snapToAlignment="start"
           />
         </View>
         </Animated.ScrollView>

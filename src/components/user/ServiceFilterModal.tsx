@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   FlatList,
   ScrollView,
-  Alert,
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
+import { useAlert } from '../shared/CustomAlert';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -71,6 +71,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
   activityCode,
 }) => {
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [rangeStart, setRangeStart] = useState<string | null>(null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(null);
@@ -119,7 +120,11 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
 
   const handleApply = () => {
     if (!rangeStart || !rangeEnd) {
-      Alert.alert('Selection Required', 'Please select both start and end times for the range.');
+      showAlert({
+        title: 'Selection Required',
+        message: 'Please select both start and end times for the range.',
+        type: 'warning'
+      });
       return;
     }
 

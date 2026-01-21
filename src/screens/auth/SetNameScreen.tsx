@@ -14,16 +14,18 @@ import {
   Animated,
   Dimensions,
   StatusBar,
-  Alert,
 } from 'react-native';
+import { useAlert } from '../../components/shared/CustomAlert';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { userAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { User } from '../../types';
+import ArrowRightIcon from '../../components/shared/icons/ArrowRightIcon';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import ProfileIcon from '../../components/shared/icons/ProfileIcon';
 
 Dimensions.get('window');
 
@@ -36,6 +38,7 @@ const SetNameScreen = ({ route, navigation }: any) => {
 
   const { login } = useAuth();
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
 
   // Animation values
@@ -43,6 +46,7 @@ const SetNameScreen = ({ route, navigation }: any) => {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
   const inputBorderAnim = useRef(new Animated.Value(0)).current;
+  const keyboardShiftAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Entry animation
@@ -50,28 +54,42 @@ const SetNameScreen = ({ route, navigation }: any) => {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.spring(logoScale, {
         toValue: 1,
         friction: 4,
         tension: 40,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
 
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      () => setKeyboardVisible(true)
+      () => {
+        setKeyboardVisible(true);
+        Animated.timing(keyboardShiftAnim, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: false,
+        }).start();
+      }
     );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
-      () => setKeyboardVisible(false)
+      () => {
+        setKeyboardVisible(false);
+        Animated.timing(keyboardShiftAnim, {
+          toValue: 0,
+          duration: 350,
+          useNativeDriver: false,
+        }).start();
+      }
     );
 
     return () => {
@@ -84,7 +102,7 @@ const SetNameScreen = ({ route, navigation }: any) => {
     setIsFocused(true);
     Animated.timing(inputBorderAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 350,
       useNativeDriver: false,
     }).start();
   };
@@ -93,7 +111,7 @@ const SetNameScreen = ({ route, navigation }: any) => {
     setIsFocused(false);
     Animated.timing(inputBorderAnim, {
       toValue: 0,
-      duration: 300,
+      duration: 350,
       useNativeDriver: false,
     }).start();
   };
@@ -101,12 +119,20 @@ const SetNameScreen = ({ route, navigation }: any) => {
   const handleSetName = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      Alert.alert('Invalid Name', 'Please enter your name');
+      showAlert({
+        title: 'Invalid Name',
+        message: 'Please enter your name',
+        type: 'warning'
+      });
       return;
     }
 
     if (trimmedName.length < 2) {
-      Alert.alert('Invalid Name', 'Name must be at least 2 characters long');
+      showAlert({
+        title: 'Invalid Name',
+        message: 'Name must be at least 2 characters long',
+        type: 'warning'
+      });
       return;
     }
 
@@ -141,7 +167,11 @@ const SetNameScreen = ({ route, navigation }: any) => {
     } catch (error: any) {
       // If setting name fails, remove the token
       await AsyncStorage.removeItem('token');
-      Alert.alert('Error', error.response?.data?.message || 'Failed to set name');
+      showAlert({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to set name',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -150,57 +180,88 @@ const SetNameScreen = ({ route, navigation }: any) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.background}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardView}
-        >
-          <ScrollView 
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingTop: insets.top + (isKeyboardVisible ? 20 : 60) }
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Animated.View 
-              style={[
-                styles.header, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: logoScale }] }
-              ]}
-            >
-              <Text style={styles.brandName}>Welcome to Hyper</Text>
-              <Text style={styles.title}>Create Your Profile</Text>
-              <Text style={styles.subtitle}>Let's get you set up. What should we call you?</Text>
-            </Animated.View>
 
-            <Animated.View 
-              style={[
-                styles.cardContainer, 
-                { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-              ]}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View
+          style={[
+            styles.mainContainer,
+            { 
+              paddingTop: insets.top + (isKeyboardVisible ? verticalScale(20) : verticalScale(30)),
+              paddingBottom: insets.bottom + (isKeyboardVisible ? verticalScale(20) : verticalScale(30))
+            }
+          ]}
+        >
+          <Animated.View 
+            style={[
+              styles.header, 
+              { 
+                opacity: Animated.multiply(fadeAnim, keyboardShiftAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 0]
+                })), 
+                transform: [
+                  { translateY: slideAnim }, 
+                  { scale: Animated.multiply(logoScale, keyboardShiftAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0.5]
+                    })) 
+                  }
+                ],
+                height: keyboardShiftAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [verticalScale(180), 0]
+                }),
+                marginBottom: keyboardShiftAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [verticalScale(10), 0]
+                }),
+                overflow: 'hidden'
+              }
+            ]}
+          >
+            <View style={styles.logoContainer}>
+              <ProfileIcon size={moderateScale(80)} color={theme.colors.primary}/>
+            </View>
+            <Text style={[styles.title, { color: theme.colors.text }]}>Let's Get Started</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>We just need your name to set up your profile.</Text>
+          </Animated.View>
+
+          <View style={styles.cardContainer}>
+            <LinearGradient
+               colors={['#000000', '#333333']}
+               start={{ x: 0, y: 0 }}
+               end={{ x: 1, y: 1 }}
+               style={[styles.card, styles.cardShadow]}
             >
-              <LinearGradient
-                colors={['#1F2937', '#111827']}
-                style={styles.card}
-              >
-                <Text style={styles.label}>Full Name</Text>
+              <View style={styles.cardInner}>
+                <Text style={[styles.label, { color: '#D1D5DB' }]}>Full Name</Text>
 
                 <View style={[
-                  styles.inputWrapper, 
-                  { borderColor: isFocused ? '#10B981' : 'rgba(255, 255, 255, 0.1)' }
+                   styles.inputWrapper,
+                   {
+                     backgroundColor: '#262626',
+                     borderColor: isFocused ? theme.colors.primary : '#4B5563'
+                   }
                 ]}>
-                  <Ionicons name="person-outline" size={20} color="rgba(255, 255, 255, 0.3)" style={styles.inputIcon} />
+                  <Ionicons 
+                    name="person-outline" 
+                    size={20} 
+                    color={isFocused ? theme.colors.primary : '#D1D5DB'} 
+                    style={styles.inputIcon} 
+                  />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: '#FFFFFF' }]}
                     placeholder="Enter your full name"
-                    placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                    placeholderTextColor={'#D1D5DB' + '80'}
                     value={name}
                     onChangeText={setName}
                     editable={!loading}
                     onFocus={handleInputFocus}
                     onBlur={handleInputBlur}
-                    selectionColor="#10B981"
+                    selectionColor={theme.colors.primary}
                     autoCapitalize="words"
                     autoComplete="name"
                     maxLength={50}
@@ -208,42 +269,33 @@ const SetNameScreen = ({ route, navigation }: any) => {
                 </View>
 
                 <TouchableOpacity
-                  style={styles.mainButton}
+                  style={[
+                    styles.mainButton,
+                    { backgroundColor: theme.colors.primary }
+                  ]}
                   onPress={handleSetName}
                   disabled={loading || name.trim().length < 2}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#10B981', '#059669']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[styles.gradientButton, (loading || name.trim().length < 2) && styles.buttonDisabled]}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <View style={styles.buttonContent}>
-                        <Text style={styles.buttonText}>Complete Setup</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </LinearGradient>
+                  {loading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <View style={styles.buttonContent}>
+                      <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>Complete Setup</Text>
+                      <ArrowRightIcon size={20} color="#FFFFFF" />
+                    </View>
+                  )}
                 </TouchableOpacity>
 
                 <Text style={styles.infoText}>
-                  You can always update your name later in your profile settings.
+                  You can always update your name later in settings.
                 </Text>
-              </LinearGradient>
-            </Animated.View>
+              </View>
+            </LinearGradient>
+          </View>
 
-            {!isKeyboardVisible && (
-              <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
-                <Text style={styles.footerText}>Ready to book your first slot?</Text>
-              </Animated.View>
-            )}
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -251,74 +303,79 @@ const SetNameScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  background: {
-    flex: 1,
+    backgroundColor: '#f3f4f6',
   },
   keyboardView: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(40),
+  mainContainer: {
+    flex: 1,
+    paddingHorizontal: scale(26),
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: verticalScale(40),
-    marginTop: verticalScale(20),
+    marginBottom: verticalScale(10),
+    height: verticalScale(180),
   },
-  brandName: {
-    fontSize: moderateScale(28),
-    fontWeight: '900',
-    letterSpacing: -0.5,
+  logoContainer: {
+    width: scale(80),
+    height: scale(80),
     marginBottom: verticalScale(8),
-    color: '#111827',
+    borderRadius: moderateScale(40),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: moderateScale(18),
-    fontWeight: '600',
-    marginBottom: verticalScale(8),
-    color: '#374151',
+    fontSize: moderateScale(22),
+    fontWeight: '800',
+    marginBottom: verticalScale(4),
+    color: '#111827',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: moderateScale(14),
     color: '#6B7280',
     textAlign: 'center',
     maxWidth: '85%',
-    lineHeight: moderateScale(20),
   },
   cardContainer: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(15) },
-    shadowOpacity: 0.15,
-    shadowRadius: moderateScale(25),
-    elevation: 10,
+    marginVertical: verticalScale(16),
+    width: '100%',
   },
   card: {
-    borderRadius: moderateScale(32),
-    padding: scale(24),
+    borderRadius: moderateScale(28),
     overflow: 'hidden',
   },
+  cardShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(10) },
+    shadowOpacity: 0.1,
+    shadowRadius: moderateScale(20),
+    elevation: 6,
+    backgroundColor: '#000000', // Ensure shadow visibility on Android
+  },
+  cardInner: {
+    padding: scale(16),
+  },
   label: {
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(11),
     fontWeight: '700',
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(8),
     marginLeft: scale(4),
     textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 1,
+    color: '#9CA3AF',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: verticalScale(64),
-    borderRadius: moderateScale(20),
+    height: verticalScale(52),
+    borderRadius: moderateScale(14),
     borderWidth: 1.5,
-    paddingHorizontal: scale(20),
-    marginBottom: verticalScale(24),
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: scale(14),
+    marginBottom: verticalScale(16),
+    backgroundColor: '#FFFFFF',
   },
   inputIcon: {
     marginRight: scale(12),
@@ -327,22 +384,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(16),
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#111827',
   },
   mainButton: {
     width: '100%',
-    marginBottom: verticalScale(16),
-  },
-  gradientButton: {
-    height: verticalScale(64),
-    borderRadius: moderateScale(20),
+    height: verticalScale(54),
+    borderRadius: moderateScale(14),
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: verticalScale(8) },
-    shadowOpacity: 0.25,
-    shadowRadius: moderateScale(12),
-    elevation: 6,
+    marginBottom: verticalScale(12),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: themeObj.colors.primary,
+    shadowOffset: { width: 0, height: verticalScale(6) },
+    shadowOpacity: 0.5,
+    shadowRadius: moderateScale(16),
+    elevation: 8,
   },
   buttonContent: {
     flexDirection: 'row',
@@ -354,25 +411,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginRight: scale(8),
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
   infoText: {
     fontSize: moderateScale(12),
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.4)',
-    lineHeight: moderateScale(18),
-  },
-  footer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 'auto',
-    paddingTop: verticalScale(32),
-  },
-  footerText: {
-    fontSize: moderateScale(14),
-    fontWeight: '600',
-    color: '#6B7280',
+    color: '#D1D5DB',
+    lineHeight: moderateScale(16),
+    opacity: 0.6,
   },
 });
 

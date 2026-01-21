@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,8 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withSequence, 
-  withTiming,
-  withDelay,
-} from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -35,47 +25,6 @@ const WalletScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
-
-  // Animations
-  const logoScale = useSharedValue(0.8);
-  const logoOpacity = useSharedValue(0);
-  const textOpacity = useSharedValue(0);
-  const textTranslateY = useSharedValue(20);
-  const glowOpacity = useSharedValue(0.3);
-
-  useEffect(() => {
-    // Entrance animations
-    logoScale.value = withTiming(1, { duration: 1000 });
-    logoOpacity.value = withTiming(1, { duration: 1000 });
-    
-    textOpacity.value = withDelay(600, withTiming(1, { duration: 800 }));
-    textTranslateY.value = withDelay(600, withTiming(0, { duration: 800 }));
-
-    // Continuous glow/pulse
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.6, { duration: 1500 }),
-        withTiming(0.3, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const animatedLogoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-    opacity: logoOpacity.value,
-  }));
-
-  const animatedTextStyle = useAnimatedStyle(() => ({
-    opacity: textOpacity.value,
-    transform: [{ translateY: textTranslateY.value }],
-  }));
-
-  const animatedGlowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{ scale: 1.2 + (glowOpacity.value * 0.2) }],
-  }));
 
   return (
     <ScreenWrapper>
@@ -101,14 +50,14 @@ const WalletScreen = () => {
         <View style={styles.centerContent}>
           {/* Logo Section */}
           <View style={styles.logoContainer}>
-            <Animated.View style={[styles.glow, animatedGlowStyle, { backgroundColor: theme.colors.primary + '20' }]} />
-            <Animated.View style={animatedLogoStyle}>
-              <HyperIcon size={moderateScale(120)} color={theme.colors.primary} />
-            </Animated.View>
+            <View style={[{ backgroundColor: theme.colors.primary + '10', opacity: 0.3 }]} />
+            <View>
+              <HyperIcon size={moderateScale(200)} color={theme.colors.primary} />
+            </View>
           </View>
 
           {/* Text Section */}
-          <Animated.View style={[styles.textContainer, animatedTextStyle]}>
+          <View style={styles.textContainer}>
             <View style={styles.comingSoonBadge}>
               <Text style={styles.comingSoonText}>COMING SOON</Text>
             </View>
@@ -130,17 +79,16 @@ const WalletScreen = () => {
                     </View>
                     <Text style={[styles.featureText, { color: theme.colors.text }]}>Smart Subscriptions</Text>
                 </View>
-                
             </View>
-          </Animated.View>
+          </View>
         </View>
 
         {/* Footer Info */}
-        <Animated.View style={[styles.footer, { paddingBottom: insets.bottom + 20 }, animatedTextStyle]}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
             <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
                 We are building something amazing for you.
             </Text>
-        </Animated.View>
+        </View>
       </View>
     </ScreenWrapper>
   );

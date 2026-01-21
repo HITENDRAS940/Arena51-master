@@ -1,6 +1,18 @@
 import * as React from "react";
 import Svg, { Path } from "react-native-svg";
 import { ViewStyle } from "react-native";
+import Animated, { 
+  useAnimatedProps, 
+  useSharedValue, 
+  withTiming, 
+  Easing,
+  interpolate,
+  withRepeat,
+  withSequence,
+  useAnimatedStyle
+} from "react-native-reanimated";
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 interface SuccessCheckIconProps {
   size?: number;
@@ -12,18 +24,58 @@ const SuccessCheckIcon: React.FC<SuccessCheckIconProps> = ({
   size = 100, 
   color = "#10B981",
   style 
-}) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 191.667 191.667"
-    style={style as any}
-  >
-    <Path 
-      d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z M150.862,79.646l-60.207,60.207c-2.56,2.56-5.963,3.969-9.583,3.969c-3.62,0-7.023-1.409-9.583-3.969l-30.685-30.685 c-2.56-2.56-3.97-5.963-3.97-9.583c0-3.621,1.41-7.024,3.97-9.584c2.559-2.56,5.962-3.97,9.583-3.97c3.62,0,7.024,1.41,9.583,3.971 l21.101,21.1l50.623-50.623c2.56-2.56,5.963-3.969,9.583-3.969c3.62,0,7.023,1.409,9.583,3.969 C156.146,65.765,156.146,74.362,150.862,79.646z" 
-      fill={color}
-    />
-  </Svg>
-);
+}) => {
+  const progress = useSharedValue(0);
+
+  React.useEffect(() => {
+    // Initial checkmark drawing animation + looping
+    const timer = setTimeout(() => {
+      progress.value = withRepeat(
+        withSequence(
+          withTiming(1, {
+            duration: 1000,
+            easing: Easing.bezier(0.65, 0, 0.45, 1),
+          }),
+          withTiming(1, { duration: 500 }), // Pause at finished state
+          withTiming(0, { duration: 0 }) // Instant reset for the next loop
+        ),
+        -1, // Loop infinitely
+        false
+      );
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const animatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: interpolate(progress.value, [0, 1], [150, 0]),
+  }));
+
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 191.667 191.667"
+      style={style as any}
+    >
+      {/* Background Circle */}
+      <Path 
+        d="M95.833,0C42.991,0,0,42.99,0,95.833s42.991,95.834,95.833,95.834s95.833-42.991,95.833-95.834S148.676,0,95.833,0z"
+        fill={color}
+      />
+      {/* Animated Checkmark Path (Stroke-based for drawing effect) */}
+      <AnimatedPath
+        d="M55 102 L85 132 L145 72"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="150"
+        animatedProps={animatedProps}
+      />
+    </Svg>
+  );
+};
 
 export default SuccessCheckIcon;

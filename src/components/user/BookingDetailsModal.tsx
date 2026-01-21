@@ -6,18 +6,20 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
+import { useAlert } from '../shared/CustomAlert';
 import { Ionicons } from '@expo/vector-icons';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import DraggableModal from '../shared/DraggableModal';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { bookingAPI } from '../../services/api';
 import { DynamicBookingResponse } from '../../types';
 import { format } from 'date-fns';
 import { useRefundPreview } from '../../hooks/useRefundPreview';
 import { useCancelBooking } from '../../hooks/useCancelBooking';
 import { RefundPreviewModal } from './RefundPreviewModal';
-import { Alert } from 'react-native';
 
 interface BookingDetailsModalProps {
   visible: boolean;
@@ -31,6 +33,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   bookingId,
 }) => {
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const [details, setDetails] = useState<DynamicBookingResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +41,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
 
   const { preview, loading: previewLoading, fetchPreview, resetPreview } = useRefundPreview();
   const { cancelBooking, loading: cancelLoading } = useCancelBooking();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (visible && bookingId) {
@@ -69,7 +73,11 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
       await fetchPreview(details.id);
     } catch (err: any) {
       // Alert already handled in hook if we want, but let's be safe
-      Alert.alert('Error', err.message || 'Failed to fetch refund details');
+      showAlert({
+        title: 'Error',
+        message: err.message || 'Failed to fetch refund details',
+        type: 'error'
+      });
       setRefundModalVisible(false);
     }
   };
@@ -81,10 +89,11 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
       setRefundModalVisible(false);
       resetPreview();
       
-      Alert.alert(
-        'Booking Cancelled',
-        result.message,
-        [
+      showAlert({
+        title: 'Booking Cancelled',
+        message: result.message,
+        type: 'success',
+        buttons: [
           {
             text: 'OK',
             onPress: () => {
@@ -92,9 +101,34 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
             },
           },
         ]
-      );
+      });
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to cancel booking');
+      showAlert({
+        title: 'Error',
+        message: err.message || 'Failed to cancel booking',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!details || !user?.token) return;
+    
+    try {
+      const invoiceUrl = `${bookingAPI.getInvoiceUrl(details.id)}?token=${user.token}`;
+      const supported = await Linking.canOpenURL(invoiceUrl);
+      
+      if (supported) {
+        await Linking.openURL(invoiceUrl);
+      } else {
+        await Linking.openURL(invoiceUrl);
+      }
+    } catch (err) {
+      showAlert({
+        title: 'Error',
+        message: 'An unexpected error occurred while trying to access the invoice.',
+        type: 'error'
+      });
     }
   };
 
@@ -228,16 +262,30 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
                </Text>
             </View>
 
-            {/* Cancel Button */}
-            {details.status === 'CONFIRMED' && (
-              <TouchableOpacity
-                style={[styles.cancelMainButton, { backgroundColor: theme.colors.error + '10' }]}
-                onPress={handleCancelPress}
-              >
-                <Ionicons name="close-circle-outline" size={20} color={theme.colors.error} />
-                <Text style={[styles.cancelMainButtonText, { color: theme.colors.error }]}>Cancel Booking</Text>
-              </TouchableOpacity>
-            )}
+            {/* Actions Section */}
+            <View style={styles.actionContainer}>
+              {/* Download Invoice Button - Only for successful bookings */}
+              {(details.status === 'CONFIRMED' || details.status === 'SUCCESS' || details.status === 'COMPLETED') && (
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: theme.colors.primary + '10', borderColor: theme.colors.primary }]}
+                  onPress={handleDownloadInvoice}
+                >
+                  <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} />
+                  <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>Download Invoice</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Cancel Button */}
+              {details.status === 'CONFIRMED' && (
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: theme.colors.error + '08', borderColor: theme.colors.error + '20' }]}
+                  onPress={handleCancelPress}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color={theme.colors.error} />
+                  <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>Cancel Booking</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={{ height: verticalScale(40) }} />
           </View>
@@ -413,22 +461,26 @@ const styles = StyleSheet.create({
   metaContainer: {
     alignItems: 'center',
     gap: verticalScale(4),
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(24),
   },
   metaText: {
     fontSize: moderateScale(11),
     fontWeight: '500',
   },
-  cancelMainButton: {
+  actionContainer: {
+    gap: verticalScale(12),
+    marginBottom: verticalScale(20),
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: verticalScale(14),
     borderRadius: moderateScale(16),
-    marginTop: verticalScale(10),
-    gap: scale(8),
+    borderWidth: 1,
+    gap: scale(10),
   },
-  cancelMainButtonText: {
+  actionButtonText: {
     fontSize: moderateScale(16),
     fontWeight: '700',
   },

@@ -7,22 +7,24 @@ import {
   ScrollView, 
   Image, 
   Platform,
-  Alert,
   Animated
 } from 'react-native';
+import { useAlert } from '../../components/shared/CustomAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { DynamicBookingResponse, Service } from '../../types';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
+import BackIcon from '../../components/shared/icons/BackIcon';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const BookingSummaryScreen = ({ route, navigation }: any) => {
   const { bookingData, service } = route.params as { bookingData: DynamicBookingResponse; service: Service };
   const { theme } = useTheme();
+  const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
 
   const handleConfirmAndPay = () => {
@@ -86,9 +88,9 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
         <View style={styles.stickyHeaderContent}>
           <TouchableOpacity 
             onPress={() => navigation.goBack()} 
-            style={[styles.stickyBackButton, { backgroundColor: theme.colors.surface }]}
+            style={styles.stickyBackButton}
           >
-            <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
+            <BackIcon width={24} height={24} fill={theme.colors.text} />
           </TouchableOpacity>
           <View>
             <Text style={[styles.stickyTitle, { color: theme.colors.text }]}>SUMMARY</Text>
@@ -110,21 +112,22 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
         }
       ]}>
         <View style={styles.headerTopRow}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={[styles.backButton, { backgroundColor: theme.colors.surface }]}
-          >
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
-              Booking
-            </Text>
-            <Text style={[styles.headerTitleSub, { color: theme.colors.textSecondary }]}>
-              Summary.
-            </Text>
+          <View style={styles.headerLeftSection}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()} 
+              style={styles.headerBackIconGroup}
+            >
+              <BackIcon width={28} height={28} fill={theme.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleGroup}>
+              <Text style={[styles.headerTitleMain, { color: theme.colors.text }]}>
+                Booking
+              </Text>
+              <Text style={[styles.headerTitleSub, { color: theme.colors.textSecondary }]}>
+                Summary.
+              </Text>
+            </View>
           </View>
-          <View style={{ width: 44 }} />
         </View>
       </Animated.View>
 
@@ -207,7 +210,11 @@ const BookingSummaryScreen = ({ route, navigation }: any) => {
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Offers & Coupons.</Text>
           <TouchableOpacity 
             style={[styles.couponButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.primary + '30' }]}
-            onPress={() => Alert.alert('Coming Soon', 'Offers and coupons system is being integrated.')}
+            onPress={() => showAlert({
+              title: 'Coming Soon',
+              message: 'Offers and coupons system is being integrated.',
+              type: 'info'
+            })}
           >
             <View style={styles.couponLeft}>
               <Ionicons name="pricetag" size={20} color={theme.colors.primary} />
@@ -327,11 +334,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(2) },
-    shadowOpacity: 0.1,
-    shadowRadius: moderateScale(4),
-    elevation: 3,
   },
   stickyTitle: {
     fontSize: moderateScale(20),
@@ -345,18 +347,33 @@ const styles = StyleSheet.create({
   },
   headerTopRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    alignItems: 'center',
+  },
+  headerLeftSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    marginLeft: -scale(16),
+  },
+  headerBackIconGroup: { 
+    padding: scale(8),
+    marginTop: verticalScale(2),
+  },
+  headerTitleGroup: {
+    flex: 1,
   },
   headerTitleMain: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,

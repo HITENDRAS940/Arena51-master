@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -19,7 +18,7 @@ import { AuthPlaceholder } from '../../components/shared/AuthPlaceholder';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { userAPI, walletAPI } from '../../services/api';
 import { PRIVACY_POLICY, ABOUT_APP } from '../../constants/legal';
@@ -34,6 +33,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const { user, logout, updateUser, setRedirectData } = useAuth();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { showAlert } = useAlert();
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
@@ -45,6 +45,19 @@ const ProfileScreen = ({ navigation }: any) => {
   const isFocused = useIsFocused();
   const { onScroll } = useTabBarScroll(navigation, { isRootTab: true });
   const scrollY = useRef(new Animated.Value(0)).current;
+  const [isStickyHeaderActive, setIsStickyHeaderActive] = useState(false);
+
+  React.useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      // Threshold should match when the sticky header starts becoming visible/relevant
+      if (value > 60 && !isStickyHeaderActive) {
+        setIsStickyHeaderActive(true);
+      } else if (value <= 60 && isStickyHeaderActive) {
+        setIsStickyHeaderActive(false);
+      }
+    });
+    return () => scrollY.removeListener(listenerId);
+  }, [isStickyHeaderActive]);
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 80],
@@ -57,8 +70,6 @@ const ProfileScreen = ({ navigation }: any) => {
     outputRange: [-10, 0],
     extrapolate: 'clamp',
   });
-
-  const { showAlert } = useAlert();
 
   const handleLogout = async () => {
     showAlert({
@@ -105,7 +116,11 @@ const ProfileScreen = ({ navigation }: any) => {
 
   const handleUpdateName = async () => {
     if (!newName.trim()) {
-      Alert.alert('Error', 'Name cannot be empty');
+      showAlert({
+        title: 'Error',
+        message: 'Name cannot be empty',
+        type: 'error'
+      });
       return;
     }
 
@@ -121,10 +136,18 @@ const ProfileScreen = ({ navigation }: any) => {
         await updateUser({ ...user, name: newName.trim() });
       }
       setIsEditingName(false);
-      Alert.alert('Success', 'Name updated successfully');
+      showAlert({
+        title: 'Success',
+        message: 'Name updated successfully',
+        type: 'success'
+      });
     } catch (error) {
 
-      Alert.alert('Error', 'Failed to update name. Please try again.');
+      showAlert({
+        title: 'Error',
+        message: 'Failed to update name. Please try again.',
+        type: 'error'
+      });
     } finally {
       setIsSavingName(false);
     }
@@ -267,6 +290,7 @@ const ProfileScreen = ({ navigation }: any) => {
       
       {/* Dynamic Sticky Top Bar */}
       <Animated.View 
+        pointerEvents={isStickyHeaderActive ? 'auto' : 'none'}
         style={[
           styles.stickyHeader, 
           { 
@@ -465,13 +489,15 @@ const styles = StyleSheet.create({
   },
   headerTitleMain: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,

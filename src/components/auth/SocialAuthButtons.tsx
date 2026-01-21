@@ -28,6 +28,7 @@ interface SocialAuthButtonsProps {
   onAuthStart?: () => void;
   onAuthSuccess?: (user: User) => void;
   onAuthError?: (error: string) => void;
+  darkMode?: boolean;
 }
 
 
@@ -42,6 +43,7 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   onAuthStart,
   onAuthSuccess,
   onAuthError,
+  darkMode = false,
 }) => {
   const { login } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -188,43 +190,51 @@ const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
     <View style={styles.container}>
       {/* Divider */}
       <View style={styles.dividerContainer}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or login with</Text>
-        <View style={styles.dividerLine} />
+        <View style={[styles.dividerLine, darkMode && { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]} />
+        <Text style={[styles.dividerText, darkMode && { color: '#D1D5DB' }]}>or login with</Text>
+        <View style={[styles.dividerLine, darkMode && { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]} />
       </View>
-
-      {/* Social Buttons */}
-      <View style={styles.buttonsContainer}>
-        {/* Google Button */}
-        <TouchableOpacity
-          style={[styles.socialButton, styles.googleButton]}
-          onPress={handleGoogleSignIn}
-          disabled={googleLoading || appleLoading}
-          activeOpacity={0.7}
-        >
-          {googleLoading ? (
-            <ActivityIndicator size="small" color="#DB4437" />
-          ) : (
-            <GoogleIcon width={scale(24)} height={scale(24)} />
-          )}
-        </TouchableOpacity>
-
-        {/* Apple Button - iOS Only */}
-        {Platform.OS === 'ios' && (
-          <TouchableOpacity
-            style={[styles.socialButton, styles.appleButton]}
-            onPress={handleAppleSignIn}
-            disabled={googleLoading || appleLoading}
-            activeOpacity={0.7}
-          >
-            {appleLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <AppleIcon width={scale(24)} height={scale(24)} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+ 
+       {/* Social Buttons */}
+       <View style={styles.buttonsContainer}>
+         {/* Google Button */}
+         <TouchableOpacity
+           style={[
+             styles.socialButton, 
+             styles.googleButton,
+             darkMode && { backgroundColor: '#1F2937', borderColor: '#374151' }
+           ]}
+           onPress={handleGoogleSignIn}
+           disabled={googleLoading || appleLoading}
+           activeOpacity={0.7}
+         >
+           {googleLoading ? (
+             <ActivityIndicator size="small" color="#DB4437" />
+           ) : (
+             <GoogleIcon width={scale(24)} height={scale(24)} />
+           )}
+         </TouchableOpacity>
+ 
+         {/* Apple Button - iOS Only */}
+         {Platform.OS === 'ios' && (
+           <TouchableOpacity
+             style={[
+               styles.socialButton, 
+               styles.appleButton,
+               darkMode && { borderColor: 'rgba(255, 255, 255, 0.2)' }
+             ]}
+             onPress={handleAppleSignIn}
+             disabled={googleLoading || appleLoading}
+             activeOpacity={0.7}
+           >
+             {appleLoading ? (
+               <ActivityIndicator size="small" color="#FFFFFF" />
+             ) : (
+               <AppleIcon width={scale(24)} height={scale(24)} color="#FFFFFF" />
+             )}
+           </TouchableOpacity>
+         )}
+       </View>
     </View>
   );
 };

@@ -6,15 +6,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
-  Alert,
   Animated,
 } from 'react-native';
+import { useAlert } from '../../components/shared/CustomAlert';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingAPI } from '../../services/api';
 import { UserBooking } from '../../types';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import BookingCard from '../../components/user/BookingCard';
 import EmptyState from '../../components/shared/EmptyState';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
@@ -27,6 +27,7 @@ import BookingDetailsModal from '../../components/user/BookingDetailsModal';
 const MyBookingsScreen = ({ navigation, route }: any) => {
   const { theme } = useTheme();
   const { user, setRedirectData } = useAuth();
+  const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
   const [bookings, setBookings] = useState<UserBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +93,11 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
       
       // Show success alert if coming from successful booking
       if (showSuccess && newBooking) {
-        Alert.alert('Booking Successful! 🎉', `Reference: ${newBooking.reference}`);
+        showAlert({
+          title: 'Booking Successful! 🎉',
+          message: `Reference: ${newBooking.reference}`,
+          type: 'success'
+        });
       }
       
     } catch (error: any) {
@@ -100,7 +105,11 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
                           error.response?.data?.error || 
                           'Failed to fetch bookings';
       
-      Alert.alert('Error', errorMessage);
+      showAlert({
+        title: 'Error',
+        message: errorMessage,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -135,22 +144,31 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
         )
       );
       
-      Alert.alert('UserBooking Cancelled', `Your booking at ${booking.serviceName} has been cancelled`);
+      showAlert({
+        title: 'Booking Cancelled',
+        message: `Your booking at ${booking.serviceName} has been cancelled`,
+        type: 'success'
+      });
       
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'Failed to cancel booking';
       
-      Alert.alert('Cancellation Failed', errorMessage);
+      showAlert({
+        title: 'Cancellation Failed',
+        message: errorMessage,
+        type: 'error'
+      });
     }
   }, []);
 
   const handleCancelBooking = useCallback(async (booking: UserBooking) => {
-    Alert.alert(
-      'Cancel UserBooking',
-      `Are you sure you want to cancel your booking at ${booking.serviceName}?\n\nThis action cannot be undone.`,
-      [
+    showAlert({
+      title: 'Cancel Booking',
+      message: `Are you sure you want to cancel your booking at ${booking.serviceName}?\n\nThis action cannot be undone.`,
+      type: 'warning',
+      buttons: [
         { text: 'No', style: 'cancel' },
         {
           text: 'Yes, Cancel',
@@ -158,8 +176,8 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
           onPress: () => confirmCancelBooking(booking),
         },
       ]
-    );
-  }, [confirmCancelBooking]);
+    });
+  }, [confirmCancelBooking, showAlert]);
 
   useEffect(() => {
     if (user) {
@@ -190,11 +208,19 @@ const MyBookingsScreen = ({ navigation, route }: any) => {
             const result = await RazorpayService.initiatePayment(item.id, theme.colors.primary);
             if (result.status === 'SUCCESS') {
               fetchBookings();
-              Alert.alert('Payment Successful!', 'Your booking is now confirmed.');
+              showAlert({
+                title: 'Payment Successful!',
+                message: 'Your booking is now confirmed.',
+                type: 'success'
+              });
             }
           } catch (error: any) {
             if (!error.message.includes('cancelled')) {
-              Alert.alert('Payment Failed', error.message);
+              showAlert({
+                title: 'Payment Failed',
+                message: error.message,
+                type: 'error'
+              });
             }
           }
         }}
@@ -345,13 +371,15 @@ const styles = StyleSheet.create({
   },
   headerTitleMain: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
   },
   headerTitleSub: {
     fontSize: moderateScale(34),
-    fontWeight: '800',
+    fontWeight: 'condensedBold',
+    fontFamily: themeObj.fonts.bold,
     lineHeight: moderateScale(40),
     letterSpacing: -1,
     opacity: 0.5,

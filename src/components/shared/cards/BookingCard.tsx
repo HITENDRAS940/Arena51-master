@@ -11,7 +11,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import StatusBadge from '../StatusBadge';
 import { formatDateToDDMMMYYYY } from '../../../utils/dateUtils';
 import { formatTimeRange } from '../../../utils/slotUtils';
-import { formatCurrency } from '../../../utils/revenueUtils';
+import { formatCurrency } from '../../../utils/helpers';
 import ProfileIcon from '../../shared/icons/ProfileIcon';
 
 interface BookingSlot {

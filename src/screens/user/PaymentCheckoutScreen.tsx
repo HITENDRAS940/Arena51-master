@@ -120,21 +120,6 @@ const PaymentCheckoutScreen = ({ route, navigation }: any) => {
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Checkout</Text>
       </View>
-      
-      <View style={styles.paymentInfo}>
-        <View style={styles.invoiceRow}>
-          <Text style={[styles.label, { color: theme.colors.textSecondary }]}>BOOKING ID</Text>
-          <Text style={[styles.value, { color: theme.colors.text }]}>#{bookingId}</Text>
-        </View>
-        <View style={styles.invoiceRow}>
-          <Text style={[styles.label, { color: theme.colors.textSecondary }]}>MERCHANT</Text>
-          <Text style={[styles.value, { color: theme.colors.text }]}>{serviceName}</Text>
-        </View>
-        <View style={styles.amountBox}>
-          <Text style={[styles.amountLabel, { color: theme.colors.textSecondary }]}>Total Amount</Text>
-          <Text style={[styles.amountValue, { color: theme.colors.text }]}>₹{amount}</Text>
-        </View>
-      </View>
 
       <View style={styles.content}>
         {renderStatus()}
@@ -144,7 +129,7 @@ const PaymentCheckoutScreen = ({ route, navigation }: any) => {
         <View style={styles.shieldRow}>
           <Ionicons name="shield-checkmark" size={16} color={theme.colors.success} />
           <Text style={[styles.shieldText, { color: theme.colors.textSecondary }]}>
-            Secure 256-bit SSL Encrypted Payment
+            Secure Payment
           </Text>
         </View>
       </View>
