@@ -12,6 +12,7 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { useAlert } from '../../components/shared/CustomAlert';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -81,32 +82,37 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
       }),
     ]).start();
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardWillShowListener = Keyboard.addListener(
+      showEvent,
+      (event) => {
         setKeyboardVisible(true);
         Animated.timing(keyboardShiftAnim, {
           toValue: 1,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
+    const keyboardWillHideListener = Keyboard.addListener(
+      hideEvent,
+      (event) => {
         setKeyboardVisible(false);
         Animated.timing(keyboardShiftAnim, {
           toValue: 0,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
 
     return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
+      keyboardWillHideListener.remove();
+      keyboardWillShowListener.remove();
     };
   }, []);
 
@@ -135,14 +141,15 @@ const OTPVerificationScreen = ({ route, navigation }: any) => {
       const userId = payload.userId;
       const name = payload.name;
 
-      // If 'name' is missing from payload, navigate to SetName screen
-      if (!('name' in payload) || !name) {
+      // If user is new, navigate to SetName screen to complete profile (Name & Phone)
+      if (newUser) {
         navigation.replace('SetName', {
           token,
-          phone,
-          email,
+          phone: phone || payload.phone,
+          email: email || payload.email,
+          name: payload.name, // Pass name to pre-fill if available
           userId,
-          isNewUser: newUser,
+          isNewUser: true,
           redirectTo
         });
         return;

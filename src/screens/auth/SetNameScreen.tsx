@@ -14,11 +14,12 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Easing,
 } from 'react-native';
 import { useAlert } from '../../components/shared/CustomAlert';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { userAPI } from '../../services/api';
+import { userAPI, authAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,11 +31,13 @@ import ProfileIcon from '../../components/shared/icons/ProfileIcon';
 Dimensions.get('window');
 
 const SetNameScreen = ({ route, navigation }: any) => {
-  const { token, userId, phone, email, isNewUser, redirectTo } = route.params || {};
-  const [name, setName] = useState('');
+  const { token, userId, phone, email, name: initialName, isNewUser, redirectTo } = route.params || {};
+  const [name, setName] = useState(initialName || '');
+  const [phoneNumber, setPhoneNumber] = useState(phone || '');
   const [loading, setLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isPhoneFocused, setIsPhoneFocused] = useState(false);
 
   const { login } = useAuth();
   const { theme } = useTheme();
@@ -69,32 +72,37 @@ const SetNameScreen = ({ route, navigation }: any) => {
       }),
     ]).start();
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardWillShowListener = Keyboard.addListener(
+      showEvent,
+      (event) => {
         setKeyboardVisible(true);
         Animated.timing(keyboardShiftAnim, {
           toValue: 1,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
+    const keyboardWillHideListener = Keyboard.addListener(
+      hideEvent,
+      (event) => {
         setKeyboardVisible(false);
         Animated.timing(keyboardShiftAnim, {
           toValue: 0,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
 
     return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
+      keyboardWillHideListener.remove();
+      keyboardWillShowListener.remove();
     };
   }, []);
 
@@ -136,6 +144,16 @@ const SetNameScreen = ({ route, navigation }: any) => {
       return;
     }
 
+    const trimmedPhone = phoneNumber.trim();
+    if (!trimmedPhone || trimmedPhone.length < 10) {
+      showAlert({
+        title: 'Invalid Phone',
+        message: 'Please enter a valid phone number',
+        type: 'warning'
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // First, save the token so API calls work
@@ -143,14 +161,14 @@ const SetNameScreen = ({ route, navigation }: any) => {
         await AsyncStorage.setItem('token', token);
       }
 
-      // Call API to set the name
-      await userAPI.setName(trimmedName);
+      // Call unified API to set name and phone
+      await userAPI.updateBasicInfo(trimmedName, trimmedPhone);
 
       // Create user object and login
       const userData: User = {
         id: userId,
         token: token,
-        phone: phone || '',
+        phone: trimmedPhone,
         email: email || '',
         role: 'ROLE_USER',
         name: trimmedName,
@@ -266,6 +284,44 @@ const SetNameScreen = ({ route, navigation }: any) => {
                     autoComplete="name"
                     maxLength={50}
                   />
+                </View>
+
+                <Text style={[styles.label, { color: '#D1D5DB' }]}>Phone Number</Text>
+                <View style={[
+                   styles.inputWrapper,
+                   {
+                     backgroundColor: '#262626',
+                     borderColor: isPhoneFocused ? theme.colors.primary : '#4B5563'
+                   }
+                ]}>
+                  <Ionicons 
+                    name="call-outline" 
+                    size={20} 
+                    color={isPhoneFocused ? theme.colors.primary : '#D1D5DB'} 
+                    style={styles.inputIcon} 
+                  />
+                  <TextInput
+                    style={[styles.input, { color: '#FFFFFF' }]}
+                    placeholder="Enter your phone number"
+                    placeholderTextColor={'#D1D5DB' + '80'}
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    editable={!loading}
+                    onFocus={() => setIsPhoneFocused(true)}
+                    onBlur={() => setIsPhoneFocused(false)}
+                    selectionColor={theme.colors.primary}
+                    keyboardType="phone-pad"
+                    autoComplete="tel"
+                    maxLength={15}
+                  />
+                </View>
+
+                {/* Phone Number Caution Message */}
+                <View style={styles.cautionContainer}>
+                  <Ionicons name="information-circle-outline" size={18} color={theme.colors.primary} />
+                  <Text style={styles.cautionText}>
+                    Please enter your correct number. It will be used to notify you in case of any changes or inconvenience with your booking.
+                  </Text>
                 </View>
 
                 <TouchableOpacity
@@ -417,6 +473,25 @@ const styles = StyleSheet.create({
     color: '#D1D5DB',
     lineHeight: moderateScale(16),
     opacity: 0.6,
+  },
+  cautionContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(14),
+    marginTop: verticalScale(-8),
+    marginBottom: verticalScale(20),
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'flex-start',
+    gap: scale(10),
+  },
+  cautionText: {
+    fontSize: moderateScale(11),
+    color: '#9CA3AF',
+    flex: 1,
+    lineHeight: moderateScale(16),
+    fontWeight: '500',
   },
 });
 

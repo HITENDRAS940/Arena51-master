@@ -51,62 +51,62 @@ export const RefundPreviewModal: React.FC<RefundPreviewModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.container, { backgroundColor: '#121212' }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>Cancel Booking</Text>
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>Cancel Booking</Text>
             <TouchableOpacity onPress={onClose} disabled={confirming} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+              <Ionicons name="close" size={24} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>Calculating refund...</Text>
+              <Text style={[styles.loadingText, { color: '#9CA3AF' }]}>Calculating refund...</Text>
             </View>
           ) : preview ? (
             preview.canCancel ? (
               <>
                 {/* Refund Details */}
-                <View style={[styles.detailsContainer, { backgroundColor: theme.colors.surface }]}>
+                <View style={[styles.detailsContainer, { backgroundColor: '#1A1A1A' }]}>
                   <View style={styles.row}>
-                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Original Amount</Text>
-                    <Text style={[styles.value, { color: theme.colors.text }]}>₹{preview.originalAmount.toFixed(2)}</Text>
+                    <Text style={[styles.label, { color: '#9CA3AF' }]}>Original Amount</Text>
+                    <Text style={[styles.value, { color: '#FFFFFF' }]}>₹{preview.originalAmount.toFixed(2)}</Text>
                   </View>
                   
                   <View style={styles.row}>
-                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Refund ({preview.refundPercent}%)</Text>
-                    <Text style={[styles.value, styles.refundAmount, { color: theme.colors.success || '#34C759' }]}>
+                    <Text style={[styles.label, { color: '#9CA3AF' }]}>Refund ({preview.refundPercent}%)</Text>
+                    <Text style={[styles.value, styles.refundAmount, { color: theme.colors.success || '#4ade80' }]}>
                       ₹{preview.refundAmount.toFixed(2)}
                     </Text>
                   </View>
                   
                   <View style={styles.row}>
-                    <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Deduction</Text>
-                    <Text style={[styles.value, styles.deductionAmount, { color: theme.colors.error || '#FF3B30' }]}>
+                    <Text style={[styles.label, { color: '#9CA3AF' }]}>Deduction</Text>
+                    <Text style={[styles.value, styles.deductionAmount, { color: theme.colors.error || '#f87171' }]}>
                       ₹{preview.deductionAmount.toFixed(2)}
                     </Text>
                   </View>
                 </View>
 
                 {/* Policy Message */}
-                <View style={[styles.policyContainer, { backgroundColor: (theme.colors as any).warning + '10' || '#FFF9E6' }]}>
-                  <Ionicons name="information-circle-outline" size={20} color={(theme.colors as any).warning || '#F59E0B'} />
-                  <Text style={[styles.policyText, { color: theme.colors.textSecondary }]}>{preview.policyMessage}</Text>
+                <View style={[styles.policyContainer, { backgroundColor: '#262626' }]}>
+                  <Ionicons name="information-circle-outline" size={20} color={theme.colors.warning || '#fbbf24'} />
+                  <Text style={[styles.policyText, { color: '#9CA3AF' }]}>{preview.policyMessage}</Text>
                 </View>
-
+ 
                 {/* Message */}
-                <Text style={[styles.message, { color: theme.colors.text }]}>{preview.message}</Text>
+                <Text style={[styles.message, { color: '#FFFFFF' }]}>{preview.message}</Text>
 
                 {/* Buttons */}
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity
-                    style={[styles.button, styles.keepButton, { backgroundColor: theme.colors.surface }]}
+                    style={[styles.button, styles.keepButton, { backgroundColor: '#1A1A1A' }]}
                     onPress={onClose}
                     disabled={confirming}
                   >
-                    <Text style={[styles.keepButtonText, { color: theme.colors.text }]}>Keep Booking</Text>
+                    <Text style={[styles.keepButtonText, { color: '#FFFFFF' }]}>Keep Booking</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -126,9 +126,9 @@ export const RefundPreviewModal: React.FC<RefundPreviewModalProps> = ({
               <>
                 {/* Cannot Cancel */}
                 <View style={styles.errorContainer}>
-                  <Ionicons name="close-circle" size={moderateScale(64)} color={theme.colors.error || '#FF3B30'} />
-                  <Text style={[styles.errorTitle, { color: theme.colors.text }]}>Cannot Cancel</Text>
-                  <Text style={[styles.errorMessage, { color: theme.colors.textSecondary }]}>{preview.reasonNotAllowed}</Text>
+                  <Ionicons name="close-circle" size={moderateScale(64)} color={theme.colors.error || '#f87171'} />
+                  <Text style={[styles.errorTitle, { color: '#FFFFFF' }]}>Cannot Cancel</Text>
+                  <Text style={[styles.errorMessage, { color: '#9CA3AF' }]}>{preview.reasonNotAllowed}</Text>
                 </View>
                 
                 <TouchableOpacity

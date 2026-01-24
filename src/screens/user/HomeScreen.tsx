@@ -7,9 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Alert,
   RefreshControl,
-  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +16,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../../components/shared/ScreenWrapper';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Booking } from '../../types';
+import { Booking, UserBooking } from '../../types';
 import { serviceAPI, bookingAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -25,39 +24,18 @@ import { ActivitySkeletonCard, SkeletonList } from '../../components/shared/Skel
 import { useLocation } from '../../hooks/useLocation';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import CitySelectionModal from '../../components/user/CitySelectionModal';
-import { ACTIVITY_THEMES, DEFAULT_THEME, theme as themeObj } from '../../contexts/ThemeContext';
+import { theme as themeObj } from '../../contexts/ThemeContext';
 import { Activity } from '../../types';
-import { ActivityIcons, DiscoveryArrowIcon } from '../../components/shared/icons/activities';
-import ProfileIcon from '../../components/shared/icons/ProfileIcon';
-import HomeIcon from '../../components/shared/icons/HomeIcon';
+import { DiscoveryArrowIcon } from '../../components/shared/icons/activities';
 import LocationIcon from '../../components/shared/icons/LocationIcon';
+import UpcomingMatchCard from '../../components/user/UpcomingMatchCard';
+import BookingDetailsModal from '../../components/user/BookingDetailsModal';
+import { isAfter, addHours } from 'date-fns';
+import ActivityCard from '../../components/user/ActivityCard';
 
-const OFFERS = [
-  {
-    id: '1',
-    title: '50% OFF',
-    description: 'On your first booking this weekend!',
-    code: 'FIRST50',
-    colors: ['#F59E0B', '#D97706'],
-    icon: 'gift',
-  },
-  {
-    id: '2',
-    title: '₹200 Cashback',
-    description: 'Valid on all turf bookings above ₹1000',
-    code: 'TURF200',
-    colors: ['#3B82F6', '#2563EB'],
-    icon: 'wallet',
-  },
-  {
-    id: '3',
-    title: 'Free Drink',
-    description: 'Get a free energy drink on every booking',
-    code: 'ENERGY',
-    colors: ['#EF4444', '#DC2626'],
-    icon: 'flask',
-  },
-];
+
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const getStatusGradient = (status: string): [string, string] => {
   switch (status?.toUpperCase()) {
@@ -75,80 +53,8 @@ const getStatusGradient = (status: string): [string, string] => {
   }
 };
 
-const ActivityCard = React.memo(({ item, onPress }: { item: Activity, onPress: (activity: Activity) => void }) => {
-  const themeConfig = ACTIVITY_THEMES[item.name] || DEFAULT_THEME;
-  
-  return (
-    <TouchableOpacity
-        style={styles.activityCard}
-        onPress={() => onPress(item)}
-        activeOpacity={0.9}
-    >
-        <LinearGradient
-          colors={themeConfig.colors as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.activityCardGradient}
-        >
-          <Text style={styles.activityCardTitle} numberOfLines={1} adjustsFontSizeToFit>
-              {item.name}
-          </Text>
-          
-          <View style={styles.activityIconContainer}>
-              {(() => {
-                const IconComponent = ActivityIcons[item.name];
-                const iconColor = themeConfig.iconColor || "rgba(255,255,255,0.25)";
-                const fallbackColor = themeConfig.iconColor || "rgba(255,255,255,0.2)";
-                
-                if (IconComponent) {
-                  return <IconComponent size={120} color={iconColor} />;
-                }
-                return (
-                  <Ionicons 
-                      name={themeConfig.icon as any} 
-                      size={120} 
-                      color={fallbackColor} 
-                  />
-                );
-              })()}
-          </View>
-        </LinearGradient>
-    </TouchableOpacity>
-  );
-});
 
-const OfferCard = React.memo(({ item }: { item: typeof OFFERS[0] }) => {
-  return (
-    <TouchableOpacity
-      style={styles.offerCard}
-      activeOpacity={0.9}
-      onPress={() => {}}
-    >
-      <LinearGradient
-        colors={item.colors as any}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.offerGradient}
-      >
-        <View style={styles.offerContent}>
-          <View style={styles.offerTextGroup}>
-            <Text style={styles.offerTitle}>{item.title}</Text>
-            <Text style={styles.offerDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          </View>
-          <View style={styles.offerBadge}>
-            <Text style={styles.offerCode}>{item.code}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.offerIconDecor}>
-          <Ionicons name={item.icon as any} size={80} color="rgba(255,255,255,0.15)" />
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-});
+
 
 const HomeScreen = ({ navigation }: any) => {
   const { theme } = useTheme();
@@ -157,6 +63,9 @@ const HomeScreen = ({ navigation }: any) => {
   
   const [activities, setActivities] = useState<Activity[]>([]);
   const [lastBooking, setLastBooking] = useState<Booking | null>(null);
+  const [upcomingBooking, setUpcomingBooking] = useState<UserBooking | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = React.useRef(new Animated.Value(0)).current;
@@ -166,7 +75,7 @@ const HomeScreen = ({ navigation }: any) => {
   const { location, manualCity, setCityManually, detectAndSetToCurrentCity, loading: locationLoading } = useLocation();
   const [showCityModal, setShowCityModal] = useState(false);
   const [isHeaderActive, setIsHeaderActive] = useState(false);
-  const { onScroll: onTabBarScroll } = useTabBarScroll(navigation, { isRootTab: false });
+  const { onScroll: onTabBarScroll } = useTabBarScroll(navigation, { isRootTab: true });
 
   useEffect(() => {
     // Trigger entrance animation
@@ -227,6 +136,27 @@ const HomeScreen = ({ navigation }: any) => {
 
   const fetchLastBooking = async () => {
     try {
+      // 1. Fetch all bookings to find the nearest upcoming one
+      const allBookingsResponse = await bookingAPI.getUserBookings();
+      const allBookings = allBookingsResponse.data || [];
+      
+      const now = new Date();
+      const threshold = addHours(now, 48); // Show if match is within 48 hours
+
+      const upcoming = allBookings
+        .filter(b => b.status === 'CONFIRMED')
+        .find(b => {
+          if (!b.date || !b.slots?.[0]?.startTime) return false;
+          // Assuming date is YYYY-MM-DD and startTime is HH:mm
+          const [hours, minutes] = b.slots[0].startTime.split(':').map(Number);
+          const [y, m, d] = b.date.split('-').map(Number);
+          const bookingDate = new Date(y, m - 1, d, hours, minutes);
+          return isAfter(bookingDate, now) && !isAfter(bookingDate, threshold);
+        });
+
+      setUpcomingBooking(upcoming || null);
+
+      // 2. Fetch last booking for the "Jump Back In" section
       const response = await bookingAPI.getLastBooking();
       if (response.data) {
         setLastBooking(response.data);
@@ -236,6 +166,7 @@ const HomeScreen = ({ navigation }: any) => {
     } catch (error) {
       // Fail silently for UI
       setLastBooking(null);
+      setUpcomingBooking(null);
     }
   };
 
@@ -257,7 +188,7 @@ const HomeScreen = ({ navigation }: any) => {
     extrapolate: 'clamp',
   });
 
-  const handleActivityPress = (activity: Activity) => {
+  const handleActivityPress = useCallback((activity: Activity) => {
       const city = manualCity || location?.city || '';
       navigation.navigate('CategoryServices', { 
           activityId: activity.id, 
@@ -265,15 +196,16 @@ const HomeScreen = ({ navigation }: any) => {
           activityCode: activity.code,
           city 
       });
-  };
+  }, [manualCity, location?.city, navigation]);
 
   const renderActivityItem = useCallback(({ item }: { item: Activity }) => (
-    <ActivityCard item={item} onPress={handleActivityPress} />
+    <ActivityCard 
+      item={item} 
+      onPress={handleActivityPress} 
+    />
   ), [handleActivityPress]);
 
-  const renderOfferItem = useCallback(({ item }: { item: typeof OFFERS[0] }) => (
-    <OfferCard item={item} />
-  ), []);
+
   const renderMainHeader = () => (
     <Animated.View style={[
       styles.headerContainer, 
@@ -383,6 +315,20 @@ const HomeScreen = ({ navigation }: any) => {
             height: (insets.top + 20) + 100,
           }} />
         
+        {/* Upcoming Match Countdown */}
+        <UpcomingMatchCard 
+          booking={upcomingBooking}
+          onPress={() => {
+            if (upcomingBooking?.id) {
+              setSelectedBookingId(upcomingBooking.id);
+              setIsModalVisible(true);
+            } else {
+              // If no booking, scroll to sport selection
+              // For now, let's just let it be a decorative card or add a scroll logic if we had a ref
+            }
+          }}
+        />
+        
         {/* Activity List */}
         <View style={styles.sectionHeaderContainer}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Choose your Sport</Text>
@@ -402,14 +348,15 @@ const HomeScreen = ({ navigation }: any) => {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={styles.activityListContent}
                 initialNumToRender={5}
                 maxToRenderPerBatch={10}
                 windowSize={5}
                 removeClippedSubviews={true}
                 nestedScrollEnabled={true}
-                decelerationRate="fast"
-                snapToAlignment="start"
+                contentContainerStyle={[
+                  styles.activityListContent,
+                  { paddingHorizontal: scale(20) }
+                ]}
               />
             )}
         </View>
@@ -532,31 +479,7 @@ const HomeScreen = ({ navigation }: any) => {
           ) : null}
         </View>
 
-        {/* Exclusive Offers Section */}
-        <View style={{ paddingBottom: 30 }}>
-          <View style={styles.sectionHeaderContainer}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Exclusive Offers</Text>
-              <TouchableOpacity>
-                  <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>View All</Text>
-              </TouchableOpacity>
-          </View>
-          <FlatList
-            data={OFFERS}
-            renderItem={renderOfferItem}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.offerListContent}
-            snapToInterval={280 + 16}
-            decelerationRate="fast"
-            initialNumToRender={3}
-            maxToRenderPerBatch={3}
-            windowSize={3}
-            removeClippedSubviews={true}
-            nestedScrollEnabled={true}
-            snapToAlignment="start"
-          />
-        </View>
+
         </Animated.ScrollView>
       </Animated.View>
 
@@ -566,6 +489,12 @@ const HomeScreen = ({ navigation }: any) => {
         onSelectCity={(city) => setCityManually(city)}
         onUseCurrentLocation={detectAndSetToCurrentCity}
         currentCity={manualCity || location?.city}
+      />
+
+      <BookingDetailsModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        bookingId={selectedBookingId}
       />
     </ScreenWrapper>
   );
@@ -628,42 +557,14 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   activityListContainer: {
-     paddingBottom: verticalScale(8),
+    paddingVertical: verticalScale(8),
+    paddingBottom: verticalScale(8),
   },
   activityListContent: {
-      paddingHorizontal: scale(20),
-      gap: scale(16),
-      paddingBottom: verticalScale(16),
-  },
-  activityCard: {
-      width: scale(140), 
-      height: verticalScale(180), 
-      borderRadius: moderateScale(24),
-      overflow: 'hidden',
-      elevation: 6,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: verticalScale(4) },
-      shadowOpacity: 0.15,
-      shadowRadius: moderateScale(8),
-      backgroundColor: '#FFFFFF',
-  },
-  activityCardGradient: {
-      flex: 1,
-      padding: moderateScale(16),
-      justifyContent: 'space-between',
-  },
-  activityCardTitle: {
-      color: '#FFFFFF',
-      fontSize: moderateScale(18),
-      fontWeight: '800',
-      zIndex: 2,
-  },
-  activityIconContainer: {
-      position: 'absolute',
-      bottom: 10,
-      right: 10,
-      zIndex: 1,
-      transform: [{rotate: '-10deg'}] 
+      // paddingHorizontal: scale(20),
+      // paddingTop: verticalScale(20),
+      gap: 0,
+      paddingBottom: verticalScale(10),
   },
   exploreButton: {
       borderRadius: moderateScale(24),
@@ -884,71 +785,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(13),
     fontWeight: '600',
   },
-  offerListContent: {
-    paddingHorizontal: scale(20),
-    gap: scale(16),
-    paddingBottom: verticalScale(10),
-  },
-  offerCard: {
-    width: scale(280),
-    height: verticalScale(140),
-    borderRadius: moderateScale(24),
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: verticalScale(8) },
-    shadowOpacity: 0.15,
-    shadowRadius: moderateScale(12),
-  },
-  offerGradient: {
-    flex: 1,
-    padding: moderateScale(20),
-    justifyContent: 'center',
-  },
-  offerContent: {
-    zIndex: 2,
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  offerTextGroup: {
-    flex: 1,
-  },
-  offerTitle: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(24),
-    fontWeight: '900',
-    marginBottom: verticalScale(4),
-    letterSpacing: -0.5,
-  },
-  offerDescription: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: moderateScale(13),
-    fontWeight: '600',
-    lineHeight: moderateScale(18),
-    maxWidth: '80%',
-  },
-  offerBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: scale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(10),
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  offerCode: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(12),
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  offerIconDecor: {
-    position: 'absolute',
-    right: -10,
-    bottom: -10,
-    zIndex: 1,
-    transform: [{ rotate: '-10deg' }],
-  },
+
 });
 
 export default HomeScreen;

@@ -78,12 +78,16 @@ export const authAPI = {
     api.post<OAuthLoginResponse>('/auth/oauth/login', data),
 
   // Phone Linking (new) - for post-OAuth phone verification
+  linkPhone: (phone: string) => api.put('/user/phone', { phone }),
 };
 
 // User APIs
 export const userAPI = {
   getProfile: () => api.get('/user/profile'),
-  setName: (name: string) => api.post('/user/setname', { name }),
+  setName: (name: string) => api.put('/user/name', { name }),
+  updateBasicInfo: (name: string, phone: string) => api.put<string>('/user/basic-info', { name, phone }),
+  deleteAccount: (reason: string, confirmationText: string) =>
+    api.delete('/user/profile', { data: { reason, confirmationText } }),
 };
 
 // Service APIs

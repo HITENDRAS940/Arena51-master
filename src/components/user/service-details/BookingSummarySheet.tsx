@@ -38,16 +38,16 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
       visible={visible}
       onClose={onClose}
       height="85%"
-      containerStyle={{ backgroundColor: theme.colors.background }}
+      containerStyle={{ backgroundColor: '#121212' }}
     >
       <View style={styles.sheet}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Summary.</Text>
+          <Text style={[styles.title, { color: '#FFFFFF' }]}>Summary.</Text>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Main Info Card */}
-          <View style={[styles.summaryCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <View style={[styles.summaryCard, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
             <View style={styles.summaryItem}>
               <Ionicons name="business-outline" size={20} color={theme.colors.primary} />
               <View style={styles.summaryText}>
@@ -76,7 +76,7 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
                 <Text style={[styles.label, { color: theme.colors.textSecondary }]}>SLOTS</Text>
                 <View style={styles.slotsList}>
                   {selectedSlots.map((slot, index) => (
-                    <Text key={index} style={[styles.value, { color: theme.colors.text }]}>
+                    <Text key={index} style={[styles.value, { color: '#FFFFFF' }]}>
                       {slot.startTime} - {slot.endTime}{index < selectedSlots.length - 1 ? ',' : ''}
                     </Text>
                   ))}
@@ -140,14 +140,14 @@ const BookingSummarySheet: React.FC<BookingSummarySheetProps> = ({
                 </View>
                 <View style={styles.breakdownDivider} />
                 <View style={styles.totalRow}>
-                  <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total Amount</Text>
+                  <Text style={[styles.totalLabel, { color: '#FFFFFF' }]}>Total Amount</Text>
                   <Text style={[styles.totalValue, { color: theme.colors.primary }]}>₹{bookingData.amountBreakdown.totalAmount}</Text>
                 </View>
               </View>
             ) : (
               <>
                 <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Total Price</Text>
-                <Text style={[styles.totalValue, { color: theme.colors.text }]}>₹{totalPrice}</Text>
+                <Text style={[styles.totalValue, { color: '#FFFFFF' }]}>₹{totalPrice}</Text>
               </>
             )}
           </View>

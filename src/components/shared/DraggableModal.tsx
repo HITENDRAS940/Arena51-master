@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#121212',
     borderTopLeftRadius: moderateScale(32),
     borderTopRightRadius: moderateScale(32),
     overflow: 'hidden',
@@ -180,8 +180,8 @@ const styles = StyleSheet.create({
     width: scale(40),
     height: verticalScale(4),
     borderRadius: moderateScale(2),
-    backgroundColor: '#E2E8F0',
-    opacity: 0.5,
+    backgroundColor: '#333333',
+    opacity: 0.8,
   },
 });
 

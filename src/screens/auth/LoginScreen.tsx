@@ -13,12 +13,14 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authAPI } from '../../services/api';
 import { useTheme, theme as themeObj } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useAlert } from '../../components/shared/CustomAlert';
 import { Ionicons } from '@expo/vector-icons';
 import HyperIcon from '../../components/shared/icons/HyperIcon';
@@ -33,6 +35,7 @@ Dimensions.get('window');
 
 const LoginScreen = ({ route, navigation }: any) => {
   const { theme } = useTheme();
+  const { login } = useAuth();
   const { showAlert } = useAlert();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -75,32 +78,37 @@ const LoginScreen = ({ route, navigation }: any) => {
       }),
     ]).start();
 
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const keyboardWillShowListener = Keyboard.addListener(
+      showEvent,
+      (event) => {
         setKeyboardVisible(true);
         Animated.timing(keyboardShiftAnim, {
           toValue: 1,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
+    const keyboardWillHideListener = Keyboard.addListener(
+      hideEvent,
+      (event) => {
         setKeyboardVisible(false);
         Animated.timing(keyboardShiftAnim, {
           toValue: 0,
-          duration: 350,
+          duration: event.duration || 300,
+          easing: event.easing === 'keyboard' ? Easing.bezier(0.33, 1, 0.68, 1) : Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
       }
     );
 
     return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
     };
   }, []);
 
@@ -300,18 +308,22 @@ const LoginScreen = ({ route, navigation }: any) => {
                   onAuthSuccess={(userData) => {
                     setSocialLoading(false);
                     
-                    // If name is missing from the social login, navigate to SetName screen
-                    if (!userData.name) {
+                    // If user is new, navigate to SetName screen to complete profile (Name & Phone)
+                    if (userData.isNewUser) {
                       navigation.replace('SetName', {
                         token: userData.token,
                         phone: userData.phone,
                         email: userData.email,
+                        name: userData.name, // Pass name to pre-fill
                         userId: userData.id,
-                        isNewUser: userData.isNewUser,
+                        isNewUser: true,
                         redirectTo
                       });
                       return;
                     }
+
+                    // User is not new, perform login and handle redirection
+                    login(userData);
 
                     // User has a name, handle redirection
                     if (redirectTo) {

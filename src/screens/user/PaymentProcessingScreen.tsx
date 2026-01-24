@@ -552,7 +552,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   promoButtonText: {
-    fontSize: moderateScale(14),
     fontWeight: '700',
     color: '#4F46E5',
   },

@@ -29,7 +29,10 @@ module.exports = {
           "upi",
           "razorpay"
         ],
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+        NSLocationWhenInUseUsageDescription: "HYPER needs your location to show nearby sports venues and calculate distances.",
+        NSPhotoLibraryUsageDescription: "HYPER needs access to your photos to let you set a profile picture.",
+        NSCameraUsageDescription: "HYPER needs access to your camera to let you take a profile picture."
       }
     },
     android: {
@@ -39,6 +42,12 @@ module.exports = {
         foregroundImage: "./assets/hy_logo.png",
         backgroundColor: "#10B981"
       },
+      permissions: [
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       intentFilters: [
         {
           action: "VIEW",
@@ -58,14 +67,14 @@ module.exports = {
       favicon: "./assets/favicon.png"
     },
     extra: {
-      eas: {
-        projectId: "d4b5fd29-d745-4050-8e10-86fae4a20c8f"
+      "eas": {
+        "projectId": "a1aa533f-8f16-4640-8307-9394a40ebdc9"
       },
       // OAuth Configuration - Replace with your actual credentials
       googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID,
       googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
     },
-    owner: "hitendras940",
+    owner: "hitendrasingh",
     plugins: [
       "expo-font",
       "expo-apple-authentication",

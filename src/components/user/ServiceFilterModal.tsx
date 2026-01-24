@@ -156,10 +156,10 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
   const renderDateItem = ({ item }: { item: Date }) => {
     const isSelected = item.toDateString() === selectedDate.toDateString();
     return (
-      <TouchableOpacity
+        <TouchableOpacity
         style={[
           styles.dateItem,
-          { backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface },
+          { backgroundColor: isSelected ? theme.colors.primary : '#1A1A1A' },
           isSelected ? styles.selectedShadow : styles.unselectedShadow,
         ]}
         onPress={() => {
@@ -168,10 +168,10 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
           setRangeEnd(null);
         }}
       >
-        <Text style={[styles.dateDay, { color: isSelected ? '#FFF' : theme.colors.textSecondary }]}>
+        <Text style={[styles.dateDay, { color: isSelected ? '#FFF' : '#9CA3AF' }]}>
           {item.toLocaleDateString('en-US', { weekday: 'short' })}
         </Text>
-        <Text style={[styles.dateNum, { color: isSelected ? '#FFF' : theme.colors.text }]}>
+        <Text style={[styles.dateNum, { color: isSelected ? '#FFF' : '#FFFFFF' }]}>
           {item.getDate()}
         </Text>
       </TouchableOpacity>
@@ -183,34 +183,34 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
       visible={visible}
       onClose={onClose}
       height="85%"
-      containerStyle={{ backgroundColor: theme.colors.background }}
+      containerStyle={{ backgroundColor: '#121212' }}
     >
       <View style={styles.modalInner}>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Filter Search</Text>
-            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Filter Search</Text>
+            <Text style={[styles.headerSubtitle, { color: '#9CA3AF' }]}>
               {!rangeStart ? 'Select start time' : !rangeEnd ? `Select end time after ${rangeStart}` : 'Perfect! Your range is ready.'}
             </Text>
           </View>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={moderateScale(24)} color={theme.colors.text} />
+            <Ionicons name="close" size={moderateScale(24)} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Search Mode</Text>
+            <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Search Mode</Text>
             <View style={styles.filterModeContainer}>
               <TouchableOpacity 
                 onPress={() => setIsDistanceFilter(false)}
                 style={[
                   styles.modeButton, 
-                  !isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                  !isDistanceFilter && { backgroundColor: theme.colors.primary + '30', borderColor: theme.colors.primary }
                 ]}
               >
-                <Ionicons name="time-outline" size={moderateScale(20)} color={!isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
-                <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Time</Text>
+                <Ionicons name="time-outline" size={moderateScale(20)} color={!isDistanceFilter ? theme.colors.primary : '#9CA3AF'} />
+                <Text style={[styles.modeButtonText, { color: !isDistanceFilter ? theme.colors.primary : '#9CA3AF' }]}>By Time</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => {
@@ -227,15 +227,15 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                 }}
                 style={[
                   styles.modeButton, 
-                  isDistanceFilter && { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }
+                  isDistanceFilter && { backgroundColor: theme.colors.primary + '30', borderColor: theme.colors.primary }
                 ]}
               >
-                <Ionicons name="location-outline" size={moderateScale(20)} color={isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary} />
-                <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : theme.colors.textSecondary }]}>By Distance</Text>
+                <Ionicons name="location-outline" size={moderateScale(20)} color={isDistanceFilter ? theme.colors.primary : '#9CA3AF'} />
+                <Text style={[styles.modeButtonText, { color: isDistanceFilter ? theme.colors.primary : '#9CA3AF' }]}>By Distance</Text>
               </TouchableOpacity>
             </View>
             {isDistanceFilter && (
-              <Text style={[styles.distanceHint, { color: theme.colors.textSecondary }]}>
+              <Text style={[styles.distanceHint, { color: '#9CA3AF' }]}>
                 Showing venues within 50km of your location.
               </Text>
             )}
@@ -245,7 +245,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
             <>
               {!activityCode && (
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Select Activity</Text>
+                  <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Select Activity</Text>
                   {loadingActivities ? (
                     <ActivityIndicator size="small" color={theme.colors.primary} />
                   ) : (
@@ -261,14 +261,14 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                             style={[
                               styles.activityBadge,
                               { 
-                                backgroundColor: isSelected ? theme.colors.primary : theme.colors.surface,
-                                borderColor: isSelected ? theme.colors.primary : theme.colors.border
+                                backgroundColor: isSelected ? theme.colors.primary : '#1A1A1A',
+                                borderColor: isSelected ? theme.colors.primary : 'rgba(255,255,255,0.05)'
                               }
                             ]}
                           >
                             <Text style={[
                               styles.activityText,
-                              { color: isSelected ? '#FFF' : theme.colors.text }
+                              { color: isSelected ? '#FFF' : '#FFFFFF' }
                             ]}>
                               {activity.name}
                             </Text>
@@ -280,7 +280,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                 </View>
               )}
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick a Day</Text>
+                <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Pick a Day</Text>
                 <FlatList
                   data={dates}
                   renderItem={renderDateItem}
@@ -292,14 +292,14 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
               </View>
 
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Pick Range</Text>
+                <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Pick Range</Text>
                 <View style={styles.slotsGrid}>
                   {DEFAULT_SLOTS.map((slot) => {
                     const isStart = rangeStart === slot.value;
                     const isEnd = rangeEnd === slot.value;
                     const inRange = isSlotInRange(slot.value);
                     const isDisabled = isSlotInPast(slot.value);
-
+ 
                     return (
                       <TouchableOpacity
                         key={slot.value}
@@ -309,11 +309,11 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                             backgroundColor: (isStart || isEnd)
                               ? theme.colors.primary
                               : inRange
-                                ? theme.colors.primary + '20'
+                                ? theme.colors.primary + '30'
                                 : isDisabled
-                                  ? theme.colors.background
-                                  : theme.colors.surface,
-                            borderColor: (isStart || isEnd) ? theme.colors.primary : theme.colors.border,
+                                  ? '#121212'
+                                  : '#1A1A1A',
+                            borderColor: (isStart || isEnd) ? theme.colors.primary : 'rgba(255,255,255,0.05)',
                           },
                           isDisabled && { opacity: 0.3 }
                         ]}
@@ -328,8 +328,8 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
                               : inRange
                                 ? theme.colors.primary
                                 : isDisabled 
-                                  ? theme.colors.textSecondary 
-                                  : theme.colors.text 
+                                  ? '#4B5563'
+                                  : '#FFFFFF'
                           }
                         ]}>
                           {slot.label}
@@ -358,7 +358,7 @@ const ServiceFilterModal: React.FC<ServiceFilterModalProps> = ({
           )}
         </ScrollView>
 
-        <View style={[styles.footer, { borderTopColor: theme.colors.border + '20' }]}>
+        <View style={[styles.footer, { borderTopColor: 'rgba(255,255,255,0.05)' }]}>
           <TouchableOpacity
             style={[styles.applyButton, { opacity: (isDistanceFilter || (rangeStart && rangeEnd)) ? 1 : 0.6 }]}
             onPress={handleApply}

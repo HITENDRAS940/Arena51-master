@@ -145,18 +145,18 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
       visible={visible}
       onClose={handleClose}
       height="85%"
-      containerStyle={{ backgroundColor: theme.colors.background }}
+      containerStyle={{ backgroundColor: '#121212' }}
     >
       <View style={styles.modalContent}>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Search.</Text>
-            <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Search.</Text>
+            <Text style={[styles.headerSubtitle, { color: '#9CA3AF' }]}>
               {city || 'Everywhere'}.
             </Text>
           </View>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={moderateScale(24)} color={theme.colors.text} />
+            <Ionicons name="close" size={moderateScale(24)} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -165,20 +165,20 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             style={[
               styles.searchInputContainer,
               { 
-                borderColor: theme.colors.border + '40', 
-                backgroundColor: theme.colors.surface,
+                borderColor: 'rgba(255,255,255,0.05)', 
+                backgroundColor: '#1A1A1A',
               },
             ]}
           >
             <Ionicons name="search" size={moderateScale(20)} color={theme.colors.primary} />
             <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
+              style={[styles.searchInput, { color: '#FFFFFF' }]}
               placeholder={
                 activityName
                   ? `Find ${activityName.toLowerCase()}...`
                   : 'Search venues...'
               }
-              placeholderTextColor={theme.colors.textSecondary + '80'}
+              placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus={true}
@@ -187,7 +187,7 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={moderateScale(20)} color={theme.colors.gray} />
+                <Ionicons name="close-circle" size={moderateScale(20)} color="#9CA3AF" />
               </TouchableOpacity>
             )}
           </View>
@@ -195,19 +195,19 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
         {searching ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: verticalScale(16) }]}>
+            <Text style={[styles.infoText, { color: '#9CA3AF', marginTop: verticalScale(16) }]}>
               Finding best venues...
             </Text>
           </View>
         ) : searchQuery.trim().length >= 3 && searchResults.length === 0 ? (
           <View style={styles.centerContainer}>
-            <View style={[styles.noResultsIcon, { backgroundColor: theme.colors.surface }]}>
-              <Ionicons name="search-outline" size={moderateScale(48)} color={theme.colors.gray} />
+            <View style={[styles.noResultsIcon, { backgroundColor: '#1A1A1A' }]}>
+              <Ionicons name="search-outline" size={moderateScale(48)} color="#9CA3AF" />
             </View>
-            <Text style={[styles.noResultsText, { color: theme.colors.text }]}>
+            <Text style={[styles.noResultsText, { color: '#FFFFFF' }]}>
               No venues found
             </Text>
-            <Text style={[styles.noResultsSubtext, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.noResultsSubtext, { color: '#9CA3AF' }]}>
               Try searching with a different name or location
             </Text>
           </View>
@@ -222,8 +222,8 @@ const ServiceSearchModal: React.FC<ServiceSearchModalProps> = ({
             ListEmptyComponent={
               !searchQuery.trim() ? (
                 <View style={styles.initialState}>
-                  <Ionicons name="rocket-outline" size={moderateScale(60)} color={theme.colors.border} />
-                  <Text style={[styles.infoText, { color: theme.colors.textSecondary, marginTop: verticalScale(16) }]}>
+                  <Ionicons name="rocket-outline" size={moderateScale(60)} color="#1A1A1A" />
+                  <Text style={[styles.infoText, { color: '#9CA3AF', marginTop: verticalScale(16) }]}>
                     Type to explore venues
                   </Text>
                 </View>

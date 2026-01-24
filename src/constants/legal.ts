@@ -31,7 +31,7 @@ Opt-Out Rights
 You can stop all collection of information by the Application easily by uninstalling it. You may use the standard uninstall processes as may be available as part of your mobile device or via the mobile application marketplace or network.
 
 Data Retention Policy
-The Service Provider will retain User Provided data for as long as you use the Application and for a reasonable time thereafter. If you'd like them to delete User Provided Data that you have provided via the Application, please contact them at manan.arora0412@gmail.com and they will respond in a reasonable time.
+The Service Provider will retain User Provided data for as long as you use the Application and for a reasonable time thereafter. You can delete your account and all associated data directly within the Application's Profile settings. Alternatively, if you'd like them to delete User Provided Data that you have provided via the Application, please contact them at manan.arora0412@gmail.com and they will respond in a reasonable time.
 
 Children
 The Service Provider does not use the Application to knowingly solicit data from or market to children under the age of 13.

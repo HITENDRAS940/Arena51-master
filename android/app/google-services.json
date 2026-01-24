@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "622776222056-5iv06ibjloiq35hsv8c0g9nb1m7pmhbt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hitendras940.hyper",
+            "certificate_hash": "b7187b2d043e3cccb1aadab01cc72f9af2d6a33f"
+          }
+        },
+        {
           "client_id": "622776222056-dm8e04bdvk4j3nch24c4n618pm7enj1b.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

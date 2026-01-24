@@ -149,33 +149,34 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   };
 
   const InfoRow = ({ label, value, icon, last }: { label: string; value: string; icon: string; last?: boolean }) => (
-    <View style={[styles.infoRow, !last && { borderBottomWidth: 1, borderBottomColor: theme.colors.border + '20' }]}>
-      <View style={[styles.iconContainer, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.infoRow, !last && { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
+      <View style={[styles.iconContainer, { backgroundColor: '#262626' }]}>
         <Ionicons name={icon as any} size={moderateScale(18)} color={theme.colors.primary} />
       </View>
       <View style={styles.infoContent}>
-        <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>{label}</Text>
-        <Text style={[styles.infoValue, { color: theme.colors.text }]}>{value}</Text>
+        <Text style={[styles.infoLabel, { color: '#9CA3AF' }]}>{label}</Text>
+        <Text style={[styles.infoValue, { color: '#FFFFFF' }]}>{value}</Text>
       </View>
     </View>
   );
+
 
   return (
     <>
     <DraggableModal
       visible={visible}
       onClose={onClose}
-      containerStyle={{ backgroundColor: theme.colors.background }}
+      containerStyle={{ backgroundColor: '#121212' }}
     >
       <View style={styles.header}>
         <View>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Booking Details</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.title, { color: '#FFFFFF' }]}>Booking Details</Text>
+          <Text style={[styles.subtitle, { color: '#9CA3AF' }]}>
             {details?.reference ? `#${details.reference}` : 'Full breakdown of your booking'}
           </Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.colors.surface }]}>
-          <Ionicons name="close" size={20} color={theme.colors.text} />
+        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: '#1A1A1A' }]}>
+          <Ionicons name="close" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -204,63 +205,64 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
             </View>
 
             {/* Main Info Card */}
-            <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-               <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>General Information</Text>
+            <View style={[styles.card, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
+               <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>General Information</Text>
                <InfoRow label="Service Name" value={details.serviceName} icon="business-outline" />
                <InfoRow label="Resource" value={details.resourceName || 'All Resources'} icon="apps-outline" />
                <InfoRow label="Booking Date" value={format(new Date(details.bookingDate), 'EEEE, do MMMM yyyy')} icon="calendar-outline" />
                <InfoRow label="Time Slot" value={`${details.startTime} - ${details.endTime}`} icon="time-outline" last />
             </View>
-
+ 
             {/* User Details */}
             {details.user && (
-              <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Customer Details</Text>
+              <View style={[styles.card, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
+                <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Customer Details</Text>
                 <InfoRow label="Name" value={details.user.name} icon="person-outline" />
                 <InfoRow label="Phone" value={details.user.phone} icon="call-outline" />
                 <InfoRow label="Email" value={details.user.email} icon="mail-outline" last />
               </View>
             )}
-
+ 
             {/* Amount Breakdown */}
-            <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Payment Summary</Text>
+            <View style={[styles.card, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
+              <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>Payment Summary</Text>
               
               <View style={styles.priceRow}>
-                <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>Subtotal</Text>
-                <Text style={[styles.priceValue, { color: theme.colors.text }]}>
+                <Text style={[styles.priceLabel, { color: '#9CA3AF' }]}>Subtotal</Text>
+                <Text style={[styles.priceValue, { color: '#FFFFFF' }]}>
                   {details.amountBreakdown.currency} {details.amountBreakdown.slotSubtotal}
                 </Text>
               </View>
-
+ 
               <View style={styles.priceRow}>
-                <Text style={[styles.priceLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.priceLabel, { color: '#9CA3AF' }]}>
                   Platform Fee ({details.amountBreakdown.platformFeePercent}%)
                 </Text>
-                <Text style={[styles.priceValue, { color: theme.colors.text }]}>
+                <Text style={[styles.priceValue, { color: '#FFFFFF' }]}>
                   {details.amountBreakdown.currency} {details.amountBreakdown.platformFee}
                 </Text>
               </View>
-
-              <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-
+ 
+              <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
+ 
               <View style={styles.priceRow}>
-                <Text style={[styles.totalLabel, { color: theme.colors.text }]}>Total Amount</Text>
+                <Text style={[styles.totalLabel, { color: '#FFFFFF' }]}>Total Amount</Text>
                 <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
                   {details.amountBreakdown.currency} {details.amountBreakdown.totalAmount}
                 </Text>
               </View>
             </View>
-
+ 
             {/* Meta Info */}
             <View style={styles.metaContainer}>
-               <Text style={[styles.metaText, { color: theme.colors.textSecondary }]}>
+               <Text style={[styles.metaText, { color: '#9CA3AF' }]}>
                  Booked on {format(new Date(details.createdAt), 'dd/MM/yyyy HH:mm')}
                </Text>
-               <Text style={[styles.metaText, { color: theme.colors.textSecondary }]}>
+               <Text style={[styles.metaText, { color: '#9CA3AF' }]}>
                  Booking ID: {details.id}
                </Text>
             </View>
+
 
             {/* Actions Section */}
             <View style={styles.actionContainer}>

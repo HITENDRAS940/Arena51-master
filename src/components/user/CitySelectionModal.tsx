@@ -73,7 +73,7 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
     <TouchableOpacity
       style={[
         styles.cityItem,
-        currentCity === item && { backgroundColor: theme.colors.surface, borderColor: theme.colors.navy }
+        currentCity === item && { backgroundColor: '#1A1A1A', borderColor: theme.colors.navy || '#1e3a8a' }
       ]}
       onPress={() => {
         onSelectCity(item);
@@ -82,16 +82,16 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
     >
       <LocationIcon
         size={moderateScale(18)}
-        color={currentCity === item ? theme.colors.navy : theme.colors.textSecondary}
+        color={currentCity === item ? (theme.colors.navy || '#1e3a8a') : '#9CA3AF'}
       />
       <Text style={[
         styles.cityText, 
-        { color: currentCity === item ? theme.colors.navy : theme.colors.text }
+        { color: currentCity === item ? (theme.colors.navy || '#1e3a8a') : '#FFFFFF' }
       ]}>
         {item}
       </Text>
       {currentCity === item && (
-        <View style={[styles.activeDot, { backgroundColor: theme.colors.navy }]} />
+        <View style={[styles.activeDot, { backgroundColor: theme.colors.navy || '#1e3a8a' }]} />
       )}
     </TouchableOpacity>
   );
@@ -100,34 +100,34 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
     <DraggableModal
       visible={visible}
       onClose={onClose}
-      containerStyle={{ backgroundColor: theme.colors.background }}
+      containerStyle={{ backgroundColor: '#121212' }}
     >
       <View style={styles.header}>
         <View>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Select City</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>Find services in your area</Text>
+          <Text style={[styles.title, { color: '#FFFFFF' }]}>Select City</Text>
+          <Text style={[styles.subtitle, { color: '#9CA3AF' }]}>Find services in your area</Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Ionicons name="close" size={20} color={theme.colors.text} />
+        <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
+          <Ionicons name="close" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
         {/* Search Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+        <View style={[styles.searchContainer, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}>
+          <Ionicons name="search" size={20} color="#9CA3AF" />
           <TextInput
-            style={[styles.searchInput, { color: theme.colors.text }]}
+            style={[styles.searchInput, { color: '#FFFFFF' }]}
             placeholder="Search for your city..."
-            placeholderTextColor={theme.colors.textSecondary}
+            placeholderTextColor="#9CA3AF"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
-
+ 
         {/* Use Current Location Card */}
         <TouchableOpacity
-          style={[styles.currentLocationCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+          style={[styles.currentLocationCard, { backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.05)' }]}
           onPress={() => {
             onUseCurrentLocation();
             onClose();
@@ -135,19 +135,19 @@ const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
           activeOpacity={0.7}
         >
           <LinearGradient
-            colors={[theme.colors.navy, theme.colors.navy + 'DD']}
+            colors={[theme.colors.navy || '#1e3a8a', (theme.colors.navy || '#1e3a8a') + 'DD']}
             style={styles.locationIconGradient}
           >
             <Ionicons name="navigate" size={18} color="#FFFFFF" />
           </LinearGradient>
           <View style={styles.locationCardContent}>
-            <Text style={[styles.locationCardTitle, { color: theme.colors.text }]}>Current Location</Text>
-            <Text style={[styles.locationCardSubtitle, { color: theme.colors.textSecondary }]}>Using GPS for better accuracy</Text>
+            <Text style={[styles.locationCardTitle, { color: '#FFFFFF' }]}>Current Location</Text>
+            <Text style={[styles.locationCardSubtitle, { color: '#9CA3AF' }]}>Using GPS for better accuracy</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={theme.colors.border} />
+          <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.1)" />
         </TouchableOpacity>
 
-        <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>POPULAR CITIES</Text>
+        <Text style={[styles.sectionLabel, { color: '#9CA3AF' }]}>POPULAR CITIES</Text>
 
         {loading ? (
           <View style={styles.loadingContainer}>
